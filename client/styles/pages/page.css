@@ -1,0 +1,1388 @@
+.content-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard {
+  padding: 2rem;
+  flex: 1;
+  background: var(--background);
+}
+
+.salary-report {
+  background: white;
+  border-radius: var(--card-border-radius);
+  padding: 2rem;
+  box-shadow: var(--box-shadow);
+  animation: fadeIn 0.6s ease;
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.salary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.salary-report__title {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+  font-weight: 700;
+  line-height: 1.2;
+  position: relative;
+}
+
+.salary-report__title::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background: var(--primary);
+  border-radius: 5px;
+}
+
+.salary-report__subtitle {
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  margin-top: 1rem;
+  margin-bottom: 0;
+  font-weight: 500;
+}
+
+.salary-filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0;
+  align-items: center;
+}
+
+.filter-select {
+  padding: 0.6rem 1.2rem 0.6rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: white;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  transition: var(--transition);
+  font-weight: 500;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+  cursor: pointer;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+/* Визуализация данных */
+.data-visual {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.data-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  flex: 1;
+  min-width: 200px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border);
+  transition: var(--transition);
+}
+
+.data-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.data-card__title {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.data-card__value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.3rem;
+}
+
+.data-card__change {
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.data-card__change--positive {
+  color: var(--success);
+}
+
+.data-card__change--negative {
+  color: var(--error);
+}
+
+.data-card__change svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Таблица */
+.salary-table-container {
+  position: relative;
+  overflow-x: auto;
+  border-radius: var(--card-border-radius);
+  box-shadow: var(--box-shadow);
+}
+
+.salary-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: var(--card-border-radius);
+  overflow: hidden;
+}
+
+.salary-table th,
+.salary-table td {
+  padding: 1rem;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+
+.salary-table th:first-child,
+.salary-table td:first-child {
+  text-align: left;
+  position: sticky;
+  left: 0;
+  background: inherit;
+  z-index: 1;
+}
+
+.salary-table th {
+  background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.salary-table tbody tr:hover {
+  background-color: rgba(79, 70, 229, 0.03);
+}
+
+.sub-header {
+  background: rgba(79, 70, 229, 0.03);
+  font-weight: 500;
+}
+
+.total-row {
+  background: rgba(79, 70, 229, 0.08);
+  font-weight: 600;
+}
+
+.total-row td {
+  color: var(--primary);
+}
+
+.deviation {
+  position: relative;
+  padding-right: 1.5rem !important;
+}
+
+.deviation--negative {
+  color: var(--error);
+}
+
+.deviation--positive {
+  color: var(--success);
+}
+
+.deviation--positive::before {
+  content: "+";
+}
+
+.deviation-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 4px;
+  z-index: 1;
+  opacity: 0.8;
+}
+
+.deviation-bar--negative {
+  background: var(--error);
+}
+
+.deviation-bar--positive {
+  background: var(--success);
+}
+
+.quarter {
+  border-top: 2px solid var(--border);
+}
+
+.export-btn {
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: 0 2px 5px rgba(79, 70, 229, 0.2);
+}
+
+.export-btn:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+}
+
+.export-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Добавляем анимацию для индикаторов */
+@keyframes growRight {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+.progress-bar {
+  position: absolute;
+  height: 4px;
+  bottom: 0;
+  left: 0;
+  border-radius: 2px;
+  opacity: 0.4;
+  animation: growRight 1s ease-out forwards;
+}
+
+.progress-bar--plan {
+  background-color: var(--primary);
+}
+
+.progress-bar--fact {
+  background-color: var(--accent);
+}
+
+/* Хлебные крошки */
+.breadcrumbs-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.8rem;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.back-button:hover {
+  background: var(--background);
+  color: var(--primary);
+  border-color: var(--primary-light);
+  transform: translateX(-2px);
+}
+
+.back-button svg {
+  color: var(--primary);
+}
+
+.breadcrumbs {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.breadcrumb-item {
+  text-decoration: none;
+  color: var(--text-secondary);
+  transition: var(--transition);
+}
+
+.breadcrumb-item:hover {
+  color: var(--primary);
+}
+
+.breadcrumb-item.active {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.breadcrumb-separator {
+  color: var(--border);
+  font-size: 0.8rem;
+}
+
+/* Элементы управления графиком */
+.chart-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.chart-tabs {
+  display: flex;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--background);
+}
+
+.chart-tab {
+  padding: 0.6rem 1.2rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.chart-tab.active {
+  background: var(--primary);
+  color: white;
+}
+
+.chart-tab:not(.active):hover {
+  background: rgba(79, 70, 229, 0.05);
+  color: var(--primary);
+}
+
+.chart-view-toggle {
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--background);
+}
+
+.chart-view-btn {
+  padding: 0.5rem 0.8rem;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.chart-view-btn.active {
+  background: rgba(79, 70, 229, 0.1);
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.chart-view-btn:not(.active):hover {
+  background: rgba(79, 70, 229, 0.05);
+}
+
+/* Модификации для графика */
+.chart-bar-container.month-view {
+  gap: 0.5rem;
+}
+
+.chart-bar-container.month-view .chart-group {
+  flex: 0 0 calc(8.33% - 0.5rem);
+}
+
+.chart-group.quarter-start {
+  position: relative;
+}
+
+.chart-group.quarter-start::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(79, 70, 229, 0.1);
+  border-radius: 4px;
+}
+
+.chart-value {
+  white-space: nowrap;
+  font-size: 0.65rem;
+}
+
+@media (max-width: 992px) {
+  .data-visual {
+    flex-direction: column;
+  }
+  
+  .data-card {
+    min-width: 100%;
+  }
+
+  .chart-controls {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .chart-tabs, .chart-view-toggle {
+    width: 100%;
+  }
+  
+  .chart-tab, .chart-view-btn {
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .chart-bar-container.month-view .chart-group {
+    flex: 0 0 calc(16.66% - 0.5rem);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard {
+    padding: 1rem;
+  }
+
+  .salary-report {
+    padding: 1.25rem;
+  }
+  
+  .salary-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .salary-filters {
+    flex-wrap: wrap;
+  }
+
+  .salary-table {
+    font-size: 0.85rem;
+  }
+
+  .salary-table th,
+  .salary-table td {
+    padding: 0.8rem 0.6rem;
+  }
+
+  .chart-bar-container.month-view .chart-group {
+    flex: 0 0 calc(25% - 0.5rem);
+  }
+  
+  .breadcrumbs {
+    flex-wrap: wrap;
+  }
+
+  .chart-container {
+    overflow: hidden;
+    max-height: 350px;
+    padding: 1rem;
+  }
+  
+  .chart {
+    height: 220px;
+  }
+}
+
+/* Состояние загрузки */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  border-radius: var(--card-border-radius);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.loading-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--primary-light);
+  border-radius: 50%;
+  border-top-color: var(--primary);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Стили для графика */
+.chart-container {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  background: white;
+  border-radius: var(--card-border-radius);
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  max-height: 400px;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.chart-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.chart-legend {
+  display: flex;
+  gap: 1rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.legend-color--plan {
+  background-color: var(--primary);
+}
+
+.legend-color--fact {
+  background-color: var(--accent);
+}
+
+.chart {
+  height: 280px;
+  position: relative;
+  padding-bottom: 2rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-bar-container {
+  display: flex;
+  height: 100%;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.chart-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.chart-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  position: absolute;
+  bottom: -2rem;
+}
+
+.chart-bar-group {
+  display: flex;
+  gap: 4px;
+  height: 100%;
+  width: 100%;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.chart-bar {
+  flex: 1;
+  max-width: 40px;
+  background-color: var(--primary);
+  border-radius: 4px 4px 0 0;
+  position: relative;
+  transition: height 1s ease;
+}
+
+.chart-bar--plan {
+  background-color: var(--primary);
+  opacity: 0.8;
+}
+
+.chart-bar--fact {
+  background-color: var(--accent);
+  opacity: 0.8;
+}
+
+.chart-value {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* Анимация для графиков */
+@keyframes growUp {
+  from { height: 0; }
+  to { height: 100%; }
+}
+
+.animate-bar {
+  animation: growUp 1s ease-out forwards;
+}
+
+/* Стили для таблицы */
+.salary-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: var(--card-border-radius);
+  overflow: hidden;
+  font-size: 0.95rem;
+}
+
+.salary-table thead {
+  background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+}
+
+.salary-table th {
+  font-weight: 600;
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 1rem 0.75rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 1px 0 var(--border);
+}
+
+.salary-table th[colspan] {
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.salary-table td {
+  padding: 0.85rem 0.75rem;
+  text-align: right;
+  position: relative;
+  vertical-align: middle;
+  transition: all 0.2s ease;
+}
+
+.salary-table td:first-child {
+  text-align: left;
+  font-weight: 500;
+  position: sticky;
+  left: 0;
+  background: inherit;
+  z-index: 1;
+}
+
+.salary-table tr {
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.2s ease;
+}
+
+.salary-table tbody tr:hover {
+  background-color: rgba(79, 70, 229, 0.03);
+}
+
+.salary-table tbody tr:nth-child(even) {
+  background-color: rgba(240, 240, 250, 0.2);
+}
+
+.salary-table tbody tr:hover td {
+  color: var(--text-primary);
+}
+
+.sortable {
+  cursor: pointer;
+  position: relative;
+}
+
+.sortable:hover {
+  background-color: rgba(79, 70, 229, 0.05);
+}
+
+.sort-icon {
+  display: inline-block;
+  margin-left: 4px;
+  opacity: 0.5;
+  font-size: 0.7rem;
+  transition: transform 0.2s ease;
+}
+
+[data-direction="asc"] .sort-icon {
+  transform: translateY(-1px);
+  opacity: 0.8;
+  color: var(--primary);
+}
+
+[data-direction="desc"] .sort-icon {
+  transform: translateY(1px);
+  opacity: 0.8;
+  color: var(--primary);
+}
+
+.total-row {
+  background-color: rgba(79, 70, 229, 0.06) !important;
+  font-weight: 600;
+}
+
+.total-row td {
+  color: var(--primary);
+  border-top: 1px solid rgba(79, 70, 229, 0.2);
+  border-bottom: 1px solid rgba(79, 70, 229, 0.2);
+  padding: 1rem 0.75rem;
+}
+
+.positive {
+  color: var(--success);
+  position: relative;
+}
+
+.negative {
+  color: var(--error);
+  position: relative;
+}
+
+.positive::before {
+  content: '+';
+}
+
+/* Индикаторы для отклонений */
+td.positive::after,
+td.negative::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  height: 70%;
+  transform: translateY(-50%);
+  width: 2px;
+  opacity: 0.6;
+}
+
+td.positive::after {
+  background-color: var(--success);
+}
+
+td.negative::after {
+  background-color: var(--error);
+}
+
+/* Прогресс-бары для значений */
+.table-progress {
+  position: absolute;
+  height: 3px;
+  bottom: 0;
+  left: 0;
+  border-radius: 1px;
+  opacity: 0.15;
+  z-index: 0;
+}
+
+.table-progress-plan {
+  background-color: var(--primary);
+}
+
+.table-progress-fact {
+  background-color: var(--accent);
+}
+
+/* Стили для модальных окон */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-content {
+  background-color: white;
+  border-radius: var(--card-border-radius);
+  width: 100%;
+  max-width: 550px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--background);
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.modal-body {
+  padding: 1rem;
+}
+
+.modal-footer {
+  padding: 1rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--input-border-radius);
+  font-size: 0.95rem;
+}
+
+.required {
+  color: var(--error);
+}
+
+/* Кнопки действий */
+.action-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Уведомления */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 1rem;
+  background: white;
+  border-radius: var(--card-border-radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 1001;
+  min-width: 300px;
+  max-width: 500px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.notification.hide {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.notification-info {
+  border-left: 4px solid var(--primary);
+}
+
+.notification-success {
+  border-left: 4px solid var(--success);
+}
+
+.notification-error {
+  border-left: 4px solid var(--error);
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+/* Добавленные стили для кнопок в таблице */
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.add-fact-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+/* Состояние загрузки */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.7);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.loading-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(79, 70, 229, 0.3);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s infinite linear;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+  .salary-filters {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .filter-select {
+    width: 100%;
+  }
+  
+  .chart-container {
+    overflow-x: auto;
+  }
+  
+  .chart-bar-container.month-view {
+    min-width: 800px;
+  }
+  
+  .salary-table-container {
+    overflow-x: auto;
+  }
+  
+  .salary-table {
+    min-width: 700px;
+  }
+}
+
+/* Стили для новой структуры таблицы с метриками в столбцах */
+.metric-header {
+    background: linear-gradient(to bottom, #f1f5f9, #e2e8f0);
+    color: var(--primary);
+    font-weight: 600;
+    text-align: center;
+    border-left: 1px solid var(--border);
+    position: relative;
+}
+
+.metric-header:not(:first-child)::before {
+    content: '';
+    position: absolute;
+    top: 10%;
+    left: 0;
+    height: 80%;
+    width: 1px;
+    background-color: var(--border);
+}
+
+/* Дополнительные стили для кнопок действий метрик */
+.add-fact-btn {
+    margin-right: 8px;
+    margin-bottom: 8px;
+    background-color: var(--success);
+    border: none;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.add-fact-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background-color: #28a745;
+}
+
+/* Модификация для мобильных устройств */
+@media (max-width: 768px) {
+    .action-buttons {
+        flex-wrap: wrap;
+    }
+    
+    .add-fact-btn {
+        margin-top: 8px;
+    }
+}
+
+/* Стили для кнопки добавления значений */
+#add-values-btn {
+    margin-left: 10px;
+    background-color: var(--success);
+    border: none;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#add-values-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+    background-color: #0f9549;
+}
+
+/* Стили для формы добавления значений */
+#fact-form .form-group {
+    margin-bottom: 15px;
+}
+
+#fact-form select.form-control, 
+#fact-form input.form-control {
+    padding: 10px;
+    font-size: 0.95rem;
+}
+
+#fact-form label {
+    font-size: 0.95rem;
+    margin-bottom: 5px;
+}
+
+/* Улучшенные стили для модальных окон */
+.modal-content {
+    max-width: 550px;
+}
+
+.modal-header {
+    background-color: var(--background);
+}
+
+.modal-title {
+    font-weight: 600;
+}
+
+.modal-footer .btn {
+    padding: 8px 20px;
+}
+
+/* Стили для чекбокса "Пересчитать план" */
+.form-check {
+    display: flex;
+    align-items: center;
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+
+.form-check-input {
+    margin-right: 10px;
+    width: 16px;
+    height: 16px;
+}
+
+.form-check-label {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+}
+
+/* Стили для подсказки */
+.tooltip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    margin-left: 8px;
+    color: var(--text-muted);
+    cursor: help;
+}
+
+.tooltip-text {
+    visibility: hidden;
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    text-align: center;
+    padding: 8px 12px;
+    border-radius: 6px;
+    width: 240px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 1;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+.tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+}
+
+/* Стили для отображения планового значения */
+.plan-value-info {
+    background-color: var(--bg-light);
+    padding: 10px 12px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+}
+
+.plan-value-info label {
+    display: block;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+    color: var(--text-secondary);
+}
+
+#plan-value-display {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* Кнопка добавления годового плана */
+#add-yearly-plan-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    margin-left: 1rem;
+}
+
+#add-yearly-plan-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+    background-color: #1976D2;
+}
+
+/* Кнопки редактирования значений в таблице */
+.edit-value-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+    margin-left: 5px;
+    padding: 2px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+}
+
+.edit-value-btn:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.edit-plan-btn svg {
+    color: #2196F3;
+}
+
+.edit-fact-btn svg {
+    color: #4caf50;
+}
+
+.salary-table td {
+    position: relative;
+}
+
+/* Стили для модального окна годового плана */
+.hidden-section {
+    display: none;
+}
+
+.month-weights {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+.month-weight-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.month-weight-item label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.month-weight-item input {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    width: 100%;
+    font-size: 0.9rem;
+}
+
+#distribution-weights h4 {
+    font-size: 1rem;
+    margin-top: 15px;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.info-message {
+    background-color: #f1f8ff;
+    border-left: 4px solid #2196F3;
+    padding: 12px 15px;
+    color: #555;
+    font-size: 0.9rem;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+@media (max-width: 768px) {
+    .month-weights {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .month-weights {
+        grid-template-columns: 1fr;
+    }
+}

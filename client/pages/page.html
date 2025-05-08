@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Отчет по зарплате | RealTimeFinanceAnalytics</title>
+  <link rel="stylesheet" href="../styles/common.css">
+  <link rel="stylesheet" href="../styles/pages/page.css">
+  <link rel="stylesheet" href="../styles/responsive.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+  <div class="content-wrapper">
+    <header class="header">
+    <div class="header-logo">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm3 5a1 1 0 0 0 0 2h10a1 1 0 1 0 0-2H7zm0 4a1 1 0 0 0 0 2h10a1 1 0 1 0 0-2H7z"/>
+      </svg>
+      RealTimeFinanceAnalytics
+    </div>
+    <nav class="header-nav">
+      <a href="#" class="active">Отчеты</a>
+      <a href="#">Аналитика</a>
+      <a href="#">Настройки</a>
+    </nav>
+    <div class="header-actions">
+ <div class="user-info">
+                <a href="./profile.html" class="user-avatar">
+                    <div class="avatar-inner">АП</div>
+                </a>
+                <div class="user-details">
+                    <div class="user-name">Загрузка...</div>
+                    <div class="user-role">Загрузка...</div>
+                </div>
+                <div class="user-dropdown">
+                    <a href="./profile.html" class="user-dropdown-item">
+                        <i class="fa fa-user"></i> Профиль
+                    </a>
+                    <a href="./settings.html" class="user-dropdown-item">
+                        <i class="fa fa-cog"></i> Настройки
+                    </a>
+                    <div class="user-dropdown-divider"></div>
+                    <a href="#" class="user-dropdown-item logout-btn">
+                        <i class="fa fa-sign-out-alt"></i> Выйти
+                    </a>
+                </div>
+            </div>
+    </div>
+  </header>
+  
+  <main class="dashboard">
+    <section class="salary-report">
+        <!-- Индикатор загрузки -->
+        <div class="loading-overlay" id="loadingOverlay">
+          <div class="loading-spinner"></div>
+        </div>
+        
+        <!-- Навигационная цепочка -->
+        <div class="breadcrumbs-container">
+          <a href="../index.html" class="back-button">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Назад
+          </a>
+        <div class="breadcrumbs">
+          <a href="../index.html" class="breadcrumb-item">Главная</a>
+          <span class="breadcrumb-separator">/</span>
+          <span class="breadcrumb-item active">Заработная плата</span>
+          </div>
+        </div>
+        
+      <div class="salary-header">
+        <div>
+          <h1 class="salary-report__title">Заработная плата</h1>
+          <h2 class="salary-report__subtitle">Магазин 1</h2>
+        </div>
+        <div class="salary-filters">
+            <select class="filter-select" id="yearFilter">
+            <option>2024 год </option>
+            <option>2023 год </option>
+          </select>
+            <select class="filter-select" id="shopFilter">
+            <option>Все магазины</option>
+            <option selected>Магазин 1</option>
+            <option>Магазин 2</option>
+          </select>
+            <button class="btn btn-primary btn-sm btn-icon export-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Экспорт
+            </button>
+          </div>
+        </div>
+        
+        <!-- Ключевые показатели -->
+        <div class="data-visual">
+          <div class="data-card">
+            <div class="data-card__title">Общий фонд оплаты труда</div>
+            <div class="data-card__value">1 458 000 ₽</div>
+            <div class="data-card__change data-card__change--negative">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
+                <polyline points="17 18 23 18 23 12"></polyline>
+              </svg>
+              0.4% от планового
+            </div>
+          </div>
+          
+          <div class="data-card">
+            <div class="data-card__title">Отработанные часы</div>
+            <div class="data-card__value">1 944 ч.</div>
+            <div class="data-card__change data-card__change--negative">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
+                <polyline points="17 18 23 18 23 12"></polyline>
+              </svg>
+              0.4% от планового
+            </div>
+          </div>
+          
+          <div class="data-card">
+            <div class="data-card__title">Средняя зарплата</div>
+            <div class="data-card__value">121 500 ₽</div>
+            <div class="data-card__change data-card__change--positive">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
+              </svg>
+              1.2% от прошлого года
+            </div>
+          </div>
+        </div>
+        
+        <!-- Селектор типа данных для визуализации -->
+        <div class="chart-controls">
+          <div class="chart-tabs">
+            <button class="chart-tab active" data-chart="hours">Рабочие часы</button>
+            <button class="chart-tab" data-chart="salary">Заработная плата</button>
+          </div>
+          <div class="chart-view-toggle">
+            <button class="chart-view-btn active" data-view="quarters">
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+              </svg>
+              Кварталы
+            </button>
+            <button class="chart-view-btn" data-view="months">
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+              </svg>
+              Месяцы
+            </button>
+        </div>
+      </div>
+
+        <!-- Визуализация данных -->
+        <div class="chart-container">
+          <div class="chart-header">
+            <div class="chart-title">Сравнение рабочих часов по кварталам (ч.)</div>
+            <div class="chart-legend">
+              <div class="legend-item">
+                <div class="legend-color legend-color--plan"></div>
+                <span>План</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-color legend-color--fact"></div>
+                <span>Факт</span>
+              </div>
+            </div>
+          </div>
+          <div class="chart" id="hoursChart">
+            <!-- График будет создан динамически -->
+          </div>
+        </div>
+
+        <div class="salary-table-container">
+      <table class="salary-table">
+        <thead>
+          <tr>
+            <th rowspan="2">Период</th>
+            <th colspan="3" class="metric-header" id="metric-header-1">Метрика 1</th>
+            <th colspan="3" class="metric-header" id="metric-header-2">Метрика 2</th>
+            <!-- Дополнительные метрики будут добавлены динамически -->
+          </tr>
+          <tr class="sub-header">
+            <!-- Первая ячейка уже занята rowspan -->
+            <td class="sortable" data-sort="metric1-plan">План</td>
+            <td class="sortable" data-sort="metric1-fact">Факт</td>
+            <td class="sortable" data-sort="metric1-diff">Отклонение</td>
+            <td class="sortable" data-sort="metric2-plan">План</td>
+            <td class="sortable" data-sort="metric2-fact">Факт</td>
+            <td class="sortable" data-sort="metric2-diff">Отклонение</td>
+            <!-- Дополнительные подзаголовки будут добавлены динамически -->
+          </tr>
+        </thead>
+            <tbody id="salaryTableBody">
+              <!-- Данные будут добавлены динамически -->
+            </tbody>
+            <tfoot>
+          <tr class="total-row">
+                <td>Итого:</td>
+            <!-- Итоговые данные будут добавлены динамически -->
+          </tr>
+            </tfoot>
+      </table>
+        </div>
+    </section>
+  </main>
+  </div>
+  
+  <!-- Подключение скриптов -->
+  <script type="module" src="../scripts/pages/page.js"></script>
+  <script type="module">
+    import authService from '../scripts/auth/auth.js';
+    
+    // Функция для отображения уведомлений
+    function showToast(message, type = 'success') {
+        let toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        
+        // Добавляем иконку в зависимости от типа уведомления
+        let icon = '';
+        if (type === 'success') {
+            icon = '<i class="fas fa-check-circle"></i>';
+        } else if (type === 'error') {
+            icon = '<i class="fas fa-exclamation-circle"></i>';
+        } else if (type === 'warning') {
+            icon = '<i class="fas fa-exclamation-triangle"></i>';
+        } else if (type === 'info') {
+            icon = '<i class="fas fa-info-circle"></i>';
+        }
+        
+        toast.innerHTML = `<div class="toast-content">${icon}<span>${message}</span></div><button class='toast-close'>&times;</button>`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        toast.querySelector('.toast-close').onclick = () => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        };
+        setTimeout(() => { 
+            toast.classList.remove('show'); 
+            setTimeout(() => toast.remove(), 300); 
+        }, 4000);
+    }
+
+    document.addEventListener('DOMContentLoaded', async function() {
+        try {
+            // Проверяем авторизацию пользователя
+            if (!authService.isAuthenticated()) {
+                window.location.href = './login.html';
+                return;
+            }
+            
+            // Загружаем данные пользователя
+            const userData = await authService.getCurrentUser();
+            if (userData) {
+                // Заполняем информацию о пользователе
+                const initials = userData.username.slice(0, 2).toUpperCase();
+                document.querySelector('.user-avatar .avatar-inner').textContent = initials;
+                
+                // Заполняем информацию в шапке
+                document.querySelector('.user-name').textContent = userData.username;
+                
+                // Добавляем информацию о роли
+                if (userData.role) {
+                    document.querySelector('.user-role').textContent = userData.role.name;
+                } else {
+                    document.querySelector('.user-role').textContent = 'Без роли';
+                }
+            }
+            
+            // Обработчик для кнопки выхода
+            document.querySelector('.logout-btn').addEventListener('click', async function(e) {
+                e.preventDefault();
+                try {
+                    await authService.logout();
+                    window.location.href = './login.html';
+                } catch (error) {
+                    console.error('Ошибка при выходе из системы:', error);
+                    showToast('Ошибка при выходе из системы', 'error');
+                }
+            });
+            
+            // Универсальное выпадающее меню пользователя
+            const userInfo = document.querySelector('.user-info');
+            const userDropdown = document.querySelector('.user-dropdown');
+            userInfo.addEventListener('click', function(e) {
+                if (e.target.closest('.user-avatar') || e.target.closest('.user-details')) {
+                    userDropdown.classList.toggle('active');
+                }
+            });
+            document.addEventListener('click', function(e) {
+                if (!userInfo.contains(e.target)) {
+                    userDropdown.classList.remove('active');
+                }
+            });
+        } catch (error) {
+            console.error('Ошибка при загрузке данных пользователя:', error);
+        }
+    });
+  </script>
+</body>
+</html>

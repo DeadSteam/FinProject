@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:Akrawer1@finance_db:5432/finance_db
+      - USERS_DATABASE_URL=postgresql+asyncpg://postgres:Akrawer1@users_db:5432/users_db
+    depends_on:
+      - finance_db
+      - users_db
+    networks:
+      - app-network
+
+  finance_db:
+    image: postgres:15
+    volumes:
+      - finance_data:/var/lib/postgresql/data
+      - ./sql/init/init_finance_db.sql:/docker-entrypoint-initdb.d/init_finance_db.sql
+    environment:
+      - POSTGRES_PASSWORD=Akrawer1
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=finance_db
+    ports:
+      - "5434:5432"
+    networks:
+      - app-network
+
+  users_db:
+    image: postgres:15
+    volumes:
+      - users_data:/var/lib/postgresql/data
+      - ./sql/init/init_users_db.sql:/docker-entrypoint-initdb.d/init_users_db.sql
+    environment:
+      - POSTGRES_PASSWORD=Akrawer1
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=users_db
+    ports:
+      - "5435:5432"
+    networks:
+      - app-network
+      
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - finance_db
+      - users_db
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  finance_data:
+  users_data: 
