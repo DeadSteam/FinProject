@@ -1107,6 +1107,31 @@ function showNotification(message, type = 'info') {
     });
 }
 
+// Функция для проверки, имеет ли пользователь права администратора или менеджера
+async function hasAdminRights() {
+    try {
+        // Импортируем сервис авторизации, если он еще не импортирован
+        if (typeof authService === 'undefined') {
+            const { default: auth } = await import('../auth/auth.js');
+            window.authService = auth;
+        }
+        
+        const user = await authService.getCurrentUser();
+        if (!user || !user.role) {
+            return false;
+        }
+        
+        // Пользователь имеет права, если его роль - admin или manager
+        return user.role.name === 'admin' || user.role.name === 'manager';
+    } catch (error) {
+        console.error('Ошибка при проверке прав пользователя:', error);
+        return false;
+    }
+}
+
+// Глобальная переменная для хранения прав пользователя
+let userHasAdminRights = false;
+
 // Функция для добавления кнопок действий для метрик
 function addMetricActionButtons(metrics) {
     // Создаем контейнер для кнопок, если его нет
@@ -1115,66 +1140,74 @@ function addMetricActionButtons(metrics) {
         actionButtons = document.createElement('div');
         actionButtons.className = 'action-buttons';
         
-        // Добавляем кнопку для инициализации года
-        const initYearBtn = document.createElement('button');
-        initYearBtn.className = 'btn btn-secondary';
-        initYearBtn.id = 'initYearBtn';
-        initYearBtn.innerHTML = `
-            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-            </svg>
-            Инициализация года
-        `;
-        actionButtons.appendChild(initYearBtn);
-        
-        // Добавляем кнопку для добавления новой метрики
-        const addMetricBtn = document.createElement('button');
-        addMetricBtn.className = 'btn btn-primary';
-        addMetricBtn.id = 'add-metric-btn';
-        addMetricBtn.innerHTML = `
-            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-            Добавить метрику
-        `;
-        actionButtons.appendChild(addMetricBtn);
+        // Показываем кнопки только для админов и менеджеров
+        if (userHasAdminRights) {
+            // Добавляем кнопку для инициализации года
+            const initYearBtn = document.createElement('button');
+            initYearBtn.className = 'btn btn-secondary';
+            initYearBtn.id = 'initYearBtn';
+            initYearBtn.innerHTML = `
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Инициализация года
+            `;
+            actionButtons.appendChild(initYearBtn);
+            
+            // Добавляем кнопку для добавления новой метрики
+            const addMetricBtn = document.createElement('button');
+            addMetricBtn.className = 'btn btn-primary';
+            addMetricBtn.id = 'add-metric-btn';
+            addMetricBtn.innerHTML = `
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Добавить метрику
+            `;
+            actionButtons.appendChild(addMetricBtn);
+        }
         
         // Добавляем контейнер перед таблицей
         const tableContainer = document.querySelector('.salary-table-container');
         tableContainer.parentNode.insertBefore(actionButtons, tableContainer);
         
-        // Добавляем обработчик для кнопки добавления метрики
-        document.getElementById('add-metric-btn').addEventListener('click', () => {
-            document.getElementById('add-metric-modal').classList.add('active');
-        });
-        
-        // Добавляем обработчик для кнопки инициализации года
-        document.getElementById('initYearBtn').addEventListener('click', showInitYearModal);
+        // Добавляем обработчики только для админов и менеджеров
+        if (userHasAdminRights) {
+            // Добавляем обработчик для кнопки добавления метрики
+            document.getElementById('add-metric-btn')?.addEventListener('click', () => {
+                document.getElementById('add-metric-modal').classList.add('active');
+            });
+            
+            // Добавляем обработчик для кнопки инициализации года
+            document.getElementById('initYearBtn')?.addEventListener('click', showInitYearModal);
+        }
     }
     
-    // Добавляем кнопку для добавления годового плана
-    const addYearlyPlanBtn = document.getElementById('add-yearly-plan-btn');
-    if (!addYearlyPlanBtn) {
-        const button = document.createElement('button');
-        button.className = 'btn btn-info';
-        button.id = 'add-yearly-plan-btn';
-        button.innerHTML = `
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-            </svg>
-            Годовой план
-        `;
-        
-        // Добавляем обработчик для кнопки
-        button.addEventListener('click', async () => {
-            // Создаем модальное окно если его еще нет
-            if (!document.getElementById('yearly-plan-modal')) {
-                await createYearlyPlanModal();
-            }
-            document.getElementById('yearly-plan-modal').classList.add('active');
-        });
-        
-        actionButtons.appendChild(button);
+    // Добавляем кнопку для добавления годового плана только для админов и менеджеров
+    if (userHasAdminRights) {
+        const addYearlyPlanBtn = document.getElementById('add-yearly-plan-btn');
+        if (!addYearlyPlanBtn) {
+            const button = document.createElement('button');
+            button.className = 'btn btn-info';
+            button.id = 'add-yearly-plan-btn';
+            button.innerHTML = `
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                Годовой план
+            `;
+            
+            // Добавляем обработчик для кнопки
+            button.addEventListener('click', async () => {
+                // Создаем модальное окно если его еще нет
+                if (!document.getElementById('yearly-plan-modal')) {
+                    await createYearlyPlanModal();
+                }
+                document.getElementById('yearly-plan-modal').classList.add('active');
+            });
+            
+            actionButtons.appendChild(button);
+        }
     }
     
     // Обновляем выпадающий список метрик
@@ -2091,6 +2124,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
     
+    try {
+        // Проверяем права пользователя
+        userHasAdminRights = await hasAdminRights();
+        console.log('Пользователь имеет права администратора/менеджера:', userHasAdminRights);
+    } catch (authError) {
+        console.error('Ошибка при проверке прав пользователя:', authError);
+        userHasAdminRights = false;
+    }
+    
     // Создаем модальные окна
     createMetricModal();
     createFactValueModal();
@@ -2556,11 +2598,13 @@ function renderMetricsTable(metrics, periods) {
                 // Формируем ячейки для плана, факта и отклонения
                 const planCell = `<td data-sort-value="${planVal}">
                     ${formatNumber(planVal)} ${metric.unit}
+                    ${userHasAdminRights ? `
                     <button type="button" class="edit-value-btn edit-plan-btn" data-metric-id="${metric.id}" data-period-id="${quarterPeriod.id}" data-value="${planVal}" data-type="plan" title="Редактировать план">
                         <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
                         </svg>
                     </button>
+                    ` : ''}
                 </td>`;
                 
                 // Для фактического значения показываем итоги по месяцам квартала, без возможности редактирования
@@ -2636,29 +2680,35 @@ function renderMetricsTable(metrics, periods) {
                 // Формируем ячейки для плана, факта и отклонения
                 const planCell = `<td data-sort-value="${planVal}">
                     ${formatNumber(planVal)} ${metric.unit}
+                    ${userHasAdminRights ? `
                     <button type="button" class="edit-value-btn edit-plan-btn" data-metric-id="${metric.id}" data-period-id="${period.id}" data-value="${planVal}" data-type="plan" title="Редактировать план">
                         <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
                         </svg>
                     </button>
+                    ` : ''}
                 </td>`;
                 
                 const factCell = factVal !== null && factVal !== 0
                     ? `<td data-sort-value="${factVal}">
                         ${formatNumber(factVal)} ${metric.unit}
+                        ${userHasAdminRights ? `
                         <button type="button" class="edit-value-btn edit-fact-btn" data-metric-id="${metric.id}" data-period-id="${period.id}" data-value="${factVal}" data-type="fact" title="Редактировать факт">
                             <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
                             </svg>
                         </button>
+                        ` : ''}
                       </td>` 
                     : `<td class="empty-value">
+                        ${userHasAdminRights ? `
                             <button type="button" class="add-fact-btn" data-metric-id="${metric.id}" data-period-id="${period.id}" data-period-month="${period.month}">
                                 <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                                 </svg>
                                 Внести факт
                             </button>
+                        ` : '—'}
                           </td>`;
                 
                 const diffCell = factVal !== null && factVal !== 0
@@ -2935,6 +2985,12 @@ async function updateTotalRow(metrics, monthPeriods) {
 function setupEditButtons() {
     console.log('Настройка обработчиков кнопок редактирования');
     
+    // Если у пользователя нет прав администратора, не добавляем обработчики
+    if (!userHasAdminRights) {
+        console.log('Пропуск добавления обработчиков редактирования - нет прав');
+        return;
+    }
+    
     // Удаляем старые обработчики, добавив класс handled
     document.querySelectorAll('.edit-plan-btn.handled, .edit-fact-btn.handled').forEach(button => {
         button.classList.remove('handled');
@@ -3028,6 +3084,41 @@ function setupEditButtons() {
                 }
             } else {
                 showNotification('Модальное окно для редактирования значений не найдено', 'error');
+            }
+        });
+    });
+    
+    // Добавляем обработчики для кнопок добавления фактических значений
+    document.querySelectorAll('.add-fact-btn:not(.handled)').forEach(button => {
+        button.classList.add('handled');
+        
+        button.addEventListener('click', function() {
+            const metricId = this.dataset.metricId;
+            const periodId = this.dataset.periodId;
+            const periodMonth = this.dataset.periodMonth;
+            
+            // Открываем модальное окно для добавления фактического значения
+            const modal = document.getElementById('add-fact-modal');
+            if (modal) {
+                // Сбрасываем все поля формы
+                document.getElementById('fact-form').reset();
+                document.getElementById('fact-value').value = '';
+                document.getElementById('plan-value-display').textContent = '—';
+                document.getElementById('plan-value-display').setAttribute('data-value', '0');
+                
+                // Устанавливаем выбранную метрику и период
+                document.getElementById('metric-select').value = metricId;
+                document.getElementById('metric-id').value = metricId;
+                document.getElementById('period-select').value = periodMonth;
+                document.getElementById('period-id').value = periodId;
+                
+                // Вызываем событие изменения метрики для загрузки плановых значений
+                document.getElementById('metric-select').dispatchEvent(new Event('change'));
+                
+                // Показываем модальное окно
+                modal.classList.add('active');
+            } else {
+                showNotification('Модальное окно для добавления фактических значений не найдено', 'error');
             }
         });
     });
