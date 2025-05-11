@@ -301,16 +301,30 @@ class AnalyticsService:
         shops = await shop_service.get_all(session)
         count_shops = len(shops)
         
-        # Вычисляем общий годовой процент выполнения
-        yearly_periods = await period_service.get_by_year(period.year, session)
-        yearly_period_ids = [p.id for p in yearly_periods]
+        # Получаем все периоды за год
+        all_periods = await period_service.get_by_year(period.year, session)
+        if not all_periods:
+            return {
+                "count_category": count_category,
+                "count_shops": count_shops,
+                "all_yearly_procent": 0.0
+            }
         
+        # Получаем годовой период для плановых значений
+        yearly_period = next((p for p in all_periods if p.quarter is None and p.month is None), None)
+        
+        # Вычисляем общий годовой процент выполнения
         actual_values = []
         plan_values = []
         
-        for p_id in yearly_period_ids:
-            actual_values.extend(await actual_value_service.get_by_period(p_id, session))
-            plan_values.extend(await plan_value_service.get_by_period(p_id, session))
+        # Получаем все плановые значения из годового периода
+        if yearly_period:
+            plan_values = await plan_value_service.get_by_period(yearly_period.id, session)
+        
+        # Получаем все фактические значения из всех периодов
+        for p in all_periods:
+            period_actuals = await actual_value_service.get_by_period(p.id, session)
+            actual_values.extend(period_actuals)
         
         total_actual = sum(av.value for av in actual_values)
         total_plan = sum(pv.value for pv in plan_values)
@@ -336,27 +350,41 @@ class AnalyticsService:
         categories = await category_service.get_all(session)
         result = []
         
-        # Получаем только годовой период вместо всех периодов года
-        yearly_period = await period_service.get_by_type(period.year, "year", session)
+        # Получаем все периоды за год
+        all_periods = await period_service.get_by_year(period.year, session)
+        if not all_periods:
+            # Если периоды не найдены, возвращаем пустой список
+            return result
+        
+        # Получаем годовой период для плановых значений
+        yearly_period = next((p for p in all_periods if p.quarter is None and p.month is None), None)
         if not yearly_period:
             # Если годовой период не найден, возвращаем пустой список
             return result
+        
+        # Получаем все плановые значения для годового периода
+        all_plan_values = await plan_value_service.get_by_period(yearly_period.id, session)
+        
+        # Получаем все фактические значения для всех периодов года
+        all_actual_values = []
+        for p in all_periods:
+            # Добавляем фактические значения из каждого периода
+            period_actuals = await actual_value_service.get_by_period(p.id, session)
+            all_actual_values.extend(period_actuals)
         
         for category in categories:
             # Получаем метрики для категории
             metrics = await metric_service.get_by_category(category.id, session)
             metric_ids = [m.id for m in metrics]
             
-            yearly_actual = Decimal('0')
-            yearly_plan = Decimal('0')
+            if not metric_ids:
+                # Если у категории нет метрик, пропускаем
+                continue
             
-            # Используем только годовой период вместо всех периодов года
-            actual_values = await actual_value_service.get_by_period(yearly_period.id, session)
-            plan_values = await plan_value_service.get_by_period(yearly_period.id, session)
-            
-            # Фильтруем по метрикам данной категории
-            category_actuals = [av for av in actual_values if av.metric_id in metric_ids]
-            category_plans = [pv for pv in plan_values if pv.metric_id in metric_ids]
+            # Фильтруем значения по метрикам данной категории
+            # Учитываем все магазины при суммировании
+            category_actuals = [av for av in all_actual_values if av.metric_id in metric_ids]
+            category_plans = [pv for pv in all_plan_values if pv.metric_id in metric_ids]
             
             yearly_actual = sum(av.value for av in category_actuals)
             yearly_plan = sum(pv.value for pv in category_plans)
@@ -396,19 +424,25 @@ class AnalyticsService:
         shops = await shop_service.get_all(session)
         result = []
         
-        # Получаем только годовой период вместо всех периодов года
-        yearly_period = await period_service.get_by_type(period.year, "year", session)
-        if not yearly_period:
-            # Если годовой период не найден, возвращаем пустой список
+        # Получаем все периоды за год
+        all_periods = await period_service.get_by_year(period.year, session)
+        if not all_periods:
+            # Если периоды не найдены, возвращаем пустой список
             return result
         
+        # Получаем все фактические значения для всех периодов года
+        all_actual_values = []
+        for p in all_periods:
+            # Добавляем фактические значения из каждого периода
+            period_actuals = await actual_value_service.get_by_period(p.id, session)
+            all_actual_values.extend(period_actuals)
+        
         for shop in shops:
-            # Используем только годовой период вместо всех периодов года
-            actual_values = await actual_value_service.get_by_period(yearly_period.id, session)
-            
             # Фильтруем по данному магазину
-            shop_actuals = [av for av in actual_values if av.shop_id == shop.id]
+            # Учитываем все метрики для данного магазина
+            shop_actuals = [av for av in all_actual_values if av.shop_id == shop.id]
             
+            # Суммируем значения по всем метрикам для данного магазина
             yearly_actual = sum(av.value for av in shop_actuals)
             
             result.append({
