@@ -8,6 +8,7 @@ import {
     closeModal,
     resetForm
 } from '../utils/helper.js';
+import { formatPhoneNumber, isValidPhoneNumber } from '../utils/validation.js';
 
 /**
  * Сервис для работы с пользователями
@@ -93,6 +94,16 @@ export class UsersService {
         modalCloseButtons.forEach(btn => {
             btn.addEventListener('click', this.handleCloseModal.bind(this));
         });
+        
+        // Форматирование номера телефона при потере фокуса
+        const phoneInput = document.getElementById('user-phone');
+        if (phoneInput) {
+            phoneInput.addEventListener('blur', function() {
+                if (this.value.trim() !== '') {
+                    this.value = formatPhoneNumber(this.value);
+                }
+            });
+        }
     }
 
     /**
@@ -274,34 +285,49 @@ export class UsersService {
      */
     async handleEditUser(userId) {
         try {
+            // Загрузка данных пользователя по ID
             const user = await this.usersApi.getUserById(userId);
+            if (!user) {
+                showNotification('Пользователь не найден', 'error');
+                return;
+            }
             
-            // Заполнение формы данными пользователя
             const modalTitle = this.userModal.querySelector('.modal-title');
             modalTitle.textContent = 'Редактировать пользователя';
             
+            // Заполнение формы данными пользователя
             document.getElementById('user-id').value = user.id;
             document.getElementById('user-username').value = user.username;
             document.getElementById('user-email').value = user.email || '';
+            document.getElementById('user-phone').value = user.phone_number || '';
             
+            // Выбор роли пользователя
             const roleSelect = document.getElementById('user-role');
             if (roleSelect && user.role) {
                 roleSelect.value = user.role.id;
             }
             
-            document.getElementById('user-status').checked = user.status;
+            // Установка статуса пользователя
+            const statusInput = document.getElementById('user-status');
+            if (statusInput) {
+                statusInput.checked = user.status;
+                const statusText = statusInput.parentElement.querySelector('.toggle-text');
+                if (statusText) {
+                    statusText.textContent = user.status ? 'Активен' : 'Неактивен';
+                }
+            }
             
             // Скрываем поля для пароля при редактировании
             const passwordFields = document.querySelectorAll('.password-field');
-            passwordFields.forEach(field => field.classList.add('d-none'));
+            passwordFields.forEach(field => field.classList.remove('d-none'));
             
-            // Делаем поля пароля необязательными
+            // Делаем поле пароля необязательным при редактировании
             const passwordInput = document.getElementById('user-password');
             if (passwordInput) {
                 passwordInput.removeAttribute('required');
             }
             
-            // Открытие модального окна
+            // Открываем модальное окно
             openModal(this.userModal);
         } catch (error) {
             showNotification(`Ошибка при загрузке данных пользователя: ${error.message}`, 'error');
@@ -335,56 +361,60 @@ export class UsersService {
     }
 
     /**
-     * Обработка события сохранения данных пользователя
+     * Обработка события сохранения пользователя
      */
     async handleSaveUser() {
-        if (!this.userForm.checkValidity()) {
-            this.userForm.reportValidity();
-            return;
-        }
-        
-        const userId = document.getElementById('user-id').value;
-        const isNewUser = !userId;
-        
-        const userData = {
-            username: document.getElementById('user-username').value,
-            email: document.getElementById('user-email').value,
-            status: document.getElementById('user-status').checked,
-        };
-        
-        // Добавляем роль, если выбрана
-        const roleSelect = document.getElementById('user-role');
-        if (roleSelect && roleSelect.value) {
-            userData.role_id = roleSelect.value;
-        }
-        
-        // Добавляем пароль только для новых пользователей или если он был введен
-        const passwordInput = document.getElementById('user-password');
-        if (passwordInput && passwordInput.value) {
-            userData.password = passwordInput.value;
-        }
-        
         try {
-            let user;
-            
-            if (isNewUser) {
-                // Создание нового пользователя
-                user = await this.usersApi.createUser(userData);
-                
-                // Добавление в список пользователей
-                this.users.push(user);
-                showNotification('Пользователь успешно создан', 'success');
-            } else {
-                // Обновление существующего пользователя
-                user = await this.usersApi.updateUser(userId, userData);
-                
-                // Обновление списка пользователей
-                this.users = this.users.map(u => u.id === userId ? user : u);
-                showNotification('Пользователь успешно обновлен', 'success');
+            // Проверяем валидность формы
+            if (!this.userForm.checkValidity()) {
+                this.userForm.reportValidity();
+                return;
             }
             
-            // Перерисовка таблицы и закрытие модального окна
-            this.renderUsers();
+            // Проверяем формат номера телефона
+            const phoneInput = document.getElementById('user-phone');
+            const phoneValue = phoneInput.value.trim();
+            if (phoneValue && !isValidPhoneNumber(phoneValue)) {
+                showNotification('Некорректный формат номера телефона', 'error');
+                phoneInput.focus();
+                return;
+            }
+            
+            // Собираем данные из формы
+            const userId = document.getElementById('user-id').value;
+            const userData = {
+                username: document.getElementById('user-username').value,
+                email: document.getElementById('user-email').value,
+                phone_number: phoneValue || null,
+                role_id: document.getElementById('user-role').value,
+                status: document.getElementById('user-status').checked
+            };
+            
+            // Проверяем, заполнено ли поле пароля
+            const password = document.getElementById('user-password').value;
+            if (password) {
+                userData.password = password;
+            }
+            
+            let user;
+            if (userId) {
+                // Обновление существующего пользователя
+                user = await this.usersApi.updateUser(userId, userData);
+                showNotification('Пользователь успешно обновлен', 'success');
+            } else {
+                // Создание нового пользователя
+                if (!userData.password) {
+                    showNotification('Необходимо указать пароль для нового пользователя', 'error');
+                    return;
+                }
+                user = await this.usersApi.createUser(userData);
+                showNotification('Пользователь успешно создан', 'success');
+            }
+            
+            // Обновляем таблицу пользователей
+            this.loadUsers();
+            
+            // Закрываем модальное окно
             closeModal(this.userModal);
         } catch (error) {
             showNotification(`Ошибка при сохранении пользователя: ${error.message}`, 'error');

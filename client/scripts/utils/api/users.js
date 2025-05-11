@@ -19,6 +19,7 @@ class UsersApi {
         if (status !== null) params.status = status;
         if (roleId) params.role_id = roleId;
         
+        console.log('Параметры поиска пользователей:', params);
         return this.apiClient.get(`${this.endpoint}/search`, params);
     }
 

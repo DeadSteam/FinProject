@@ -115,6 +115,27 @@ class UserService(BaseService[User, UserSchema, UserCreate, UserUpdate]):
         
         return TypeAdapter(self.schema).validate_python(db_obj.__dict__)
     
+    async def get_by_phone_number(self, phone_number: str, session: AsyncSession) -> Optional[UserSchema]:
+        """Получение пользователя по номеру телефона."""
+        # Запрос с загрузкой связанной роли
+        query = select(self.model).options(
+            selectinload(self.model.role)
+        ).where(self.model.phone_number == phone_number)
+        
+        result = await session.execute(query)
+        db_obj = result.scalar_one_or_none()
+        
+        if not db_obj:
+            return None
+        
+        # Отладочная информация о роли
+        if hasattr(db_obj, 'role') and db_obj.role:
+            print(f"Пользователь с номером телефона {phone_number} имеет роль: {db_obj.role.name}")
+        else:
+            print(f"Пользователь с номером телефона {phone_number} не имеет роли")
+        
+        return TypeAdapter(self.schema).validate_python(db_obj.__dict__)
+    
     async def get_multi(self, session: AsyncSession, skip: int = 0, limit: int = 100) -> List[UserSchema]:
         """Получение списка пользователей с пагинацией и загрузкой связанных объектов."""
         # Создаем запрос с загрузкой связанных объектов
@@ -146,7 +167,7 @@ class UserService(BaseService[User, UserSchema, UserCreate, UserUpdate]):
         
         Args:
             session: Сессия БД
-            search: Поисковая строка для фильтрации по имени пользователя, email и полному имени
+            search: Поисковая строка для фильтрации по имени пользователя, email, номеру телефона и полному имени
             status: Фильтр по статусу (True - активен, False - неактивен)
             role_id: Фильтр по ID роли
             skip: Смещение для пагинации
@@ -164,6 +185,7 @@ class UserService(BaseService[User, UserSchema, UserCreate, UserUpdate]):
                 or_(
                     self.model.username.ilike(search_term),
                     self.model.email.ilike(search_term),
+                    self.model.phone_number.ilike(search_term),
                     self.model.full_name.ilike(search_term)
                 )
             )
@@ -257,65 +279,71 @@ class UserService(BaseService[User, UserSchema, UserCreate, UserUpdate]):
                 attempts["locked_until"] = current_time + LOCKOUT_TIME
     
     def _reset_failed_attempts(self, identifier: str):
-        """Сбрасывает счетчик неудачных попыток после успешного входа."""
+        """Сброс счетчика неудачных попыток входа."""
         if identifier in failed_login_attempts:
-            failed_login_attempts[identifier] = {"count": 0, "locked_until": None}
+            del failed_login_attempts[identifier]
     
-    async def authenticate(self, username: Optional[str] = None, email: Optional[str] = None, password: str = None, session: AsyncSession = None) -> Optional[UserSchema]:
-        """Аутентификация пользователя.
+    async def authenticate(
+        self, 
+        email: Optional[str] = None, 
+        phone_number: Optional[str] = None,
+        password: str = None, 
+        session: AsyncSession = None
+    ) -> Optional[UserSchema]:
+        """
+        Аутентификация пользователя по email или телефону и паролю.
         
         Args:
-            username: Имя пользователя
             email: Email пользователя
+            phone_number: Номер телефона пользователя
             password: Пароль
             session: Сессия БД
-            
+        
         Returns:
-            Возвращает пользователя, если аутентификация прошла успешно
+            Данные пользователя в случае успешной аутентификации, None в противном случае
         """
-        if not username and not email:
+        # Проверяем, что передан хотя бы один идентификатор
+        if not (email or phone_number):
+            print("Не указан ни email, ни phone_number")
             return None
         
-        # Используем email или username в качестве идентификатора для защиты от brute-force
-        identifier = email if email else username
+        # Используем первый непустой идентификатор для проверки блокировки
+        identifier = email or phone_number
         
-        # Проверяем, не заблокирован ли пользователь из-за неудачных попыток
+        # Проверяем, не заблокирован ли пользователь за слишком много попыток входа
         if not self._check_login_attempts(identifier):
+            print(f"Слишком много попыток входа для {identifier}")
             return None
         
-        # Формируем запрос с загрузкой связанной роли
+        # Получаем пользователя по указанному идентификатору
         if email:
-            query = select(self.model).options(
-                selectinload(self.model.role)
-            ).where(self.model.email == email)
+            user = await self.get_by_email(email, session)
+        elif phone_number:
+            user = await self.get_by_phone_number(phone_number, session)
         else:
-            query = select(self.model).options(
-                selectinload(self.model.role)
-            ).where(self.model.username == username)
+            user = None
         
-        result = await session.execute(query)
-        db_user = result.scalar_one_or_none()
-        
-        # Проверяем существование пользователя и верность пароля
-        if not db_user or not self._verify_password(password, db_user.password_hash):
+        # Если пользователь не найден или пароль неверный, записываем попытку входа
+        if not user:
+            print(f"Пользователь не найден для {identifier}")
             self._record_failed_attempt(identifier)
             return None
         
-        # Проверяем статус пользователя (активен/неактивен)
-        if not db_user.status:
+        # Проверяем статус пользователя
+        if not user.status:
+            print(f"Пользователь {identifier} деактивирован")
+            return None
+        
+        # Проверяем пароль
+        if not self._verify_password(password, user.password_hash):
+            print(f"Неверный пароль для {identifier}")
             self._record_failed_attempt(identifier)
             return None
         
         # Сбрасываем счетчик неудачных попыток
         self._reset_failed_attempts(identifier)
         
-        # Отладочная информация о роли
-        if hasattr(db_user, 'role') and db_user.role:
-            print(f"Аутентифицирован пользователь {db_user.username} с ролью: {db_user.role.name}")
-        else:
-            print(f"Аутентифицирован пользователь {db_user.username} без роли")
-        
-        return TypeAdapter(self.schema).validate_python(db_user.__dict__)
+        return user
     
     def create_token_pair(self, user_data: Dict) -> TokenPair:
         """Создает пару токенов (access и refresh)."""

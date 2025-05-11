@@ -39,6 +39,7 @@ class UserBase(BaseSchema):
     """Базовая схема для пользователя."""
     username: str
     email: Optional[EmailStr] = None
+    phone_number: Optional[str] = None
     status: bool = True
 
 
@@ -53,6 +54,7 @@ class UserUpdate(BaseSchema):
     username: Optional[str] = None
     password: Optional[str] = None
     email: Optional[EmailStr] = None
+    phone_number: Optional[str] = None
     role_id: Optional[uuid.UUID] = None
     status: Optional[bool] = None
 
@@ -98,8 +100,8 @@ class TokenData(BaseSchema):
 
 class LoginRequest(BaseSchema):
     """Запрос на вход в систему."""
-    username: Optional[str] = None
     email: Optional[EmailStr] = None
+    phone_number: Optional[str] = None
     password: str
 
 

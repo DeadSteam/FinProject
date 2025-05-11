@@ -24,6 +24,7 @@ class User(UUIDTimestampedBase):
     username: Mapped[str] = mapped_column(String(50), unique=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     email: Mapped[Optional[str]] = mapped_column(String(255), unique=True)
+    phone_number: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     status: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     
     # Внешний ключ к таблице ролей

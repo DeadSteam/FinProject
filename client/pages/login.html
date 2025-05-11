@@ -41,14 +41,15 @@
             
             <form id="loginForm" class="animate-form">
                 <div class="input-group">
-                    <label for="email">Email</label>
+                    <label for="identifier">Email / Телефон</label>
                     <div class="input-wrapper">
                         <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2m0 0l8 5 8-5m-16 0v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6"></path>
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
                         </svg>
-                        <input type="email" id="email" name="email" class="input" required placeholder="Введите ваш email">
+                        <input type="text" id="identifier" name="identifier" class="input" required placeholder="Введите email или номер телефона">
                     </div>
-                    <div class="error-message" id="emailError"></div>
+                    <div class="error-message" id="identifierError"></div>
                 </div>
                 
                 <div class="input-group">
@@ -119,8 +120,9 @@
 
     <!-- Импортируем скрипт авторизации -->
     <script type="module">
-        // Импортируем сервис авторизации
+        // Импортируем сервис авторизации и утилиты
         import authService from '../scripts/auth/auth.js';
+        import { isValidEmail, isValidPhoneNumber, formatPhoneNumber } from '../scripts/utils/validation.js';
         
         // Переключение видимости пароля
         document.getElementById('togglePassword').addEventListener('click', function() {
@@ -135,9 +137,9 @@
         });
         
         // Живая валидация
-        const validateInput = (input, regex, errorElement, errorMessage) => {
+        const validateInput = (input, validateFn, errorElement, errorMessage) => {
             const value = input.value.trim();
-            const isValid = regex.test(value);
+            const isValid = validateFn(value);
             
             if (value === '') {
                 input.parentElement.classList.remove('valid', 'invalid');
@@ -157,13 +159,38 @@
             }
         };
         
-        // Валидация Email
-        const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
-        const emailInput = document.getElementById('email');
-        const emailError = document.getElementById('emailError');
+        // Валидация идентификатора (email или телефон)
+        const identifierInput = document.getElementById('identifier');
+        const identifierError = document.getElementById('identifierError');
         
-        emailInput.addEventListener('input', () => {
-            validateInput(emailInput, emailRegex, emailError, 'Пожалуйста, введите корректный email');
+        // Функция для проверки идентификатора
+        const validateIdentifier = (value) => {
+            // Если значение похоже на email, проверяем его
+            if (value.includes('@')) {
+                return isValidEmail(value);
+            }
+            
+            // В противном случае считаем, что это телефон
+            return value.replace(/\D/g, '').length >= 10;
+        };
+        
+        // Валидация идентификатора при вводе
+        identifierInput.addEventListener('input', () => {
+            validateInput(
+                identifierInput,
+                validateIdentifier,
+                identifierError,
+                'Пожалуйста, введите корректный email или номер телефона'
+            );
+            
+            // Если ввод похож на номер телефона, автоматически форматируем его при потере фокуса
+            if (!identifierInput.value.includes('@')) {
+                identifierInput.addEventListener('blur', function() {
+                    if (this.value.trim()) {
+                        this.value = formatPhoneNumber(this.value);
+                    }
+                });
+            }
         });
         
         // Валидация пароля
@@ -172,30 +199,46 @@
         const passwordError = document.getElementById('passwordError');
         
         passwordInput.addEventListener('input', () => {
-            validateInput(passwordInput, passwordRegex, passwordError, 'Пароль должен содержать минимум 6 символов');
+            validateInput(
+                passwordInput,
+                (value) => passwordRegex.test(value),
+                passwordError,
+                'Пароль должен содержать минимум 6 символов'
+            );
         });
         
         // Обработка отправки формы
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const email = emailInput.value;
+            const identifier = identifierInput.value.trim();
             const password = passwordInput.value;
             
             // Валидация
-            const isEmailValid = validateInput(emailInput, emailRegex, emailError, 'Пожалуйста, введите корректный email');
-            const isPasswordValid = validateInput(passwordInput, passwordRegex, passwordError, 'Пароль должен содержать минимум 6 символов');
+            const isIdentifierValid = validateInput(
+                identifierInput,
+                validateIdentifier,
+                identifierError,
+                'Пожалуйста, введите корректный email или номер телефона'
+            );
+            
+            const isPasswordValid = validateInput(
+                passwordInput, 
+                (value) => passwordRegex.test(value),
+                passwordError, 
+                'Пароль должен содержать минимум 6 символов'
+            );
             
             // Если все в порядке, отправляем форму
-            if (isEmailValid && isPasswordValid) {
-                console.log('Попытка входа:', { email, password });
+            if (isIdentifierValid && isPasswordValid) {
+                console.log('Попытка входа:', { identifier, password });
                 const button = document.getElementById('loginButton');
                 button.disabled = true;
                 button.textContent = 'Подождите...';
                 
                 try {
                     // Выполняем запрос авторизации через API
-                    const authResult = await authService.login(email, password);
+                    const authResult = await authService.login(identifier, password);
                     
                     // Выводим информацию о токене в консоль для отладки
                     console.log('Успешная авторизация', {
@@ -209,7 +252,7 @@
                 } catch (error) {
                     console.error('Ошибка входа:', error);
                     // Показываем информативную ошибку
-                    let errorMessage = 'Неверный email или пароль';
+                    let errorMessage = 'Неверные учетные данные';
                     
                     if (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('Failed to fetch')) {
                         errorMessage = 'Ошибка соединения с сервером. Проверьте, что сервер запущен.';

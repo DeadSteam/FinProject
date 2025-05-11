@@ -327,7 +327,7 @@ class PlanValueService(BaseService[PlanValue, PlanValueSchema, PlanValueCreate, 
         if not future_months:
             # Если нет будущих месяцев, просто возвращаем пустой список
             return []
-        
+            
         # Распределяем остаток равномерно по будущим месяцам
         plan_per_month = round(remaining_plan / len(future_months), 2)
         
@@ -338,7 +338,7 @@ class PlanValueService(BaseService[PlanValue, PlanValueSchema, PlanValueCreate, 
         for i, month in enumerate(future_months):
             # Определяем значение для месяца
             new_value = plan_per_month
-            
+                
             # Для последнего месяца добавляем остаток от округления
             if i == len(future_months) - 1:
                 new_value += rounding_remainder
@@ -363,7 +363,7 @@ class PlanValueService(BaseService[PlanValue, PlanValueSchema, PlanValueCreate, 
                 updated_plans.append(updated_plan)
                 # Обновляем словарь планов
                 month_plans[month] = updated_plan
-        
+                
         # Обновляем квартальные планы
         for q in range(1, 5):
             if q in quarter_periods:
@@ -379,7 +379,7 @@ class PlanValueService(BaseService[PlanValue, PlanValueSchema, PlanValueCreate, 
                             sum_month_plans += actual_value
                         else:
                             sum_month_plans += month_plans[month].value
-                
+                            
                 # Обновляем или создаем квартальный план
                 if q in quarter_plans:
                     # Обновляем существующий
@@ -397,7 +397,7 @@ class PlanValueService(BaseService[PlanValue, PlanValueSchema, PlanValueCreate, 
                     updated_plan = await self.create(plan_create, session)
                 
                 updated_plans.append(updated_plan)
-        
+                
         # Годовой план не меняется, поэтому не обновляем его
         
         return updated_plans

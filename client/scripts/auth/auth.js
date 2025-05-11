@@ -11,26 +11,31 @@ const API_BASE_URL = 'http://localhost:8000/api/v1';
 class AuthService {
     /**
      * Авторизация пользователя
-     * @param {string} usernameOrEmail - Имя пользователя или email
+     * @param {string} identifier - Email или номер телефона
      * @param {string} password - Пароль
      * @returns {Promise<Object>} - Данные токенов и информация о пользователе
      */
-    async login(usernameOrEmail, password) {
+    async login(identifier, password) {
         try {
-            console.log(`Попытка входа с ${usernameOrEmail} и паролем ${password}`);
+            console.log(`Попытка входа с идентификатором ${identifier} и паролем ${password}`);
             
-            // Определяем, что передано - email или username
-            const isEmail = usernameOrEmail.includes('@');
+            // Определяем тип идентификатора
+            let requestBody = { password };
+            
+            if (identifier.includes('@')) {
+                // Если содержит @, считаем email
+                requestBody.email = identifier;
+            } else {
+                // Иначе считаем телефоном
+                requestBody.phone_number = identifier;
+            }
             
             const response = await fetch(`${API_BASE_URL}/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    [isEmail ? 'email' : 'username']: usernameOrEmail,
-                    password: password
-                }),
+                body: JSON.stringify(requestBody),
                 credentials: 'include' // Для работы с куками
             });
             
@@ -253,6 +258,7 @@ class AuthService {
      */
     async updateProfile(userData) {
         try {
+            console.log('Обновление профиля пользователя:', userData);
             const response = await this.authenticatedRequest(`${API_BASE_URL}/users/me`, {
                 method: 'PUT',
                 headers: {
@@ -261,7 +267,15 @@ class AuthService {
                 body: JSON.stringify(userData)
             });
             
-            return await response.json();
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Ошибка при обновлении профиля:', errorData);
+                throw new Error(errorData.detail || 'Ошибка при обновлении профиля');
+            }
+            
+            const updatedUser = await response.json();
+            console.log('Профиль обновлен:', updatedUser);
+            return updatedUser;
         } catch (error) {
             console.error('Ошибка при обновлении профиля:', error);
             throw error;

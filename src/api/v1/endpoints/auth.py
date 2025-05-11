@@ -105,11 +105,11 @@ async def login(
     session: AsyncSession = Depends(users_db.get_session)
 ):
     """
-    Авторизация пользователя по email или username
+    Авторизация пользователя по email или номеру телефона
     """
     user = await user_service.authenticate(
-        username=login_data.username,
         email=login_data.email,
+        phone_number=login_data.phone_number,
         password=login_data.password,
         session=session
     )
@@ -117,7 +117,7 @@ async def login(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Неверное имя пользователя, email или пароль",
+            detail="Неверные учетные данные для входа",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
@@ -158,8 +158,9 @@ async def login_for_access_token(
     """
     Авторизация с использованием стандартной формы OAuth2
     """
+    # Используем username из формы OAuth2 как email
     user = await user_service.authenticate(
-        username=form_data.username,
+        email=form_data.username,  # В стандартной форме OAuth2 используется поле username
         password=form_data.password,
         session=session
     )
@@ -167,7 +168,7 @@ async def login_for_access_token(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Неверное имя пользователя или пароль",
+            detail="Неверный email или пароль",
             headers={"WWW-Authenticate": "Bearer"},
         )
     

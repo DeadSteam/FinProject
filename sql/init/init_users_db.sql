@@ -15,6 +15,7 @@ CREATE TABLE users (
     username VARCHAR(50) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE,
+    phone_number VARCHAR(20),
     role_id UUID REFERENCES roles(id),
     status BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -29,4 +30,5 @@ INSERT INTO roles (name) VALUES
 
 -- Создаем индексы для оптимизации запросов
 CREATE INDEX idx_users_username ON users(username);
-CREATE INDEX idx_users_role_id ON users(role_id); 
+CREATE INDEX idx_users_role_id ON users(role_id);
+CREATE INDEX idx_users_phone_number ON users(phone_number); 

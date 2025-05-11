@@ -136,6 +136,7 @@ export function generateUserTableRow(user) {
             </div>
         </td>
         <td data-label="Логин">${user.username}</td>
+        <td data-label="Телефон">${user.phone_number || 'Не указан'}</td>
         <td data-label="Роль">${user.role ? user.role.name : 'Не назначена'}</td>
         <td data-label="Статус">${getStatusBadge(user.status)}</td>
         <td data-label="Действия">

@@ -106,12 +106,24 @@ async def create_user(
     session: AsyncSession = Depends(users_db.get_session)
 ):
     """Регистрация нового пользователя."""
-    user = await user_service.get_by_email(email=user_in.email, session=session)
-    if user:
-        raise HTTPException(
-            status_code=400,
-            detail="Пользователь с такой электронной почтой уже существует в системе",
-        )
+    # Проверка уникальности email
+    if user_in.email:
+        user = await user_service.get_by_email(email=user_in.email, session=session)
+        if user:
+            raise HTTPException(
+                status_code=400,
+                detail="Пользователь с такой электронной почтой уже существует в системе",
+            )
+    
+    # Проверка уникальности номера телефона
+    if user_in.phone_number:
+        user = await user_service.get_by_phone_number(phone_number=user_in.phone_number, session=session)
+        if user:
+            raise HTTPException(
+                status_code=400,
+                detail="Пользователь с таким номером телефона уже существует в системе",
+            )
+    
     return await user_service.create(obj_in=user_in, session=session)
 
 @router.get("/me", response_model=User)
@@ -167,6 +179,15 @@ async def update_current_user(
             raise HTTPException(
                 status_code=400,
                 detail="Пользователь с таким email уже существует"
+            )
+    
+    # Проверяем, что номер телефона не занят другим пользователем
+    if user_in.phone_number and user_in.phone_number != current_user.phone_number:
+        existing_user = await user_service.get_by_phone_number(phone_number=user_in.phone_number, session=session)
+        if existing_user and existing_user.id != current_user.id:
+            raise HTTPException(
+                status_code=400,
+                detail="Пользователь с таким номером телефона уже существует"
             )
     
     # Запрещаем менять роль через этот эндпоинт
@@ -282,13 +303,33 @@ async def update_user(
     current_user: User = Depends(get_admin_user),
     session: AsyncSession = Depends(users_db.get_session)
 ):
-    """Обновление данных пользователя."""
+    """Обновление данных пользователя администратором."""
+    # Проверяем существование пользователя
     user = await user_service.get(id=user_id, session=session)
     if not user:
         raise HTTPException(
             status_code=404,
             detail="Пользователь не найден"
         )
+    
+    # Проверяем уникальность email, если он изменен
+    if user_in.email and user_in.email != user.email:
+        existing_user = await user_service.get_by_email(email=user_in.email, session=session)
+        if existing_user and existing_user.id != user_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Пользователь с таким email уже существует"
+            )
+    
+    # Проверяем уникальность номера телефона, если он изменен
+    if user_in.phone_number and user_in.phone_number != user.phone_number:
+        existing_user = await user_service.get_by_phone_number(phone_number=user_in.phone_number, session=session)
+        if existing_user and existing_user.id != user_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Пользователь с таким номером телефона уже существует"
+            )
+    
     return await user_service.update(id=user_id, obj_in=user_in, session=session)
 
 @router.delete("/{user_id}", status_code=200)

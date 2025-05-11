@@ -76,7 +76,8 @@
                 </div>
                 <div class="form-group">
                     <label for="phone">Телефон</label>
-                    <input type="tel" id="phone" class="form-control" value="+7 (999) 123-45-67">
+                    <input type="tel" id="phone" class="form-control" value="">
+                    <small class="form-text">Формат: +7 (999) 123-45-67</small>
                 </div>
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary">Сохранить изменения</button>
@@ -118,9 +119,10 @@
     </div>
 </div>
 <script type="module">
-    // Импортируем сервис авторизации
+    // Импортируем сервис авторизации и утилиты
     import authService from '../scripts/auth/auth.js';
-    import {showToast} from '../scripts/utils/helper.js'
+    import { showToast } from '../scripts/utils/helper.js';
+    import { isValidEmail, isValidPhoneNumber, formatPhoneNumber, showFieldError } from '../scripts/utils/validation.js';
 
     document.addEventListener('DOMContentLoaded', async function() {
         // Проверяем авторизацию пользователя
@@ -154,6 +156,16 @@
                 showToast('Ошибка при выходе из системы', 'error');
             }
         });
+        
+        // Автоматическое форматирование номера телефона при вводе
+        const phoneInput = document.getElementById('phone');
+        if (phoneInput) {
+            phoneInput.addEventListener('blur', function() {
+                if (this.value.trim()) {
+                    this.value = formatPhoneNumber(this.value);
+                }
+            });
+        }
         
         // Загрузка данных пользователя
         try {
@@ -195,6 +207,9 @@
             if (userData.email) {
                 profileForm.querySelector('#email').value = userData.email;
             }
+            if (userData.phone_number) {
+                profileForm.querySelector('#phone').value = userData.phone_number;
+            }
             
             console.log('Данные пользователя загружены:', userData);
         } catch (error) {
@@ -208,23 +223,28 @@
             profileForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 let valid = true;
+                
                 // Очищаем ошибки
-                profileForm.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+                profileForm.querySelectorAll('.error-message').forEach(el => el.remove());
                 profileForm.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
+                
                 // Проверка полей
                 const name = profileForm.querySelector('#full-name');
                 const email = profileForm.querySelector('#email');
                 const phone = profileForm.querySelector('#phone');
+                
                 if (!name.value.trim()) {
-                    showError(name, 'Введите имя пользователя'); 
+                    showFieldError(name, 'Введите имя пользователя'); 
                     valid = false;
                 }
-                if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.value)) {
-                    showError(email, 'Некорректный email'); 
+                
+                if (email.value && !isValidEmail(email.value)) {
+                    showFieldError(email, 'Некорректный формат email'); 
                     valid = false;
                 }
-                if (!/^\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}$/.test(phone.value)) {
-                    showError(phone, 'Формат: +7 (999) 123-45-67'); 
+                
+                if (phone.value && !isValidPhoneNumber(phone.value)) {
+                    showFieldError(phone, 'Некорректный формат телефона'); 
                     valid = false;
                 }
                 
@@ -233,8 +253,8 @@
                         // Подготавливаем данные для обновления
                         const updateData = {
                             username: name.value.trim(),
-                            email: email.value.trim(),
-                            // Телефон не предусмотрен в API, но можно добавить в будущем
+                            email: email.value.trim() || null,
+                            phone_number: phone.value.trim() || null
                         };
                         
                         // Отправляем запрос на обновление
@@ -248,17 +268,10 @@
                         document.querySelector('.profile-name').textContent = result.username;
                         document.querySelector('.profile-email').textContent = result.email || 'Email не указан';
                         
-                        // Анимация успешного обновления данных
-                        const profileCard = document.querySelector('.profile-card');
-                        profileCard.classList.add('update-success');
-                        setTimeout(() => {
-                            profileCard.classList.remove('update-success');
-                        }, 1500);
-                        
-                        showToast('Данные профиля успешно обновлены', 'success');
+                        showToast('Профиль успешно обновлен', 'success');
                     } catch (error) {
                         console.error('Ошибка при обновлении профиля:', error);
-                        showToast('Ошибка при обновлении профиля', 'error');
+                        showToast(error.message || 'Ошибка при обновлении профиля', 'error');
                     }
                 }
             });
