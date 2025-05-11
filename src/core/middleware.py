@@ -40,6 +40,6 @@ def setup_middlewares(app: FastAPI) -> None:
         SessionMiddleware, 
         secret_key=settings.SECRET_KEY,
         max_age=settings.SESSION_MAX_AGE,
-        https_only=True,  # Требуется HTTPS
+        https_only=False,  # В разработке может не быть HTTPS
         same_site="lax"   # Защита от CSRF атак
     ) 

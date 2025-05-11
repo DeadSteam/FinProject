@@ -324,8 +324,14 @@ async function loadImagesForSelect() {
                 // Добавляем класс selected к выбранному элементу
                 this.classList.add('selected');
                 
-                // Обновляем значение скрытого input
-                imageIdInput.value = this.dataset.id;
+                // Получаем ID изображения
+                const selectedImageId = this.dataset.id;
+                
+                // Обновляем значение скрытого поля напрямую
+                imageIdInput.value = selectedImageId;
+                
+                console.log('Выбрано изображение с ID:', selectedImageId);
+                console.log('Значение поля image_id после выбора:', imageIdInput.value);
                 
                 // Генерируем событие change для select, чтобы другие обработчики могли среагировать
                 const event = new Event('change');
@@ -420,12 +426,31 @@ async function saveCategory() {
     }
     
     const categoryId = document.getElementById('category-id').value;
+    
+    // Получаем ID изображения из скрытого поля
+    const imageIdElement = document.getElementById('category-image');
+    const imageId = imageIdElement ? imageIdElement.value : null;
+    
+    console.log('Сохранение категории с image_id:', imageId);
+    console.log('Элемент image_id существует:', !!imageIdElement);
+    console.log('DOM value элемента image_id:', imageIdElement ? imageIdElement.value : 'элемент не найден');
+    
+    // Находим выбранное изображение в галерее (как запасной вариант)
+    const selectedImageInGallery = document.querySelector('.image-item.selected');
+    const imageIdFromGallery = selectedImageInGallery ? selectedImageInGallery.dataset.id : null;
+    console.log('ID изображения из выбранного элемента галереи:', imageIdFromGallery);
+    
+    // Используем ID из галереи, если основной ID пустой
+    const finalImageId = imageId || imageIdFromGallery;
+    
     const categoryData = {
         name: document.getElementById('category-name').value,
         description: document.getElementById('category-description').value || null,
-        image_id: document.getElementById('category-image').value || null,
+        image_id: finalImageId || null,
         status: document.getElementById('category-status').checked
     };
+    
+    console.log('Данные категории для отправки:', categoryData);
     
     try {
         if (categoryId) {
@@ -453,11 +478,18 @@ document.addEventListener('DOMContentLoaded', () => {
     loadImagesForSelect();
     
     // Обработчик для кнопки добавления категории
-    addCategoryBtn.addEventListener('click', () => {
+    addCategoryBtn.addEventListener('click', async () => {
         document.querySelector('.modal-title').textContent = 'Добавить категорию';
         categoryForm.reset();
         document.getElementById('category-id').value = '';
         document.getElementById('category-status').checked = true;
+        
+        // Загружаем изображения перед открытием модального окна
+        await loadImagesForSelect();
+        
+        // Явно сбрасываем значение изображения
+        document.getElementById('category-image').value = '';
+        
         openModal(categoryModal);
     });
     

@@ -11,11 +11,6 @@ from src.service.users import UserService, RoleService
 
 router = APIRouter()
 
-# Получение сессии БД
-async def get_db():
-    async for session in users_db.get_session():
-        yield session
-
 # Инициализация сервисов
 user_service = UserService()
 role_service = RoleService()
@@ -26,7 +21,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 # Функция для получения текущего пользователя
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(users_db.get_session)
 ):
     """Получение текущего пользователя по токену."""
     credentials_exception = HTTPException(
@@ -73,7 +68,7 @@ async def get_users(
     skip: int = 0, 
     limit: int = 100, 
     current_user: User = Depends(get_admin_user),
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(users_db.get_session)
 ):
     """Получение списка пользователей."""
     return await user_service.get_multi(session=session, skip=skip, limit=limit)
@@ -86,7 +81,7 @@ async def search_users(
     skip: int = 0, 
     limit: int = 100, 
     current_user: User = Depends(get_admin_user),
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(users_db.get_session)
 ):
     """
     Поиск и фильтрация пользователей.
@@ -108,7 +103,7 @@ async def search_users(
 async def create_user(
     user_in: UserCreate, 
     current_user: User = Depends(get_admin_user),
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(users_db.get_session)
 ):
     """Регистрация нового пользователя."""
     user = await user_service.get_by_email(email=user_in.email, session=session)
@@ -122,7 +117,7 @@ async def create_user(
 @router.get("/me", response_model=User)
 async def get_current_user_info(
     current_user: User = Depends(get_active_user),
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(users_db.get_session)
 ):
     """Получение данных текущего пользователя."""
     # Получаем полные данные пользователя с ролью
@@ -139,7 +134,7 @@ async def get_current_user_info(
 @router.get("/me/role", response_model=UserRoleResponse)
 async def get_current_user_role(
     current_user: User = Depends(get_active_user),
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(users_db.get_session)
 ):
     """Получение роли текущего пользователя."""
     # Получаем полные данные пользователя с ролью
@@ -162,7 +157,7 @@ async def get_current_user_role(
 async def update_current_user(
     user_in: UserUpdate,
     current_user: User = Depends(get_active_user),
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(users_db.get_session)
 ):
     """Обновление данных текущего пользователя."""
     # Проверяем, что email не занят другим пользователем
@@ -192,7 +187,7 @@ async def get_roles(
     skip: int = 0, 
     limit: int = 100, 
     current_user: User = Depends(get_admin_user),
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(users_db.get_session)
 ):
     """Получение списка ролей."""
     return await role_service.get_multi(session=session, skip=skip, limit=limit)
@@ -201,14 +196,14 @@ async def get_roles(
 async def create_role(
     role_in: RoleCreate, 
     current_user: User = Depends(get_admin_user),
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(users_db.get_session)
 ):
     """Создание новой роли."""
-    role = await role_service.get_by_name(name=role_in.name, session=session)
-    if role:
+    existing_role = await role_service.get_by_name(role_in.name, session)
+    if existing_role:
         raise HTTPException(
             status_code=400,
-            detail="Роль с таким названием уже существует",
+            detail=f"Роль с именем '{role_in.name}' уже существует"
         )
     return await role_service.create(obj_in=role_in, session=session)
 
@@ -216,12 +211,15 @@ async def create_role(
 async def read_role(
     role_id: UUID, 
     current_user: User = Depends(get_admin_user),
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(users_db.get_session)
 ):
-    """Получение данных роли по ID."""
+    """Получение информации о роли."""
     role = await role_service.get(id=role_id, session=session)
     if not role:
-        raise HTTPException(status_code=404, detail="Роль не найдена")
+        raise HTTPException(
+            status_code=404,
+            detail="Роль не найдена"
+        )
     return role
 
 @router.put("/roles/{role_id}", response_model=Role)
@@ -229,40 +227,52 @@ async def update_role(
     role_id: UUID, 
     role_in: RoleUpdate, 
     current_user: User = Depends(get_admin_user),
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(users_db.get_session)
 ):
-    """Обновление данных роли."""
+    """Обновление роли."""
     role = await role_service.get(id=role_id, session=session)
     if not role:
-        raise HTTPException(status_code=404, detail="Роль не найдена")
+        raise HTTPException(
+            status_code=404,
+            detail="Роль не найдена"
+        )
     return await role_service.update(id=role_id, obj_in=role_in, session=session)
 
 @router.delete("/roles/{role_id}", status_code=200)
 async def delete_role(
     role_id: UUID, 
     current_user: User = Depends(get_admin_user),
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(users_db.get_session)
 ):
     """Удаление роли."""
     role = await role_service.get(id=role_id, session=session)
     if not role:
-        raise HTTPException(status_code=404, detail="Роль не найдена")
-    result = await role_service.delete(id=role_id, session=session)
-    if not result:
-        raise HTTPException(status_code=500, detail="Ошибка при удалении роли")
-    return {"status": "success", "message": "Роль успешно удалена"}
+        raise HTTPException(
+            status_code=404,
+            detail="Роль не найдена"
+        )
+    # Особая проверка для удаления роли admin
+    if role.name == "admin":
+        raise HTTPException(
+            status_code=400,
+            detail="Невозможно удалить роль администратора"
+        )
+    await role_service.delete(id=role_id, session=session)
+    return {"message": f"Роль '{role.name}' успешно удалена"}
 
-# ------------ Эндпоинты для отдельных пользователей ------------
 @router.get("/{user_id}", response_model=User)
 async def read_user(
     user_id: UUID, 
     current_user: User = Depends(get_admin_user),
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(users_db.get_session)
 ):
-    """Получение данных пользователя по ID."""
+    """Получение информации о пользователе."""
     user = await user_service.get(id=user_id, session=session)
     if not user:
-        raise HTTPException(status_code=404, detail="Пользователь не найден")
+        raise HTTPException(
+            status_code=404,
+            detail="Пользователь не найден"
+        )
     return user
 
 @router.put("/{user_id}", response_model=User)
@@ -270,32 +280,29 @@ async def update_user(
     user_id: UUID, 
     user_in: UserUpdate, 
     current_user: User = Depends(get_admin_user),
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(users_db.get_session)
 ):
     """Обновление данных пользователя."""
     user = await user_service.get(id=user_id, session=session)
     if not user:
-        raise HTTPException(status_code=404, detail="Пользователь не найден")
+        raise HTTPException(
+            status_code=404,
+            detail="Пользователь не найден"
+        )
     return await user_service.update(id=user_id, obj_in=user_in, session=session)
 
 @router.delete("/{user_id}", status_code=200)
 async def delete_user(
     user_id: UUID, 
     current_user: User = Depends(get_admin_user),
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(users_db.get_session)
 ):
     """Удаление пользователя."""
-    # Проверяем, что пользователь не пытается удалить сам себя
-    if user_id == current_user.id:
-        raise HTTPException(
-            status_code=400,
-            detail="Нельзя удалить самого себя"
-        )
-    
     user = await user_service.get(id=user_id, session=session)
     if not user:
-        raise HTTPException(status_code=404, detail="Пользователь не найден")
-    result = await user_service.delete(id=user_id, session=session)
-    if not result:
-        raise HTTPException(status_code=500, detail="Ошибка при удалении пользователя")
-    return {"status": "success", "message": "Пользователь успешно удален"} 
+        raise HTTPException(
+            status_code=404,
+            detail="Пользователь не найден"
+        )
+    await user_service.delete(id=user_id, session=session)
+    return {"message": f"Пользователь '{user.username}' успешно удален"} 

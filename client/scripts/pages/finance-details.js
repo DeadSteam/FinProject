@@ -209,14 +209,6 @@ function formatCurrency(number) {
     return new Intl.NumberFormat('ru-RU', { style: 'decimal' }).format(number) + ' ₽';
 }
 
-// Функция форматирования валюты в сокращенном формате
-function formatShortCurrency(number) {
-    if (number >= 100000) {
-        return (number / 1000).toFixed(0) + 'K';
-    }
-    return number.toString();
-}
-
 // Функции для управления индикатором загрузки
 function showLoading() {
     document.getElementById('loadingOverlay').classList.add('visible');
@@ -594,66 +586,44 @@ function createFactValueModal() {
         try {
             showLoading();
             
-            // Получаем текущий год
-            const currentYear = new Date().getFullYear();
-            console.log(`Загрузка планового значения для метрики ${metricId}, период: год ${currentYear}, месяц ${periodMonth}`);
-            
-            // Получаем период для месяца (если он существует)
-            const periodResponse = await apiClient.get(`/finance/periods?year=${currentYear}&month=${periodMonth}`);
-            console.log('Ответ API по периодам:', periodResponse);
-            
+            // Используем только кэшированные данные
             let planValue = 0;
-            let periodId = '';
+            let unit = '';
+            const monthNum = parseInt(periodMonth);
+            const currentYear = new Date().getFullYear();
             
-            // Получаем магазин из параметров URL
-            const shopId = getUrlParams().storeId;
-            console.log(`ID магазина: ${shopId}`);
-            
-            // 1. Пытаемся найти плановое значение для выбранного месяца
-            if (periodResponse && periodResponse.length > 0) {
-                periodId = periodResponse[0].id;
-                console.log(`Найден период с ID: ${periodId}`);
-                document.getElementById('period-id').value = periodId;
-                
-                // Запрос на получение плановых значений с явными параметрами
-                const planValuesUrl = `/finance/plan-values?metric_id=${metricId}&shop_id=${shopId}&period_id=${periodId}`;
-                console.log(`Запрос плановых значений: ${planValuesUrl}`);
-                
-                const planValues = await apiClient.get(planValuesUrl);
-                console.log('Ответ API по плановым значениям для месяца:', planValues);
-                
-                if (planValues && planValues.length > 0) {
-                    planValue = parseFloat(planValues[0].value);
-                    console.log(`Найдено плановое значение для месяца: ${planValue}`);
-                } else {
-                    console.log('Плановое значение для месяца не найдено, ищем годовое значение');
+            // Проверяем, есть ли метрики в кэше
+            const loadedMetrics = window.loadedMetricsData || [];
+            if (loadedMetrics.length > 0) {
+                // Ищем нужную метрику
+                const metric = loadedMetrics.find(m => m.id === metricId);
+                if (metric) {
+                    unit = metric.unit;
                     
-                    // 2. Если для месяца нет планового значения, ищем годовое
-                    const yearlyValue = await getYearlyPlanMetricValue(metricId, shopId);
-                    if (yearlyValue > 0) {
-                        // Делим годовое значение на 12 для получения месячного
-                        planValue = yearlyValue / 12;
-                        console.log(`Годовое плановое значение: ${yearlyValue}, для месяца: ${planValue}`);
+                    // Ищем период в кэше
+                    const loadedPeriods = window.loadedPeriodsData || [];
+                    // Ищем конкретный период месяца
+                    const monthPeriodId = `month-${currentYear}-${monthNum}`;
+                    
+                    // Ищем плановое значение для этого периода
+                    const planValueObj = metric.planValues.find(pv => pv.period_id === monthPeriodId);
+                    
+                    if (planValueObj) {
+                        planValue = parseFloat(planValueObj.value);
+                } else {
+                        // Если для месяца нет значения, используем годовое / 12
+                        const yearPeriodId = `year-${currentYear}`;
+                        const yearPlan = metric.planValues.find(pv => pv.period_id === yearPeriodId);
+                        
+                        if (yearPlan) {
+                            planValue = parseFloat(yearPlan.value) / 12;
+                        }
                     }
-                }
-            } else {
-                console.log(`Период для года ${currentYear} и месяца ${periodMonth} не найден в API`);
-                
-                // Даже если период для месяца не найден, попробуем получить годовое значение
-                const yearlyValue = await getYearlyPlanMetricValue(metricId, shopId);
-                if (yearlyValue > 0) {
-                    // Делим годовое значение на 12 для получения месячного
-                    planValue = yearlyValue / 12;
-                    console.log(`Годовое плановое значение: ${yearlyValue}, для месяца: ${planValue}`);
+                    
+                    // Устанавливаем скрытое поле period-id
+                    document.getElementById('period-id').value = monthPeriodId;
                 }
             }
-            
-            // Получаем единицу измерения метрики
-            const metricResponse = await apiClient.get(`/finance/metrics/${metricId}`);
-            console.log('Ответ API по метрике:', metricResponse);
-            const unit = metricResponse && metricResponse.unit ? metricResponse.unit : '';
-            
-            console.log(`Обновляем отображение планового значения: ${planValue} ${unit}`);
             
             // Обновляем отображение планового значения
             const planValueDisplay = document.getElementById('plan-value-display');
@@ -772,14 +742,6 @@ function createEditValueModal() {
             const newValue = parseFloat(document.getElementById('edit-value').value);
             const recalculatePlan = document.getElementById('edit-recalculate-plan').checked;
             
-            console.log('Сохраняем редактируемое значение:', {
-                metricId,
-                periodId,
-                valueType,
-                newValue,
-                recalculatePlan
-            });
-            
             try {
                 showLoading();
                 
@@ -788,11 +750,8 @@ function createEditValueModal() {
                     ? `/finance/plan-values?metric_id=${metricId}&period_id=${periodId}`
                     : `/finance/actual-values?metric_id=${metricId}&period_id=${periodId}`;
                 
-                console.log(`Запрашиваем существующее значение через: ${endpoint}`);
-                
                 // Получаем существующее значение для редактирования
                 const values = await apiClient.get(endpoint);
-                console.log('Получены значения:', values);
                 
                 if (values.length > 0) {
                     const valueId = values[0].id;
@@ -800,26 +759,30 @@ function createEditValueModal() {
                         ? `/finance/plan-values/${valueId}`
                         : `/finance/actual-values/${valueId}`;
                     
-                    console.log(`Отправляем обновление на: ${updateEndpoint}`, { value: newValue });
-                    
                     // Обновляем значение
                     await apiClient.put(updateEndpoint, { value: newValue });
                     
                     // Если это фактическое значение и нужно пересчитать план
                     if (valueType === 'fact' && recalculatePlan) {
-                        // Получаем текущий год и месяц из периода
+                        // Получаем месяц из periodId если это виртуальный ID
+                        let month;
+                        if (periodId.startsWith('month-')) {
+                            month = parseInt(periodId.split('-')[2]);
+                        } else {
+                            // Если это не виртуальный ID, получаем данные из API
                         const periodData = await apiClient.get(`/finance/periods/${periodId}`);
-                        console.log('Данные о периоде:', periodData);
+                            month = periodData.month;
+                        }
                         
-                        if (periodData && periodData.month) {
-                            const currentYear = periodData.year || new Date().getFullYear();
+                        if (month) {
+                            const currentYear = new Date().getFullYear();
                             
                             // Отправляем запрос на пересчет плана
                             await apiClient.postWithParams('/finance/plan-values/recalculate-with-actual', {
                                 metric_id: metricId,
                                 shop_id: getUrlParams().storeId,
                                 year: currentYear,
-                                actual_month: periodData.month,
+                                actual_month: month,
                                 actual_value: newValue
                             });
                             
@@ -883,53 +846,6 @@ function showNotification(message, type = 'info') {
     });
 }
 
-// Загрузка данных о категории и магазине
-async function loadCategoryAndStore() {
-    try {
-        const { categoryId, storeId } = getUrlParams();
-        
-        if (!categoryId || !storeId) {
-            showNotification('Не указаны параметры категории или магазина в URL. Проверьте ссылку, по которой вы перешли.', 'error');
-            return;
-        }
-        
-        showLoading();
-        
-        try {
-            // Получаем данные о категории
-            const category = await apiClient.get(`/finance/categories/${categoryId}`);
-            
-            // Получаем данные о магазине
-            const store = await apiClient.get(`/finance/shops/${storeId}`);
-            
-            // Обновляем заголовки на странице
-            document.querySelector('.breadcrumb-item.active').textContent = category.name;
-            document.querySelector('.salary-report__title').textContent = category.name;
-            document.querySelector('.salary-report__subtitle').textContent = store.name;
-            
-            // Обновляем заголовок страницы
-            document.title = `${category.name} | ${store.name} | RealTimeFinanceAnalytics`;
-            
-            hideLoading();
-        } catch (error) {
-            console.error('Ошибка при загрузке данных:', error);
-            hideLoading();
-            
-            // Проверяем, какой запрос вызвал ошибку и выводим соответствующее сообщение
-            if (error.message.includes('categories')) {
-                showNotification(`Категория с ID ${categoryId} не найдена. Пожалуйста, вернитесь на главную страницу и выберите категорию снова.`, 'error');
-            } else if (error.message.includes('shops')) {
-                showNotification(`Магазин с ID ${storeId} не найден. Пожалуйста, вернитесь на главную страницу и выберите магазин снова.`, 'error');
-            } else {
-                showNotification('Ошибка при загрузке данных: ' + error.message, 'error');
-            }
-        }
-    } catch (error) {
-        hideLoading();
-        showNotification('Ошибка при обработке параметров URL: ' + error.message, 'error');
-    }
-}
-
 // Функция для добавления кнопок действий для метрик
 function addMetricActionButtons(metrics) {
     // Создаем контейнер для кнопок, если его нет
@@ -987,28 +903,6 @@ function addMetricActionButtons(metrics) {
         actionButtons.appendChild(button);
     }
     
-    // Добавляем кнопку для инициализации периодов (только для администратора или разработчика)
-    const initPeriodsBtn = document.getElementById('init-periods-btn');
-    if (!initPeriodsBtn) {
-        const button = document.createElement('button');
-        button.className = 'btn btn-secondary';
-        button.id = 'init-periods-btn';
-        button.style.marginLeft = 'auto'; // Добавляем отступ слева, чтобы кнопка была справа
-        button.innerHTML = `
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-            </svg>
-            Инициализировать периоды
-        `;
-        
-        // Добавляем обработчик для кнопки
-        button.addEventListener('click', function() {
-            initializePeriods();
-        });
-        
-        actionButtons.appendChild(button);
-    }
-    
     // Обновляем выпадающий список метрик
     updateMetricSelect(metrics);
 }
@@ -1027,50 +921,6 @@ function updateMetricSelect(metrics) {
         option.textContent = `${metric.name} (${metric.unit})`;
         select.appendChild(option);
     });
-}
-
-// Добавление кнопок действий
-function addActionButtons() {
-    // Создаем контейнер для кнопок
-    const actionButtons = document.createElement('div');
-    actionButtons.className = 'action-buttons';
-    actionButtons.innerHTML = `
-        <button class="btn btn-primary" id="add-metric-btn">
-            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-            Добавить метрику
-        </button>
-        <button class="btn btn-secondary" id="init-periods-btn">
-            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 4H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2h-3"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11v6M9 11h6"></path>
-            </svg>
-            Инициализировать периоды
-        </button>
-    `;
-    
-    // Добавляем контейнер перед таблицей
-    const tableContainer = document.querySelector('.salary-table-container');
-    tableContainer.parentNode.insertBefore(actionButtons, tableContainer);
-    
-    // Добавляем обработчик для кнопки добавления метрики
-    document.getElementById('add-metric-btn').addEventListener('click', () => {
-        document.getElementById('add-metric-modal').classList.add('active');
-    });
-    
-    // Добавляем обработчик для кнопки инициализации периодов
-    document.getElementById('init-periods-btn').addEventListener('click', async () => {
-        if (confirm('Вы уверены, что хотите инициализировать периоды для текущего года? Это действие создаст периоды для года, кварталов и месяцев, если они еще не существуют.')) {
-            await initializePeriods();
-        }
-    });
-}
-
-// Модификация заголовков таблицы
-function updateTableHeaders() {
-    // Для этой структуры не нужно менять заголовки в HTML, 
-    // теперь будем обновлять их динамически при рендеринге метрик
 }
 
 // Обработчик сортировки таблицы
@@ -1216,20 +1066,31 @@ function createYearlyPlanModal() {
         document.getElementById('yearly-plan-modal').classList.remove('active');
     });
 
-    // Заполнение выпадающего списка метрик
-    apiClient.get(`/finance/metrics?category_id=${getUrlParams().categoryId}`)
-        .then(metrics => {
+    // Заполнение выпадающего списка метрик используя кэшированные данные
             const select = document.getElementById('yearly-metric-select');
-            metrics.forEach(metric => {
+    
+    // Проверяем наличие кэшированных метрик
+    const loadedMetrics = window.loadedMetricsData || [];
+    if (loadedMetrics.length > 0) {
+        // Если метрики уже загружены, используем их
+        loadedMetrics.forEach(metric => {
                 const option = document.createElement('option');
                 option.value = metric.id;
                 option.textContent = `${metric.name} (${metric.unit})`;
                 select.appendChild(option);
             });
-        })
-        .catch(error => {
-            console.error('Ошибка при загрузке метрик:', error);
-        });
+    } else {
+        // Вместо запроса к старому API эндпоинту, показываем сообщение,
+        // что данных нет и нужно сначала загрузить страницу целиком
+        const option = document.createElement('option');
+        option.value = "";
+        option.textContent = "Сначала загрузите данные...";
+        option.disabled = true;
+        select.appendChild(option);
+        
+        // Показываем уведомление
+        showNotification('Сначала нужно загрузить метрики на странице', 'warning');
+    }
 
     // Обработчик сохранения годового плана
     document.getElementById('save-yearly-plan-btn').addEventListener('click', async () => {
@@ -1280,84 +1141,36 @@ function createYearlyPlanModal() {
     });
 }
 
-// Функция для инициализации периодов
-async function initializePeriods() {
+// Функция для получения годового планового значения метрики - полностью переписываем для работы с кэшем
+async function getYearlyPlanValue(metricId, shopId) {
     try {
-        showLoading();
-        
-        // Получаем текущий год
+        // Используем только кэшированные данные
         const currentYear = new Date().getFullYear();
+        const yearPeriodId = `year-${currentYear}`;
         
-        // Создаем период для года
-        const yearPeriod = await apiClient.post('/finance/periods', {
-            year: currentYear
-        });
-        
-        // Создаем периоды для кварталов
-        const quarterPeriods = [];
-        for (let quarter = 1; quarter <= 4; quarter++) {
-            const quarterPeriod = await apiClient.post('/finance/periods', {
-                year: currentYear,
-                quarter: quarter
-            });
-            quarterPeriods.push(quarterPeriod);
-        }
-        
-        // Создаем периоды для месяцев
-        const monthPeriods = [];
-        for (let quarter = 1; quarter <= 4; quarter++) {
-            for (let monthInQuarter = 1; monthInQuarter <= 3; monthInQuarter++) {
-                const monthNum = (quarter - 1) * 3 + monthInQuarter;
-                const monthPeriod = await apiClient.post('/finance/periods', {
-                    year: currentYear,
-                    quarter: quarter,
-                    month: monthNum
-                });
-                monthPeriods.push(monthPeriod);
+        // Проверяем, есть ли метрики в кэше
+        const loadedMetrics = window.loadedMetricsData || [];
+        if (loadedMetrics.length > 0) {
+            // Ищем нужную метрику
+            const metric = loadedMetrics.find(m => m.id === metricId);
+            if (metric) {
+                // Ищем годовое плановое значение
+                const yearPlan = metric.planValues.find(pv => pv.period_id === yearPeriodId);
+                if (yearPlan) {
+                    return parseFloat(yearPlan.value);
+                }
+                
+                // Если годового значения нет, суммируем по месяцам
+                const monthlyPlans = metric.planValues.filter(pv => 
+                    pv.period_id.startsWith(`month-${currentYear}`)
+                );
+                
+                if (monthlyPlans.length > 0) {
+                    return monthlyPlans.reduce((sum, pv) => sum + parseFloat(pv.value), 0);
+                }
             }
         }
         
-        hideLoading();
-        showNotification(`Периоды успешно созданы: 1 год, ${quarterPeriods.length} кварталов, ${monthPeriods.length} месяцев`, 'success');
-        
-        // Перезагружаем метрики с новыми периодами
-        await loadMetrics();
-        
-    } catch (error) {
-        hideLoading();
-        console.error('Ошибка при инициализации периодов:', error);
-        showNotification('Ошибка при инициализации периодов: ' + error.message, 'error');
-    }
-}
-
-// Функция для получения годового планового значения метрики
-async function getYearlyPlanMetricValue(metricId, shopId) {
-    try {
-        // Получаем текущий год
-        const currentYear = new Date().getFullYear();
-        
-        // Получаем годовой период
-        const yearPeriodResponse = await apiClient.get(`/finance/periods?year=${currentYear}&period_type=year`);
-        console.log('Ответ API по годовому периоду:', yearPeriodResponse);
-        
-        if (yearPeriodResponse && yearPeriodResponse.length > 0) {
-            const yearPeriodId = yearPeriodResponse[0].id;
-            
-            // Запрос на получение годового планового значения
-            const yearlyPlanValuesUrl = `/finance/plan-values?metric_id=${metricId}&shop_id=${shopId}&period_id=${yearPeriodId}`;
-            console.log(`Запрос годовых плановых значений: ${yearlyPlanValuesUrl}`);
-            
-            const yearlyPlanValues = await apiClient.get(yearlyPlanValuesUrl);
-            console.log('Ответ API по годовым плановым значениям:', yearlyPlanValues);
-            
-            if (yearlyPlanValues && yearlyPlanValues.length > 0) {
-                const yearlyValue = parseFloat(yearlyPlanValues[0].value);
-                console.log(`Найдено годовое плановое значение: ${yearlyValue}`);
-                return yearlyValue;
-            }
-        }
-        
-        console.log('Годовое плановое значение не найдено');
         return 0;
     } catch (error) {
         console.error('Ошибка при получении годового планового значения:', error);
@@ -1687,75 +1500,196 @@ async function loadMetrics() {
         
         showLoading();
         
-        // Получаем метрики для выбранной категории
-        const metrics = await apiClient.get(`/finance/metrics?category_id=${categoryId}`);
-        
         // Получаем текущий год
-        const currentYear = new Date().getFullYear();
+        const currentYear = new Date().getFullYear(); // Используем текущий год вместо фиксированного
         
-        // Получаем все периоды для текущего года с месяцами
-        const monthPeriods = await apiClient.get(`/finance/periods?year=${currentYear}&period_type=month`);
+        // Получаем все данные через новый API-эндпоинт детальных метрик
+        const detailedMetrics = await apiClient.get(`/finance/analytics/metrics/details/${categoryId}/${storeId}/${currentYear}`);
+        console.log('Загружены детальные метрики:', detailedMetrics);
         
-        // Получаем все периоды для текущего года с кварталами
-        const quarterPeriods = await apiClient.get(`/finance/periods?year=${currentYear}&period_type=quarter`);
-        
-        // Получаем годовой период для текущего года
-        const yearPeriods = await apiClient.get(`/finance/periods?year=${currentYear}&period_type=year`);
-        console.log('Годовой период:', yearPeriods);
-        
-        // Проверяем, что есть периоды для всех месяцев и кварталов
-        if (monthPeriods.length === 0 || quarterPeriods.length === 0 || yearPeriods.length === 0) {
+        if (!detailedMetrics || !detailedMetrics.metrics || detailedMetrics.metrics.length === 0) {
             hideLoading();
-            if (confirm('Не найдены периоды для текущего года. Хотите инициализировать периоды?')) {
-                await initializePeriods();
+            showNotification('Нет доступных метрик для выбранной категории и магазина', 'warning');
                 return;
-            }
         }
         
-        // Объединяем периоды
-        const periods = [...monthPeriods, ...quarterPeriods, ...yearPeriods];
+        // Преобразуем данные в формат, понятный для существующих функций
+        const metrics = detailedMetrics.metrics.map(metric => {
+            // Создаем объект метрики
+            const metricObj = {
+                id: metric.metric_id,
+                name: metric.metric_name,
+                unit: metric.unit,
+                category_id: categoryId,
+                planValues: [],
+                actualValues: []
+            };
+            
+            // Обрабатываем годовые данные
+            if (metric.periods_value.year) {
+                const yearData = metric.periods_value.year;
+                // Здесь мы не имеем ID периода, но можем создать виртуальный
+                const yearPeriodObj = {
+                    id: `year-${currentYear}`,
+                    year: currentYear,
+                    quarter: null,
+                    month: null
+                };
+                
+                // Добавляем плановое значение
+                if (yearData.plan !== undefined) {
+                    metricObj.planValues.push({
+                        metric_id: metric.metric_id,
+                        shop_id: storeId,
+                        value: yearData.plan,
+                        period_id: yearPeriodObj.id,
+                        period: yearPeriodObj
+                    });
+                }
+                
+                // Добавляем фактическое значение
+                if (yearData.actual !== undefined) {
+                    metricObj.actualValues.push({
+                        metric_id: metric.metric_id,
+                        shop_id: storeId,
+                        value: yearData.actual,
+                        period_id: yearPeriodObj.id,
+                        period: yearPeriodObj
+                    });
+                }
+            }
+            
+            // Обрабатываем квартальные данные
+            Object.entries(metric.periods_value.quarters).forEach(([quarterName, quarterData]) => {
+                // Извлекаем номер квартала из названия (например, "I квартал" -> 1)
+                const quarterNumber = ["I квартал", "II квартал", "III квартал", "IV квартал"].indexOf(quarterName) + 1;
+                if (quarterNumber > 0) {
+                    const quarterPeriodObj = {
+                        id: `quarter-${currentYear}-${quarterNumber}`,
+                        year: currentYear,
+                        quarter: quarterNumber,
+                        month: null
+                    };
+                    
+                    // Добавляем плановое значение
+                    if (quarterData.plan !== undefined) {
+                        metricObj.planValues.push({
+                            metric_id: metric.metric_id,
+                            shop_id: storeId,
+                            value: quarterData.plan,
+                            period_id: quarterPeriodObj.id,
+                            period: quarterPeriodObj
+                        });
+                    }
+                    
+                    // Добавляем фактическое значение
+                    if (quarterData.actual !== undefined) {
+                        metricObj.actualValues.push({
+                            metric_id: metric.metric_id,
+                            shop_id: storeId,
+                            value: quarterData.actual,
+                            period_id: quarterPeriodObj.id,
+                            period: quarterPeriodObj
+                        });
+                    }
+                }
+            });
+            
+            // Обрабатываем месячные данные
+            Object.entries(metric.periods_value.months).forEach(([monthName, monthData]) => {
+                // Соответствие названий месяцев и их номеров
+                const monthNameToNumber = {
+                    'январь': 1, 'февраль': 2, 'март': 3, 'апрель': 4, 'май': 5, 'июнь': 6,
+                    'июль': 7, 'август': 8, 'сентябрь': 9, 'октябрь': 10, 'ноябрь': 11, 'декабрь': 12
+                };
+                
+                const monthNumber = monthNameToNumber[monthName.toLowerCase()];
+                if (monthNumber) {
+                    // Определяем квартал по месяцу
+                    const quarter = Math.ceil(monthNumber / 3);
+                    
+                    const monthPeriodObj = {
+                        id: `month-${currentYear}-${monthNumber}`,
+                        year: currentYear,
+                        quarter: quarter,
+                        month: monthNumber
+                    };
+                    
+                    // Добавляем плановое значение
+                    if (monthData.plan !== undefined) {
+                        metricObj.planValues.push({
+                            metric_id: metric.metric_id,
+                            shop_id: storeId,
+                            value: monthData.plan,
+                            period_id: monthPeriodObj.id,
+                            period: monthPeriodObj
+                        });
+                    }
+                    
+                    // Добавляем фактическое значение
+                    if (monthData.actual !== undefined) {
+                        metricObj.actualValues.push({
+                            metric_id: metric.metric_id,
+                            shop_id: storeId,
+                            value: monthData.actual,
+                            period_id: monthPeriodObj.id,
+                            period: monthPeriodObj
+                        });
+                    }
+                }
+            });
+            
+            return metricObj;
+        });
         
-        console.log('Загруженные периоды:', periods);
+        // Сохраняем преобразованные метрики в глобальной переменной для доступа из других функций
+        window.loadedMetricsData = metrics;
+        
+        // Создаем массив периодов из данных метрик
+        const periods = [];
+        
+        // Для каждой метрики обрабатываем периоды
+        metrics.forEach(metric => {
+            // Из плановых значений
+            metric.planValues.forEach(pv => {
+                if (pv.period && !periods.some(p => p.id === pv.period.id)) {
+                    periods.push(pv.period);
+                }
+            });
+            
+            // Из фактических значений
+            metric.actualValues.forEach(av => {
+                if (av.period && !periods.some(p => p.id === av.period.id)) {
+                    periods.push(av.period);
+                }
+            });
+        });
+        
+        // Сохраняем периоды в глобальной переменной для доступа из других функций
+        window.loadedPeriodsData = periods;
+        
+        console.log('Преобразованные метрики:', metrics);
+        console.log('Извлеченные периоды:', periods);
+        
+        // Получаем месячные периоды
+        const monthPeriods = periods.filter(p => p.month !== null);
+        // Получаем квартальные периоды
+        const quarterPeriods = periods.filter(p => p.quarter !== null && p.month === null);
+        // Получаем годовой период
+        const yearPeriods = periods.filter(p => p.quarter === null && p.month === null);
+        
         console.log('Месячные периоды:', monthPeriods.length);
         console.log('Квартальные периоды:', quarterPeriods.length);
+        console.log('Годовые периоды:', yearPeriods.length);
         
-        // Получаем плановые значения для текущего магазина
-        const planValues = await apiClient.get(`/finance/plan-values?shop_id=${storeId}`);
+        // Обновляем UI с загруженными данными
         
-        // Получаем фактические значения для текущего магазина
-        const actualValues = await apiClient.get(`/finance/actual-values?shop_id=${storeId}`);
-        
-        // Обогащаем данные о плановых и фактических значениях информацией о периодах
-        const enrichedPlanValues = planValues.map(plan => {
-            const period = periods.find(p => p.id === plan.period_id);
-            return {
-                ...plan,
-                period
-            };
-        });
-        
-        const enrichedActualValues = actualValues.map(actual => {
-            const period = periods.find(p => p.id === actual.period_id);
-            return {
-                ...actual,
-                period
-            };
-        });
-        
-        // Добавляем к метрикам периоды с плановыми и фактическими значениями
-        const metricsWithValues = metrics.map(metric => {
-            const metricPlanValues = enrichedPlanValues.filter(plan => plan.metric_id === metric.id);
-            const metricActualValues = enrichedActualValues.filter(actual => actual.metric_id === metric.id);
-            
-            return {
-                ...metric,
-                planValues: metricPlanValues,
-                actualValues: metricActualValues
-            };
-        });
+        // Обновляем заголовок с данными категории и магазина
+        document.querySelector('.salary-report__title').textContent = detailedMetrics.category_name || 'Заработная плата';
+        document.querySelector('.salary-report__subtitle').textContent = detailedMetrics.shop_name || 'Магазин';
         
         // Обновляем таблицу метрик
-        renderMetricsTable(metricsWithValues, periods);
+        renderMetricsTable(metrics, periods);
         
         // Обновляем выпадающий список метрик в модальном окне
         updateMetricSelect(metrics);
@@ -1764,7 +1698,7 @@ async function loadMetrics() {
         addMetricActionButtons(metrics);
         
         // Настраиваем графики
-        setupCharts(metricsWithValues, periods);
+        setupCharts(metrics, periods);
         
         hideLoading();
         
@@ -1817,6 +1751,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Инициализация страницы
 document.addEventListener('DOMContentLoaded', async () => {
+    try {
     // Добавляем стили для уведомлений
     const notificationStyles = `
         .notification {
@@ -1880,12 +1815,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     createYearlyPlanModal();
     createEditValueModal();
     
-    // Добавляем кнопки действий
-    addActionButtons();
-    
-    // Загружаем данные о категории и магазине
-    await loadCategoryAndStore();
-    
+        try {
     // Загружаем метрики
     await loadMetrics();
     
@@ -1897,15 +1827,66 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Настраиваем кнопку экспорта
     setupExportButton();
+            
+            // Фиксируем размеры графика при загрузке страницы
+            fixChartContainerSize();
+        } catch (metricError) {
+            console.error('Ошибка при загрузке и настройке данных:', metricError);
+            showNotification(`Ошибка при загрузке данных: ${metricError.message}`, 'error');
+        }
+    } catch (error) {
+        console.error('Ошибка при инициализации страницы:', error);
+        hideLoading();
+        showNotification(`Ошибка при инициализации страницы: ${error.message}`, 'error');
+    }
 });
 
 // Функция настройки фильтров
 function setupFilters() {
     const shopFilter = document.getElementById('shopFilter');
     if (shopFilter) {
-        // Загружаем список магазинов для фильтра
+        // Проверяем, есть ли уже загруженные магазины в локальном хранилище
+        const cachedShops = localStorage.getItem('financeShops');
+        if (cachedShops) {
+            try {
+                const shops = JSON.parse(cachedShops);
+                populateShopFilter(shops);
+            } catch (e) {
+                console.error('Ошибка при парсинге кэшированных магазинов', e);
+                // Если произошла ошибка при парсинге, загружаем данные заново
+                fetchShops();
+            }
+        } else {
+            // Иначе загружаем список магазинов для фильтра
+            fetchShops();
+        }
+
+        // Добавляем обработчик изменения фильтра
+        shopFilter.addEventListener('change', function() {
+            if (this.value) {
+                // Если выбран конкретный магазин, обновляем URL и перезагружаем страницу
+                const { categoryId } = getUrlParams();
+                window.location.href = `./page.html?category=${categoryId}&store=${this.value}`;
+            }
+        });
+    }
+    
+    // Функция для получения списка магазинов через API
+    function fetchShops() {
         apiClient.get('/finance/shops')
             .then(shops => {
+                // Кэшируем список магазинов для последующего использования
+                localStorage.setItem('financeShops', JSON.stringify(shops));
+                // Заполняем выпадающий список
+                populateShopFilter(shops);
+            })
+            .catch(error => {
+                console.error('Ошибка при загрузке магазинов:', error);
+            });
+    }
+    
+    // Функция для заполнения выпадающего списка магазинов
+    function populateShopFilter(shops) {
                 // Очищаем список магазинов
                 while (shopFilter.firstChild) {
                     shopFilter.removeChild(shopFilter.firstChild);
@@ -1916,6 +1897,9 @@ function setupFilters() {
                 allOption.textContent = 'Все магазины';
                 allOption.value = '';
                 shopFilter.appendChild(allOption);
+        
+        // Получаем текущий выбранный магазин
+        const currentStoreId = getUrlParams().storeId;
                 
                 // Добавляем магазины в список
                 shops.forEach(shop => {
@@ -1926,25 +1910,12 @@ function setupFilters() {
                     option.value = shop.id;
                     
                     // Выбираем текущий магазин
-                    if (shop.id === getUrlParams().storeId) {
+            if (shop.id === currentStoreId) {
                         option.selected = true;
                     }
                     
                     shopFilter.appendChild(option);
                 });
-            })
-            .catch(error => {
-                console.error('Ошибка при загрузке магазинов:', error);
-            });
-        
-        // Добавляем обработчик изменения фильтра
-        shopFilter.addEventListener('change', function() {
-            if (this.value) {
-                // Если выбран конкретный магазин, обновляем URL и перезагружаем страницу
-                const { categoryId } = getUrlParams();
-                window.location.href = `./page.html?category=${categoryId}&store=${this.value}`;
-            }
-        });
     }
 }
 
@@ -2371,13 +2342,17 @@ async function updateTotalRow(metrics, monthPeriods) {
             plan.period && plan.period.month === null && plan.period.quarter === null
         );
         
-        // Используем годовое значение или запрашиваем его, если не найдено
+        // Используем годовое значение или суммируем по месяцам, если не найдено
         let totalPlan = yearlyPlanValue ? parseFloat(yearlyPlanValue.value) : 0;
         
-        // Если годовое значение не найдено в метрике, делаем запрос через функцию
+        // Если годовое значение не найдено в метрике, суммируем по месяцам
         if (totalPlan === 0) {
-            totalPlan = await getYearlyPlanMetricValue(metric.id, shopId);
-            console.log(`Получено годовое значение через запрос API: ${totalPlan}`);
+            // Суммируем все месячные плановые значения
+            totalPlan = metric.planValues
+                .filter(pv => pv.period && pv.period.month !== null)
+                .reduce((sum, pv) => sum + parseFloat(pv.value), 0);
+            
+            console.log(`Рассчитано годовое значение плана по месяцам: ${totalPlan}`);
         }
         
         // Суммируем фактические значения
@@ -2436,72 +2411,74 @@ function setupEditButtons() {
         // Помечаем кнопки, для которых добавлены обработчики
         button.classList.add('handled');
         
-        button.addEventListener('click', async function(event) {
-            // Предотвращаем всплытие события, чтобы оно не влияло на родительские элементы
+        button.addEventListener('click', function(event) {
+            // Предотвращаем всплытие события
             event.preventDefault();
             event.stopPropagation();
-            
-            console.log('Клик по кнопке редактирования');
             
             const metricId = this.dataset.metricId;
             const periodId = this.dataset.periodId;
             const valueType = this.dataset.type;
             const currentValue = this.dataset.value;
             
-            console.log('Данные кнопки редактирования:', {
-                metricId,
-                periodId,
-                valueType,
-                currentValue
-            });
-            
             // Открываем модальное окно для редактирования значения
             const modal = document.getElementById('edit-value-modal');
-            console.log('Модальное окно:', modal);
             
             if (modal) {
-                // Получаем информацию о метрике
                 try {
                     showLoading();
                     
-                    // Получаем данные о метрике
-                    const metric = await apiClient.get(`/finance/metrics/${metricId}`);
-                    console.log('Данные о метрике:', metric);
+                    // Используем только кэшированные данные
+                    let metricName = '';
+                    let unit = '';
+                    let periodName = 'Неизвестный период';
                     
-                    // Получаем данные о периоде
-                    const period = await apiClient.get(`/finance/periods/${periodId}`);
-                    console.log('Данные о периоде:', period);
+                    // Получаем данные о метрике из кэша
+                    const loadedMetrics = window.loadedMetricsData || [];
+                    if (loadedMetrics.length > 0) {
+                        const metric = loadedMetrics.find(m => m.id === metricId);
+                        if (metric) {
+                            metricName = metric.name;
+                            unit = metric.unit;
+                        }
+                    }
                     
-                    // Определяем название периода
-                    let periodName = "Неизвестный период";
-                    if (period) {
-                        if (period.month && period.quarter) {
+                    // Определяем название периода из ID
+                    if (periodId.startsWith('year-')) {
+                        const year = parseInt(periodId.split('-')[1]);
+                        periodName = `Год ${year}`;
+                    }
+                    else if (periodId.startsWith('quarter-')) {
+                        const parts = periodId.split('-');
+                        const year = parseInt(parts[1]);
+                        const quarter = parseInt(parts[2]);
+                        const quarterNames = {
+                            1: 'I квартал', 2: 'II квартал', 3: 'III квартал', 4: 'IV квартал'
+                        };
+                        periodName = `${quarterNames[quarter]} ${year}`;
+                    }
+                    else if (periodId.startsWith('month-')) {
+                        const parts = periodId.split('-');
+                        const year = parseInt(parts[1]);
+                        const month = parseInt(parts[2]);
                             const monthNames = {
                                 1: 'Январь', 2: 'Февраль', 3: 'Март', 4: 'Апрель', 5: 'Май', 6: 'Июнь',
                                 7: 'Июль', 8: 'Август', 9: 'Сентябрь', 10: 'Октябрь', 11: 'Ноябрь', 12: 'Декабрь'
                             };
-                            periodName = `${monthNames[period.month]} ${period.year}`;
-                        } else if (period.quarter && !period.month) {
-                            const quarterNames = {
-                                1: 'I квартал', 2: 'II квартал', 3: 'III квартал', 4: 'IV квартал'
-                            };
-                            periodName = `${quarterNames[period.quarter]} ${period.year}`;
-                        } else if (!period.quarter && !period.month) {
-                            periodName = `Год ${period.year}`;
-                        }
+                        periodName = `${monthNames[month]} ${year}`;
                     }
                     
                     // Заполняем форму
                     document.getElementById('edit-metric-id').value = metricId;
                     document.getElementById('edit-period-id').value = periodId;
                     document.getElementById('edit-value-type').value = valueType;
-                    document.getElementById('edit-metric-name').textContent = `${metric.name} (${metric.unit})`;
+                    document.getElementById('edit-metric-name').textContent = `${metricName} (${unit})`;
                     document.getElementById('edit-period-name').textContent = periodName;
                     document.getElementById('edit-value').value = currentValue;
                     
                     // Показываем/скрываем опцию пересчета в зависимости от типа значения
                     const recalculateContainer = document.getElementById('recalculate-container');
-                    if (valueType === 'fact' && period && period.month) {
+                    if (valueType === 'fact' && periodId.startsWith('month-')) {
                         recalculateContainer.style.display = 'block';
                     } else {
                         recalculateContainer.style.display = 'none';

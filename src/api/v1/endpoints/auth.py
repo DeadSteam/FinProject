@@ -14,11 +14,6 @@ from src.scheme.users import (
 
 router = APIRouter()
 
-# Получение сессии БД
-async def get_db():
-    async for session in users_db.get_session():
-        yield session
-
 # Инициализация сервисов
 user_service = UserService()
 
@@ -27,7 +22,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 # Вспомогательные функции
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(users_db.get_session)
 ):
     """
     Получение текущего пользователя по токену
@@ -59,7 +54,7 @@ async def get_current_user(
 @router.post("/register", response_model=User)
 async def register_user(
     registration_data: RegistrationRequest,
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(users_db.get_session)
 ):
     """
     Регистрация нового пользователя
@@ -107,7 +102,7 @@ async def register_user(
 async def login(
     login_data: LoginRequest,
     response: Response,
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(users_db.get_session)
 ):
     """
     Авторизация пользователя по email или username
@@ -158,7 +153,7 @@ async def login(
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     response: Response = None,
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(users_db.get_session)
 ):
     """
     Авторизация с использованием стандартной формы OAuth2
@@ -203,67 +198,82 @@ async def login_for_access_token(
 @router.post("/refresh", response_model=Token)
 async def refresh_token(
     refresh_token: Optional[str] = None,
-    refresh_token_cookie: Optional[str] = Cookie(None, alias="refresh_token")
+    refresh_token_cookie: Optional[str] = Cookie(None, alias="refresh_token"),
+    session: AsyncSession = Depends(users_db.get_session)
 ):
     """
-    Обновление токена доступа с помощью refresh токена
-    
-    Refresh токен может быть передан как часть тела запроса или как cookie
+    Получение нового access токена с использованием refresh токена
     """
-    # Получаем refresh токен из запроса или из куки
-    token = refresh_token if refresh_token else refresh_token_cookie
+    # Приоритет refresh токена из тела запроса, затем из куки
+    token_value = refresh_token or refresh_token_cookie
     
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Refresh токен не предоставлен",
-        )
-    
-    # Обновляем токен
-    new_access_token = user_service.refresh_access_token(token)
-    
-    if not new_access_token:
+    if not token_value:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Невалидный или истекший refresh токен",
+            detail="Отсутствует refresh токен",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    return {"access_token": new_access_token, "token_type": "bearer"}
+    # Проверяем refresh токен
+    token_data = user_service.decode_token(token_value, refresh=True)
+    if not token_data:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Недействительный refresh токен",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Проверяем существование пользователя
+    user = await user_service.get_by_username(token_data.username, session)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Пользователь не существует",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Создаем новый access токен
+    access_token = user_service.create_access_token(data={"sub": user.username})
+    
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
 @router.post("/logout")
 async def logout(response: Response):
     """
-    Выход пользователя из системы
-    
-    Удаляет refresh токен из куки
+    Выход из системы (очистка куки с refresh токеном)
     """
     response.delete_cookie(
         key="refresh_token",
         path="/api/v1/auth/refresh"
     )
     
-    return {"status": "success", "message": "Вы успешно вышли из системы"}
+    return {"message": "Успешный выход из системы"}
 
 
 @router.post("/reset-password", status_code=status.HTTP_200_OK)
 async def request_password_reset(
     reset_data: PasswordResetRequest,
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(users_db.get_session)
 ):
     """
     Запрос на сброс пароля
-    
-    Отправляет на указанную почту письмо со ссылкой для сброса пароля
     """
-    user = await user_service.get_by_email(email=reset_data.email, session=session)
+    user = None
     
-    # Даже если пользователь не найден, возвращаем успешный ответ
-    # для предотвращения утечки информации о существующих пользователях
+    # Ищем пользователя по email
+    if reset_data.email:
+        user = await user_service.get_by_email(email=reset_data.email, session=session)
+    
+    # Если не нашли по email, ищем по username
+    elif reset_data.username:
+        user = await user_service.get_by_username(username=reset_data.username, session=session)
+    
+    # Если пользователя не нашли, возвращаем успех для безопасности
     if not user:
-        return {"status": "success", "message": "Если пользователь с таким email существует, на него будет отправлена инструкция по сбросу пароля"}
+        return {"message": "Инструкции по сбросу пароля отправлены на вашу почту"}
     
-    # В реальном приложении здесь будет логика отправки письма
-    # Сейчас просто возвращаем успешный ответ
-    return {"status": "success", "message": "На ваш email отправлена инструкция по сбросу пароля"} 
+    # В реальном приложении здесь нужно отправить электронное письмо со ссылкой на сброс пароля
+    # Для демонстрации просто возвращаем успешный ответ
+    
+    return {"message": "Инструкции по сбросу пароля отправлены на вашу почту"} 

@@ -47,8 +47,8 @@ class Settings(BaseModel):
     # Наружу предоставляем CORS_ORIGINS для middleware
     @property
     def CORS_ORIGINS(self) -> List[str]:
-        # Возвращаем просто звездочку, чтобы разрешить все источники во время разработки
-        return ["*"]
+        # Возвращаем список разрешенных источников
+        return self.BACKEND_CORS_ORIGINS
     
     # Настройки сессий
     SESSION_MAX_AGE: int = 14 * 24 * 60 * 60  # 14 дней в секундах

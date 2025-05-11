@@ -112,6 +112,17 @@ const categoriesGrid = document.querySelector('.categories-grid');
 const storesList = document.querySelector('.stores-list');
 const categoriesCount = document.querySelector('.quick-stat-item:nth-child(1) .quick-stat-value');
 const storesCount = document.querySelector('.quick-stat-item:nth-child(2) .quick-stat-value');
+const expensePercentage = document.querySelector('.quick-stat-item:nth-child(3) .quick-stat-value');
+const planValue = document.querySelector('.budget-tile-plan .tile-value');
+const factValue = document.querySelector('.budget-tile-fact .tile-value');
+const progressBar = document.querySelector('.budget-progress-bar');
+const budgetStatus = document.querySelector('.budget-status');
+const storesSection = document.getElementById('stores-section');
+const storesGrid = document.querySelector('.stores-grid');
+const currentCategoryElement = document.getElementById('current-category');
+
+// Глобальная переменная для хранения данных дашборда
+let dashboardData = null;
 
 // Форматирование денежных значений
 function formatCurrency(value) {
@@ -315,10 +326,8 @@ async function initPage() {
         // Обновляем информацию о пользователе в интерфейсе
         updateUserInfo(user);
         
-        // Загружаем категории и магазины только если они еще не загружены
-        if (!dataLoaded) {
-            await loadCategoriesAndStores();
-        }
+        // Загружаем данные дашборда
+        await loadDashboardData();
         
         console.log('Инициализация страницы успешно завершена');
     } catch (error) {
@@ -372,251 +381,99 @@ function setupAdminLink(user) {
     }
 }
 
-// Функция для загрузки категорий и магазинов
-async function loadCategoriesAndStores() {
-    // Проверяем, не выполняется ли уже загрузка
-    if (isDataLoading) {
-        console.log('Загрузка данных уже выполняется');
-        return;
-    }
-    
-    // Устанавливаем флаг, что началась загрузка
-    isDataLoading = true;
-    
+// Функция для загрузки данных дашборда из нового API-эндпоинта
+async function loadDashboardData() {
     try {
-        console.log('Начинаем загрузку категорий и магазинов');
+        // Загружаем данные из нового API-эндпоинта
+        dashboardData = await apiClient.get('/finance/analytics/dashboard/aggregate');
+        console.log('Загружены данные дашборда:', dashboardData);
         
-        // Получаем периоды для бюджетного обзора
-        const periods = await apiClient.get('/finance/periods');
+        // Обновляем бюджетную информацию
+        updateBudgetInfo(dashboardData);
         
-        // Загружаем метрики с категориями
-        const allMetrics = await apiClient.get('/finance/metrics');
-        
-        // Обновляем бюджетный обзор
-        await updateBudgetOverview(allMetrics, periods);
-        
-        // Загружаем категории
-        await loadCategories();
-        
-        // Помечаем, что данные загружены
-        dataLoaded = true;
-        console.log('Данные успешно загружены');
+        // Загружаем категории и магазины
+        loadCategories(dashboardData);
     } catch (error) {
-        console.error('Ошибка при загрузке данных:', error);
-    } finally {
-        // Снимаем флаг загрузки
-        isDataLoading = false;
+        console.error('Ошибка при загрузке данных дашборда:', error);
     }
 }
 
-/**
- * Загрузка категорий с сервера
- */
-async function loadCategories() {
-    try {
-        console.log('Загрузка категорий...');
+// Функция для обновления бюджетной информации
+function updateBudgetInfo(data) {
+    // Обновляем счетчики
+    if (categoriesCount) categoriesCount.textContent = data.dashboard_metrics.count_category;
+    if (storesCount) storesCount.textContent = data.dashboard_metrics.count_shops;
+    if (expensePercentage) expensePercentage.textContent = `${data.dashboard_metrics.all_yearly_procent}%`;
+    
+    // Обновляем бюджетные значения
+    const monthPlan = data.month_values.month_plan;
+    const monthActual = data.month_values.month_actual;
+    const monthPercent = data.month_values.month_procent;
+    
+    if (planValue) planValue.textContent = formatCurrency(monthPlan);
+    if (factValue) factValue.textContent = formatCurrency(monthActual);
+    
+    // Обновляем прогресс-бар
+    if (progressBar) {
+        progressBar.style.width = `${Math.min(100, monthPercent)}%`;
         
-        // Показываем индикатор загрузки
-        const loadingOverlay = document.createElement('div');
-        loadingOverlay.className = 'loading-overlay';
-        loadingOverlay.innerHTML = '<div class="loading-spinner"></div>';
-        document.body.appendChild(loadingOverlay);
-        
-        // Очищаем существующие карточки категорий
-        if (categoriesGrid) {
-            console.log('Очистка существующих категорий');
-            categoriesGrid.innerHTML = '';
+        // Цвет прогресс-бара зависит от процента выполнения
+        if (monthPercent < 80) {
+            progressBar.style.backgroundColor = 'var(--warning)'; // Отстает от плана
+        } else if (monthPercent <= 105) {
+            progressBar.style.backgroundColor = 'var(--success)'; // В рамках плана
         } else {
-            console.error('Элемент categoriesGrid не найден');
-            document.body.removeChild(loadingOverlay);
-            return;
+            progressBar.style.backgroundColor = 'var(--danger)'; // Превышает план
+        }
         }
         
-        // Получаем категории с сервера
-        const categories = await apiClient.get('/finance/categories/with-images');
+    // Обновляем статус бюджета
+    if (budgetStatus) {
+        // Вычисляем разницу в деньгах
+        const difference = monthActual - monthPlan;
+        const isOverage = monthActual > monthPlan;
         
-        // Обновляем счетчик категорий
-        if (categoriesCount) {
-            categoriesCount.textContent = categories.length;
-        }
-        
-        // Если категорий нет
-        if (categories.length === 0) {
-            categoriesGrid.innerHTML = '<div class="empty-state">Категории не найдены</div>';
-            document.body.removeChild(loadingOverlay); // Убираем индикатор загрузки
-            return;
-        }
-
-        // Получаем все периоды
-        let periods = [];
-        try {
-            // Получаем все периоды без фильтрации по году
-            periods = await apiClient.get('/finance/periods');
-            console.log('Получены периоды:', periods);
-        } catch (error) {
-            console.error('Ошибка при загрузке периодов:', error);
-            // Если не удалось загрузить периоды, показываем сообщение об ошибке
-            categoriesGrid.innerHTML = `
-                <div class="error-state">
-                    Не удалось загрузить периоды. Ошибка: ${error.message}
-                </div>
-            `;
-            document.body.removeChild(loadingOverlay); // Убираем индикатор загрузки
-            return;
-        }
-        
-        // Получаем магазины (требуется для запросов метрик)
-        let shops = [];
-        try {
-            shops = await apiClient.get('/finance/shops');
-        } catch (error) {
-            console.error('Ошибка при загрузке магазинов:', error);
-            document.body.removeChild(loadingOverlay); // Убираем индикатор загрузки
-            return;
-        }
-        
-        // Обновляем счетчик магазинов
-        if (storesCount) {
-            storesCount.textContent = shops.length;
-        }
-        
-        // Используем первый магазин по умолчанию или пустой ID, если магазинов нет
-        const defaultShopId = shops.length > 0 ? shops[0].id : '';
-        
-        // Годовой и месячные периоды
-        const yearPeriod = periods.find(p => p.year === currentYear && p.quarter === null && p.month === null);
-        const monthPeriods = periods.filter(p => p.year === currentYear && p.month !== null);
-        
-        // Получаем все метрики
-        let allMetrics = [];
-        for (const category of categories) {
-            if (!category.status) continue; // Пропускаем неактивные категории
-
-            try {
-                // Получаем метрики для категории
-                const metrics = await apiClient.getWithParams('/finance/metrics', { 
-                    category_id: category.id 
-                });
-                
-                // Если есть метрики, добавляем их в общий список с id категории
-                if (metrics && metrics.length > 0) {
-                    // Для каждой метрики получаем плановые и фактические значения
-                    for (const metric of metrics) {
-                        try {
-                            // Получаем плановые значения для метрики с учетом магазина
-                            let planValues = [];
-                            if (defaultShopId) {
-                                const planParams = {
-                                    metric_id: metric.id,
-                                    shop_id: defaultShopId
-                                };
-                                const planData = await apiClient.getWithParams('/finance/plan-values', planParams);
-                                planValues = planData || [];
-                            }
-                            metric.planValues = planValues;
-                        } catch (error) {
-                            console.warn(`Не удалось получить плановые значения для метрики ${metric.id}:`, error);
-                            metric.planValues = [];
+        budgetStatus.className = `budget-status ${isOverage ? 'budget-status--overage' : ''}`;
+        budgetStatus.innerHTML = `
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="${isOverage ? 'M19 14l-7 7m0 0l-7-7m7 7V3' : 'M5 10l7-7m0 0l7 7m-7-7v18'}"></path>
+            </svg>
+            ${isOverage ? 
+                `Превышение: ${Math.round(monthPercent - 100)}% (${formatCurrency(difference)})` : 
+                `Экономия: ${Math.round(100 - monthPercent)}% (${formatCurrency(-difference)})`}
+        `;
                         }
-                        
-                        try {
-                            // Получаем фактические значения для метрики с учетом магазина
-                            let actualValues = [];
-                            if (defaultShopId) {
-                                const actualParams = {
-                                    metric_id: metric.id,
-                                    shop_id: defaultShopId
-                                };
-                                const actualData = await apiClient.getWithParams('/finance/actual-values', actualParams);
-                                actualValues = actualData || [];
-                            }
-                            metric.actualValues = actualValues;
-                        } catch (error) {
-                            console.warn(`Не удалось получить фактические значения для метрики ${metric.id}:`, error);
-                            metric.actualValues = [];
-                        }
-                    }
-                    
-                    // Добавляем метрики с id категории
-                    allMetrics.push({
-                        categoryId: category.id,
-                        metrics: metrics
-                    });
-                }
-            } catch (error) {
-                console.error(`Ошибка при загрузке метрик для категории ${category.id}:`, error);
-            }
+}
+
+// Функция для загрузки категорий
+function loadCategories(data) {
+    if (!categoriesGrid) return;
+    
+    categoriesGrid.innerHTML = '';
+    
+    const categories = data.categories;
+    
+    // Если нет категорий
+    if (!categories || categories.length === 0) {
+        categoriesGrid.innerHTML = '<div class="empty-state">Нет доступных категорий расходов</div>';
+        return;
         }
         
-        // Обновляем бюджетную карточку и быструю статистику
-        await updateBudgetOverview(allMetrics, periods);
-        
-        // Отображаем категории
+    // Создаем карточки для категорий
         categories.forEach(category => {
-            if (!category.status) return; // Пропускаем неактивные категории
-            
-            // Создаем SVG-изображение или заглушку
-            let svgContent = '';
-            if (category.image && category.image.svg_data) {
-                svgContent = `
-                    <svg class="category-icon__svg" viewBox="0 0 24 24">
-                        <path d="${category.image.svg_data}"></path>
-                    </svg>
-                `;
-            } else {
-                // Заглушка, если нет изображения
-                svgContent = `
-                    <svg class="category-icon__svg" viewBox="0 0 24 24">
-                        <path d="M12 2l-5.5 9h11L12 2zm0 3.84L13.93 9h-3.87L12 5.84zM17.5 13c-2.49 0-4.5 2.01-4.5 4.5s2.01 4.5 4.5 4.5 4.5-2.01 4.5-4.5-2.01-4.5-4.5-4.5zm0 7c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"></path>
-                    </svg>
-                `;
-            }
-            
-            // Находим метрики для текущей категории
-            const categoryMetricsData = allMetrics.find(m => m.categoryId === category.id);
-            let planAmount = 0;
-            let factAmount = 0;
-            
-            if (categoryMetricsData && categoryMetricsData.metrics.length > 0) {
-                // Суммируем все плановые и фактические значения метрик категории
-                for (const metric of categoryMetricsData.metrics) {
-                    // Годовой период (без квартала и месяца)
-                    if (yearPeriod) {
-                        // Плановое значение на год
-                        const yearPlanValue = metric.planValues.find(plan => plan.period_id === yearPeriod.id);
-                        if (yearPlanValue) {
-                            planAmount += parseFloat(yearPlanValue.value);
-                        }
-                    }
-                    
-                    // Суммируем фактические значения по всем месяцам
-                    for (const period of monthPeriods) {
-                        const factValue = metric.actualValues.find(actual => actual.period_id === period.id);
-                        if (factValue) {
-                            factAmount += parseFloat(factValue.value);
-                        }
-                    }
-                }
-            } else {
-                // Если нет метрик, то показываем нули
-                planAmount = 0;
-                factAmount = 0;
-            }
-            
-            // Вычисляем процент выполнения плана и разницу
-            const percentage = planAmount > 0 ? Math.round((factAmount / planAmount) * 100) : 0;
-            const difference = factAmount - planAmount;
-            const isOverage = factAmount > planAmount;
-            
-            // Создаем карточку категории
             const categoryCard = document.createElement('div');
             categoryCard.className = 'category-card';
             categoryCard.dataset.category = category.id;
+        
+        const progressPercent = category.yearly_procent;
             
             categoryCard.innerHTML = `
                 <div style="display: flex; justify-content: space-between">
                     <div class="category-icon">
-                        ${svgContent}
+                    <svg class="category-icon__svg" viewBox="0 0 24 24">
+                        <path d="${category.image}"></path>
+                    </svg>
                     </div>
                     <div style="text-align: end">
                         <h3 class="category-title">${category.name}</h3>
@@ -627,47 +484,49 @@ async function loadCategories() {
                 <div class="budget-tiles category-tiles">
                     <div class="budget-tile budget-tile-plan">
                         <div class="tile-label">План</div>
-                        <div class="tile-value">${formatCurrency(planAmount)}</div>
+                    <div class="tile-value">${formatCurrency(category.yearly_plan)}</div>
                     </div>
                     <div class="budget-tile budget-tile-fact">
                         <div class="tile-label">Факт</div>
-                        <div class="tile-value">${formatCurrency(factAmount)}</div>
+                    <div class="tile-value">${formatCurrency(category.yearly_actual)}</div>
                     </div>
                 </div>
 
                 <div class="category-info">
                     <div class="category-progress">
-                        <div class="category-progress-bar" style="width: ${Math.min(percentage, 200)}%;"></div>
+                    <div class="category-progress-bar" style="width: ${Math.min(progressPercent, 200)}%;"></div>
                     </div>
-                    <div class="category-status ${isOverage ? 'category-status--overage' : ''}">
+                <div class="category-status ${progressPercent > 100 ? 'category-status--overage' : ''}">
                         <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="${isOverage ? 'M19 14l-7 7m0 0l-7-7m7 7V3' : 'M5 10l7-7m0 0l7 7m-7-7v18'}"></path>
+                              d="${progressPercent > 100 ? 'M19 14l-7 7m0 0l-7-7m7 7V3' : 'M5 10l7-7m0 0l7 7m-7-7v18'}"></path>
                         </svg>
-                        ${isOverage ? `Превышение: ${percentage - 100}% (${formatCurrency(difference)})` : 
-                                     `Экономия: ${100 - percentage}% (${formatCurrency(-difference)})`}
+                    ${progressPercent > 100 ? 
+                       `Превышение: ${Math.round(progressPercent - 100)}% (${formatCurrency(category.yearly_actual - category.yearly_plan)})` : 
+                       `Экономия: ${Math.round(100 - progressPercent)}% (${formatCurrency(category.yearly_plan - category.yearly_actual)})`}
                     </div>
                     <div class="category-action">Выбрать</div>
                 </div>
             `;
             
-            categoriesGrid.appendChild(categoryCard);
-
-            // Добавляем обработчик клика для выбора категории
-            categoryCard.addEventListener('click', () => {
-                // Убираем активный класс у всех категорий
+        // Добавляем обработчик клика
+        categoryCard.addEventListener('click', function() {
+            // Убираем выделение со всех карточек
                 document.querySelectorAll('.category-card').forEach(card => {
                     card.classList.remove('active');
                 });
                 
-                // Делаем выбранную категорию активной
+            // Выделяем выбранную карточку
                 categoryCard.classList.add('active');
                 
-                // Устанавливаем название категории в заголовке секции магазинов
-                const currentCategorySpan = document.getElementById('current-category');
-                if (currentCategorySpan) {
-                    currentCategorySpan.textContent = category.name;
-                }
+            // Загружаем список магазинов для выбранной категории
+            loadStores(category.id);
+            
+            // Скрываем инструкцию после выбора категории
+            hideInstructionAfterSelection();
+            
+            // Показываем второй шаг инструкции
+            showInstructionStep(2);
                 
                 // Отображаем секцию с магазинами и активируем второй шаг инструкции
                 const storesSection = document.getElementById('stores-section');
@@ -678,7 +537,7 @@ async function loadCategories() {
                     document.querySelector('[data-step="1"]').classList.add('completed');
                     document.querySelector('[data-step="2"]').classList.add('active');
                     
-                    // Добавляем небольшую задержку перед прокруткой, чтобы секция успела отобразиться
+                // Добавляем небольшую задержку перед прокруткой
                     setTimeout(() => {
                     // Прокручиваем к секции магазинов
                     storesSection.scrollIntoView({
@@ -686,134 +545,45 @@ async function loadCategories() {
                             block: 'start'
                     });
                     }, 100);
-                    
-                    // Загружаем магазины для выбранной категории
-                    loadStores(category.id);
                 }
             });
-        });
         
-        // Убираем индикатор загрузки
-        document.body.removeChild(loadingOverlay);
-    } catch (error) {
-        console.error('Ошибка при загрузке категорий:', error);
-        categoriesGrid.innerHTML = `
-            <div class="error-state">
-                Не удалось загрузить категории. Ошибка: ${error.message}
-            </div>
-        `;
-        
-        // Убираем индикатор загрузки в случае ошибки
-        const loadingOverlay = document.querySelector('.loading-overlay');
-        if (loadingOverlay) {
-            document.body.removeChild(loadingOverlay);
-        }
-    }
+        categoriesGrid.appendChild(categoryCard);
+    });
 }
 
-/**
- * Загрузка магазинов с сервера
- */
-async function loadStores(categoryId = null) {
-    try {
-        // Проверяем наличие контейнера для магазинов на странице
-        const storesGrid = document.querySelector('.stores-grid');
+// Функция для загрузки магазинов
+function loadStores(categoryId) {
         if (!storesGrid) return;
         
-        // Очищаем существующие магазины
         storesGrid.innerHTML = '';
         
-        // Получаем магазины с сервера
-        const stores = await apiClient.get('/finance/shops');
-        
-        // Обновляем счетчик магазинов
-        if (storesCount) {
-            storesCount.textContent = stores.length;
-        }
-        
-        // Если магазинов нет
-        if (stores.length === 0) {
-            storesGrid.innerHTML = '<div class="empty-state">Магазины не найдены</div>';
+    // Получаем данные выбранной категории из загруженных данных
+    const categoryData = dashboardData.categories.find(category => category.id === categoryId);
+    if (!categoryData) {
+        console.error(`Категория с ID ${categoryId} не найдена в данных`);
             return;
         }
         
-        // Получаем все периоды
-        let periods = [];
-        try {
-            // Получаем все периоды без фильтрации по году
-            periods = await apiClient.get('/finance/periods');
-        } catch (error) {
-            console.error('Ошибка при загрузке периодов:', error);
-            // Если не удалось загрузить периоды, показываем сообщение об ошибке
-            storesGrid.innerHTML = `
-                <div class="error-state">
-                    Не удалось загрузить периоды. Ошибка: ${error.message}
-                </div>
-            `;
-            return;
-        }
-        
-        // Отображаем магазины
-        for (const store of stores) {
-            if (!store.status) continue; // Пропускаем неактивные магазины
-            
-            // Получаем метрики по категории, если указан ID категории
-            let storeAmount = 0;
-            
-            if (categoryId) {
-                try {
-                    // Получаем метрики для выбранной категории
-                    const metrics = await apiClient.getWithParams('/finance/metrics', { 
-                        category_id: categoryId 
-                    });
-                    
-                    if (metrics && metrics.length > 0) {
-                        // Получаем все фактические значения для магазина
-                        try {
-                            // Прямой запрос фактических значений для магазина
-                            const actualValues = await apiClient.getWithParams('/finance/actual-values', {
-                                shop_id: store.id
-                            });
+    // Устанавливаем имя текущей категории
+    currentCategoryElement.textContent = categoryData.name;
+    
+    // Показываем секцию магазинов
+    storesSection.classList.add('active');
+    
+    const stores = dashboardData.shops;
                             
-                            // Фильтруем значения только для метрик выбранной категории
-                            const metricIds = metrics.map(m => m.id);
-                            const filteredValues = actualValues.filter(v => metricIds.includes(v.metric_id));
-                            
-                            // Суммируем все фактические значения
-                            for (const value of filteredValues) {
-                                storeAmount += parseFloat(value.value);
-                            }
-                        } catch (error) {
-                            console.error(`Ошибка при загрузке фактических значений для магазина ${store.id}:`, error);
-                        }
+    // Если нет магазинов
+    if (!stores || stores.length === 0) {
+        storesGrid.innerHTML = '<div class="empty-state">Нет доступных магазинов</div>';
+        return;
                     }
-                } catch (error) {
-                    console.error(`Ошибка при загрузке метрик для категории ${categoryId}:`, error);
-                }
-            } else {
-                // Если категория не выбрана, показываем суммарные значения по всем метрикам для этого магазина
-                try {
-                    // Получаем все фактические значения для магазина
-                    const actualValues = await apiClient.getWithParams('/finance/actual-values', {
-                        shop_id: store.id
-                    });
-                    
-                    // Суммируем все фактические значения
-                    for (const value of actualValues) {
-                        storeAmount += parseFloat(value.value);
-                    }
-                } catch (error) {
-                    console.error(`Ошибка при загрузке фактических значений для магазина ${store.id}:`, error);
-                }
-            }
-            
-            // Создаем элемент карточки магазина с описанием
+    
+    // Создаем карточки для магазинов
+    stores.forEach(store => {
             const storeCard = document.createElement('div');
             storeCard.className = 'store-card';
             storeCard.dataset.store = store.id;
-            
-            // Получаем описание магазина или используем заглушку
-            const description = store.description || 'Описание магазина отсутствует';
 
             storeCard.innerHTML = `
                 <div class="store-card-header">
@@ -824,7 +594,7 @@ async function loadStores(categoryId = null) {
                     </svg>
                 </div>
                 <div class="store-name">${store.name}</div>
-                    <div class="store-amount">${formatCurrency(storeAmount)}</div>
+                <div class="store-amount">${formatCurrency(store.yearly_actual)}</div>
                 </div>
                 <div class="store-card-body">
                     <div class="store-address">
@@ -836,7 +606,7 @@ async function loadStores(categoryId = null) {
                         </svg>
                         <span>${store.address || 'Адрес не указан'}</span>
                     </div>
-                    <div class="store-description">${description}</div>
+                <div class="store-description">${store.description || 'Описание не указано'}</div>
                 </div>
                 <div class="store-card-footer">
                     <button class="store-view-report">
@@ -849,45 +619,55 @@ async function loadStores(categoryId = null) {
                 </div>
             `;
             
-            storesGrid.appendChild(storeCard);
-            
-            // Добавляем обработчик клика для всей карточки магазина
-            storeCard.addEventListener('click', function() {
-                // Убираем активный класс у всех магазинов
-                document.querySelectorAll('.store-card').forEach(card => {
-                    card.classList.remove('active');
-                });
+        // Добавляем обработчик клика на кнопку "Просмотреть отчет"
+        storeCard.querySelector('.store-view-report').addEventListener('click', function() {
+            // Перенаправляем на страницу с детальной информацией
+            window.location.href = `./pages/finance-details.html?category=${categoryId}&store=${store.id}`;
                 
-                // Делаем выбранный магазин активным
-                this.classList.add('active');
-                
-                // Активируем шаг 3 в инструкции
-                document.querySelector('[data-step="2"]').classList.add('completed');
-                document.querySelector('[data-step="3"]').classList.add('active');
-                
-                // Добавляем класс loading, чтобы показать индикатор загрузки
-                this.classList.add('loading');
-                
-                // Здесь можно добавить логику для перехода к отчету
-                // Для демонстрации перенаправляем на страницу отчета с небольшой задержкой
-                setTimeout(() => {
-                    const selectedCategory = document.querySelector('.category-card.active').dataset.category;
-                    console.log(`Переход к отчету: категория ${selectedCategory}, магазин ${store.id}`);
-                    // Раскомментируйте следующую строку для реального перехода:
-                    window.location.href = `./pages/page.html?category=${selectedCategory}&store=${store.id}`;
-                }, 800);
-            });
+            // Показываем третий шаг инструкции
+            showInstructionStep(3);
+        });
+        
+        storesGrid.appendChild(storeCard);
+    });
+}
+
+// Показ и скрытие индикатора загрузки
+function showLoading() {
+    let loader = document.querySelector('.loading-overlay');
+    if (!loader) {
+        loader = document.createElement('div');
+        loader.className = 'loading-overlay';
+        loader.innerHTML = '<div class="loading-spinner"></div>';
+        document.body.appendChild(loader);
+    }
+    loader.style.display = 'flex';
+}
+
+function hideLoading() {
+    const loader = document.querySelector('.loading-overlay');
+    if (loader) {
+        loader.style.display = 'none';
+    }
+}
+
+// Функция для отображения определенного шага инструкции
+function showInstructionStep(step) {
+    const instructionSteps = document.querySelectorAll('.instruction-step');
+    instructionSteps.forEach(stepElem => {
+        if (parseInt(stepElem.dataset.step) === step) {
+            stepElem.classList.add('active');
+        } else {
+            stepElem.classList.remove('active');
         }
-    } catch (error) {
-        console.error('Ошибка при загрузке магазинов:', error);
-        const storesGrid = document.querySelector('.stores-grid');
-        if (storesGrid) {
-            storesGrid.innerHTML = `
-                <div class="error-state">
-                    Не удалось загрузить магазины. Ошибка: ${error.message}
-                </div>
-            `;
-        }
+    });
+}
+
+// Скрытие инструкции после выбора
+function hideInstructionAfterSelection() {
+    const instruction = document.getElementById('instruction');
+    if (instruction) {
+        instruction.classList.add('minimized');
     }
 }
 
