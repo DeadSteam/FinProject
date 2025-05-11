@@ -41,23 +41,25 @@ class PeriodService(BaseService[Period, PeriodSchema, PeriodCreate, PeriodUpdate
         
         if not db_obj:
             return None
+        
             
         return TypeAdapter(self.schema).validate_python(db_obj.__dict__)
     
     async def get_by_type(
-        self, 
-        session: AsyncSession, 
-        period_type: str,
-        year: Optional[int] = None,
-        quarter: Optional[int] = None,
-        skip: int = 0,
-        limit: int = 100
-    ) -> List[PeriodSchema]:
-        """Получение периодов по типу (год, квартал, месяц)."""
-        conditions = []
+        self, year: int, period_type: str, session: AsyncSession
+    ) -> Optional[Period]:
+        """
+        Получение периода определенного типа (year, quarter, month) по году.
         
-        if year is not None:
-            conditions.append(self.model.year == year)
+        Args:
+            year: Год для поиска периода
+            period_type: Тип периода ("year", "quarter", "month")
+            session: Сессия БД
+            
+        Returns:
+            Период заданного типа или None, если не найден
+        """
+        conditions = [self.model.year == year]
         
         if period_type == "year":
             conditions.append(self.model.quarter.is_(None))
@@ -65,33 +67,38 @@ class PeriodService(BaseService[Period, PeriodSchema, PeriodCreate, PeriodUpdate
         elif period_type == "quarter":
             conditions.append(self.model.quarter.isnot(None))
             conditions.append(self.model.month.is_(None))
-            if quarter is not None:
-                conditions.append(self.model.quarter == quarter)
         elif period_type == "month":
             conditions.append(self.model.month.isnot(None))
+        else:
+            raise ValueError(f"Неизвестный тип периода: {period_type}")
         
-        query = select(self.model).where(and_(*conditions)).offset(skip).limit(limit)
+        query = select(self.model).where(and_(*conditions))
         result = await session.execute(query)
-        db_objs = result.scalars().all()
-        
-        return [TypeAdapter(self.schema).validate_python(obj.__dict__) for obj in db_objs]
+        return result.scalar_one_or_none()
     
     async def get_or_create(
         self, year: int, session: AsyncSession, quarter: Optional[int] = None, month: Optional[int] = None
     ) -> PeriodSchema:
-        """Получение или создание периода."""
-        period = await self.get_by_year_quarter_month(year, session, quarter, month)
-        if period:
-            return period
+        """
+        Получение или создание периода.
         
-        # Создаем новый период
-        period_data = {
-            "year": year,
-            "quarter": quarter,
-            "month": month
-        }
-        period_in = PeriodCreate(**period_data)
-        return await self.create(period_in, session)
+        Этот метод устарел, используйте get_or_create_by_params.
+        
+        Args:
+            year: Год для поиска/создания периода
+            session: Сессия БД
+            quarter: Квартал для поиска/создания периода (опционально)
+            month: Месяц для поиска/создания периода (опционально)
+        
+        Returns:
+            Найденный или созданный период
+        """
+        return await self.get_or_create_by_params(
+            year=year,
+            month=month,
+            quarter=quarter,
+            session=session
+        )
     
     async def get_periods_grouped_by_type(
         self, 
@@ -198,4 +205,139 @@ class PeriodService(BaseService[Period, PeriodSchema, PeriodCreate, PeriodUpdate
         """
         query = select(self.model).where(self.model.year == year)
         result = await session.execute(query)
-        return list(result.scalars().all()) 
+        return list(result.scalars().all())
+
+    async def get_periods_by_type(
+        self, 
+        session: AsyncSession, 
+        period_type: str,
+        year: Optional[int] = None,
+        quarter: Optional[int] = None,
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[PeriodSchema]:
+        """Получение периодов по типу (год, квартал, месяц)."""
+        conditions = []
+        
+        if year is not None:
+            conditions.append(self.model.year == year)
+        
+        if period_type == "year":
+            conditions.append(self.model.quarter.is_(None))
+            conditions.append(self.model.month.is_(None))
+        elif period_type == "quarter":
+            conditions.append(self.model.quarter.isnot(None))
+            conditions.append(self.model.month.is_(None))
+            if quarter is not None:
+                conditions.append(self.model.quarter == quarter)
+        elif period_type == "month":
+            conditions.append(self.model.month.isnot(None))
+        
+        query = select(self.model).where(and_(*conditions)).offset(skip).limit(limit)
+        result = await session.execute(query)
+        db_objs = result.scalars().all()
+        
+        return [TypeAdapter(self.schema).validate_python(obj.__dict__) for obj in db_objs]
+
+    async def get_by_params(
+        self, 
+        year: int, 
+        session: AsyncSession, 
+        month: Optional[int] = None, 
+        quarter: Optional[int] = None
+    ) -> List[PeriodSchema]:
+        """
+        Получение списка периодов по параметрам года, месяца и квартала.
+        
+        Args:
+            year: Год для поиска
+            session: Сессия БД
+            month: Месяц (опционально)
+            quarter: Квартал (опционально)
+            
+        Returns:
+            Список найденных периодов
+        """
+        conditions = [self.model.year == year]
+        
+        if month is not None:
+            conditions.append(self.model.month == month)
+        elif quarter is not None:
+            conditions.append(self.model.quarter == quarter)
+            conditions.append(self.model.month.is_(None))
+        
+        query = select(self.model).where(and_(*conditions))
+        result = await session.execute(query)
+        db_objs = result.scalars().all()
+        
+        return [TypeAdapter(self.schema).validate_python(obj.__dict__) for obj in db_objs]
+        
+    async def get_by_params_first(
+        self, 
+        year: int, 
+        session: AsyncSession, 
+        month: Optional[int] = None, 
+        quarter: Optional[int] = None
+    ) -> Optional[PeriodSchema]:
+        """
+        Получение первого найденного периода по параметрам года, месяца и квартала.
+        
+        Args:
+            year: Год для поиска
+            session: Сессия БД
+            month: Месяц (опционально)
+            quarter: Квартал (опционально)
+            
+        Returns:
+            Найденный период или None
+        """
+        periods = await self.get_by_params(
+            year=year,
+            month=month,
+            quarter=quarter,
+            session=session
+        )
+        
+        if not periods:
+            return None
+            
+        return periods[0]
+        
+    async def get_or_create_by_params(
+        self, 
+        year: int, 
+        session: AsyncSession, 
+        month: Optional[int] = None, 
+        quarter: Optional[int] = None
+    ) -> PeriodSchema:
+        """
+        Получение или создание периода по параметрам.
+        
+        Args:
+            year: Год для поиска/создания
+            session: Сессия БД
+            month: Месяц (опционально)
+            quarter: Квартал (опционально)
+            
+        Returns:
+            Найденный или созданный период
+        """
+        period = await self.get_by_params_first(
+            year=year,
+            month=month,
+            quarter=quarter,
+            session=session
+        )
+        
+        if period:
+            return period
+            
+        # Создаем новый период
+        period_data = {
+            "year": year,
+            "month": month,
+            "quarter": quarter
+        }
+        
+        period_in = PeriodCreate(**period_data)
+        return await self.create(period_in, session=session) 

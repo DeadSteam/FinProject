@@ -55,7 +55,21 @@ class PlanValueService(BaseService[PlanValue, PlanValueSchema, PlanValueCreate, 
         result_plans = []
         
         # Получаем или создаем период для года
-        year_period = await self.period_service.get_or_create(year, session)
+        year_period = await self.period_service.get_by_year_quarter_month(
+            year=year, 
+            session=session,
+            quarter=None,  # Годовой период не имеет квартала
+            month=None     # Годовой период не имеет месяца
+        )
+        
+        if not year_period:
+            # Если годовой период не найден, создаем его
+            year_period = await self.period_service.get_or_create_by_params(
+                year=year,
+                month=None,
+                quarter=None,
+                session=session
+            )
         
         # Проверяем, существует ли уже годовое плановое значение
         year_plan = await self.get_by_metric_shop_period(metric_id, shop_id, year_period.id, session)
@@ -246,12 +260,22 @@ class PlanValueService(BaseService[PlanValue, PlanValueSchema, PlanValueCreate, 
         current_month = now.month if now.year == year else 1
         
         # Находим годовой период
-        year_period = await self.period_service.get_by_year_quarter_month(year, session)
+        year_period = await self.period_service.get_by_year_quarter_month(
+            year=year, 
+            session=session,
+            quarter=None,  # Годовой период не имеет квартала
+            month=None     # Годовой период не имеет месяца
+        )
         
         if not year_period:
-            # Если период не найден, возвращаем пустой список
-            return []
-            
+            # Если годовой период не найден, создаем его
+            year_period = await self.period_service.get_or_create_by_params(
+                year=year,
+                month=None,
+                quarter=None,
+                session=session
+            )
+        
         # Получаем годовое плановое значение
         year_plan = await self.get_by_metric_shop_period(metric_id, shop_id, year_period.id, session)
         
@@ -398,4 +422,37 @@ class PlanValueService(BaseService[PlanValue, PlanValueSchema, PlanValueCreate, 
             )
         )
         result = await session.execute(query)
-        return result.scalar_one_or_none() 
+        return result.scalar_one_or_none()
+    
+    async def get_by_params_list(
+        self, 
+        metric_id: uuid.UUID, 
+        period_id: uuid.UUID, 
+        session: AsyncSession,
+        shop_id: Optional[uuid.UUID] = None
+    ) -> List[PlanValueSchema]:
+        """
+        Получение списка плановых значений по параметрам.
+        
+        Args:
+            metric_id: ID метрики
+            period_id: ID периода
+            session: Сессия БД
+            shop_id: ID магазина (опционально)
+            
+        Returns:
+            Список плановых значений, подходящих под условия
+        """
+        conditions = [
+            self.model.metric_id == metric_id,
+            self.model.period_id == period_id
+        ]
+        
+        if shop_id is not None:
+            conditions.append(self.model.shop_id == shop_id)
+        
+        query = select(self.model).where(and_(*conditions))
+        result = await session.execute(query)
+        db_objs = result.scalars().all()
+        
+        return [TypeAdapter(self.schema).validate_python(obj.__dict__) for obj in db_objs] 

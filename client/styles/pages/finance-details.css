@@ -221,10 +221,6 @@
   color: var(--success);
 }
 
-.deviation--positive::before {
-  content: "+";
-}
-
 .deviation-bar {
   position: absolute;
   top: 0;
@@ -815,10 +811,6 @@
 .negative {
   color: var(--error);
   position: relative;
-}
-
-.positive::before {
-  content: '+';
 }
 
 /* Индикаторы для отклонений */

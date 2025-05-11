@@ -122,3 +122,4 @@ async def delete_category(
     if not result:
         raise HTTPException(status_code=500, detail="Ошибка при удалении категории")
     return {"status": "success", "message": "Категория успешно удалена"} 
+ 

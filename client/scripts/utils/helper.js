@@ -87,24 +87,6 @@ export function closeModal(modal) {
     document.body.classList.remove('modal-open');
 }
 
-// Функция для форматирования даты
-export function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ru-RU', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-    });
-}
-
-// Функция для форматирования денежных значений
-export function formatCurrency(value) {
-    return new Intl.NumberFormat('ru-RU', {
-        style: 'currency',
-        currency: 'RUB',
-        minimumFractionDigits: 2
-    }).format(value);
-}
 
 // Функция для получения статуса в удобном для отображения виде
 export function getStatusBadge(status) {

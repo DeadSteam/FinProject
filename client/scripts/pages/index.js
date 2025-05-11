@@ -8,7 +8,7 @@ class ApiClient {
         this.headers = {
             'Content-Type': 'application/json'
         };
-        
+
         // Добавляем токен авторизации, если он есть
         if (authService.isAuthenticated()) {
             this.headers['Authorization'] = authService.getAuthHeader();
@@ -21,7 +21,7 @@ class ApiClient {
             const response = await fetch(`${this.baseUrl}${endpoint}`, {
                 headers: this.headers
             });
-            
+
             // Если ошибка авторизации
             if (response.status === 401) {
                 // Пробуем обновить токен
@@ -38,62 +38,13 @@ class ApiClient {
                     throw refreshError;
                 }
             }
-            
+
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
             return await response.json();
         } catch (error) {
             console.error(`Ошибка GET запроса: ${error.message}`);
-            // Не перенаправляем на страницу входа при общих ошибках сети
-            if (error.message.includes('Failed to fetch')) {
-                console.error('Ошибка сети - возможно, сервер недоступен');
-                return []; // Возвращаем пустой массив вместо ошибки
-            }
-            throw error;
-        }
-    }
-
-    // Добавляем метод для получения данных с параметрами
-    async getWithParams(endpoint, params) {
-        try {
-            // Преобразуем объект параметров в строку запроса
-            const queryParams = new URLSearchParams();
-            for (const key in params) {
-                queryParams.append(key, params[key]);
-            }
-            
-            const url = `${this.baseUrl}${endpoint}?${queryParams.toString()}`;
-            console.log(`Выполняем GET запрос с параметрами к ${url}`);
-            
-            const response = await fetch(url, {
-                headers: this.headers
-            });
-            
-            // Если ошибка авторизации
-            if (response.status === 401) {
-                // Пробуем обновить токен
-                try {
-                    await authService.refreshToken();
-                    // Обновляем заголовки с новым токеном
-                    this.headers['Authorization'] = authService.getAuthHeader();
-                    // Повторяем запрос
-                    return this.getWithParams(endpoint, params);
-                } catch (refreshError) {
-                    // Если не удалось обновить токен, перенаправляем на страницу входа
-                    console.error('Ошибка обновления токена:', refreshError);
-                    window.location.href = '/client/pages/login.html';
-                    throw refreshError;
-                }
-            }
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error(`Ошибка GET запроса с параметрами: ${error.message}`);
             // Не перенаправляем на страницу входа при общих ошибках сети
             if (error.message.includes('Failed to fetch')) {
                 console.error('Ошибка сети - возможно, сервер недоступен');
@@ -109,7 +60,6 @@ const apiClient = new ApiClient('http://localhost:8000/api/v1');
 
 // Элементы DOM
 const categoriesGrid = document.querySelector('.categories-grid');
-const storesList = document.querySelector('.stores-list');
 const categoriesCount = document.querySelector('.quick-stat-item:nth-child(1) .quick-stat-value');
 const storesCount = document.querySelector('.quick-stat-item:nth-child(2) .quick-stat-value');
 const expensePercentage = document.querySelector('.quick-stat-item:nth-child(3) .quick-stat-value');
@@ -146,27 +96,27 @@ async function updateBudgetOverview(allMetrics, periods) {
         const progressBar = document.querySelector('.budget-progress-bar');
         const budgetStatus = document.querySelector('.budget-status');
         const expensePercentage = document.querySelector('.quick-stat-item:nth-child(3) .quick-stat-value');
-        
+
         // Получаем текущий месяц и используем фиксированный год
         const now = new Date();
         const currentMonth = now.getMonth() + 1; // JavaScript месяцы с 0, нам нужно с 1
         // Используем фиксированный год вместо now.getFullYear()
-        
+
         // Месяцы на русском
         const monthNames = {
             1: 'Январь', 2: 'Февраль', 3: 'Март', 4: 'Апрель', 5: 'Май', 6: 'Июнь',
             7: 'Июль', 8: 'Август', 9: 'Сентябрь', 10: 'Октябрь', 11: 'Ноябрь', 12: 'Декабрь'
         };
-        
+
         // Обновляем заголовок бюджетной карточки
         if (budgetTitle) {
             budgetTitle.textContent = `Бюджет на ${monthNames[currentMonth]} ${currentYear}`;
         }
-        
+
         // Вычисляем общие плановые и фактические значения для текущего месяца
         let totalPlan = 0;
         let totalFact = 0;
-        
+
         // Проверяем, что у нас есть данные о периодах
         if (!periods || periods.length === 0) {
             console.warn('Нет данных о периодах');
@@ -186,12 +136,12 @@ async function updateBudgetOverview(allMetrics, periods) {
             if (expensePercentage) expensePercentage.textContent = '0%';
             return;
         }
-        
+
         // Фильтруем периоды для текущего года и месяца
         const currentYearPeriods = periods.filter(p => p.year === currentYear);
         // Находим период текущего месяца
         const currentMonthPeriod = currentYearPeriods.find(p => p.month === currentMonth);
-        
+
         // Проверяем, что у нас есть данные о текущем месяце
         if (!currentMonthPeriod) {
             console.warn(`Нет данных о периоде для ${monthNames[currentMonth]} ${currentYear}`);
@@ -211,7 +161,7 @@ async function updateBudgetOverview(allMetrics, periods) {
             if (expensePercentage) expensePercentage.textContent = '0%';
             return;
         }
-        
+
         // Проверяем, что у нас есть данные о метриках
         if (!allMetrics || !Array.isArray(allMetrics) || allMetrics.length === 0) {
             console.warn('Нет данных о метриках');
@@ -230,7 +180,7 @@ async function updateBudgetOverview(allMetrics, periods) {
             if (expensePercentage) expensePercentage.textContent = '0%';
             return;
         }
-        
+
         // Если у нас есть данные о метриках и текущем периоде, вычисляем значения
         for (const metricData of allMetrics) {
             // Проверяем, что у метрики есть массив metrics
@@ -238,21 +188,21 @@ async function updateBudgetOverview(allMetrics, periods) {
                 console.warn('Неверный формат данных метрики:', metricData);
                 continue;
             }
-            
+
             for (const metric of metricData.metrics) {
                 // Проверяем, что у метрики есть массивы planValues и actualValues
-                if (!metric.planValues || !Array.isArray(metric.planValues) || 
+                if (!metric.planValues || !Array.isArray(metric.planValues) ||
                     !metric.actualValues || !Array.isArray(metric.actualValues)) {
                     console.warn('Неверный формат данных для метрики:', metric);
                     continue;
                 }
-                
+
                 // Находим плановое значение для текущего месяца
                 const planValueData = metric.planValues.find(plan => plan.period_id === currentMonthPeriod.id);
                 if (planValueData) {
                     totalPlan += parseFloat(planValueData.value);
                 }
-                
+
                 // Находим фактическое значение для текущего месяца
                 const factValueData = metric.actualValues.find(actual => actual.period_id === currentMonthPeriod.id);
                 if (factValueData) {
@@ -260,26 +210,26 @@ async function updateBudgetOverview(allMetrics, periods) {
                 }
             }
         }
-        
+
         // Обновляем значения в бюджетной карточке
         if (planValue) {
             planValue.textContent = formatCurrency(totalPlan);
         }
-        
+
         if (factValue) {
             factValue.textContent = formatCurrency(totalFact);
         }
-        
+
         // Вычисляем процент выполнения и разницу
         const percentage = totalPlan > 0 ? Math.round((totalFact / totalPlan) * 100) : 0;
         const difference = totalFact - totalPlan;
         const isOverage = totalFact > totalPlan;
-        
+
         // Обновляем прогресс-бар
         if (progressBar) {
             progressBar.style.width = `${Math.min(percentage, 200)}%`;
         }
-        
+
         // Обновляем статус бюджета
         if (budgetStatus) {
             budgetStatus.className = `budget-status ${isOverage ? 'budget-status--overage' : ''}`;
@@ -288,11 +238,11 @@ async function updateBudgetOverview(allMetrics, periods) {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="${isOverage ? 'M19 14l-7 7m0 0l-7-7m7 7V3' : 'M5 10l7-7m0 0l7 7m-7-7v18'}"></path>
                 </svg>
-                ${isOverage ? `Превышение на ${percentage - 100}% (${formatCurrency(difference)})` : 
-                             `Экономия на ${100 - percentage}% (${formatCurrency(-difference)})`}
+                ${isOverage ? `Превышение на ${percentage - 100}% (${formatCurrency(difference)})` :
+                `Экономия на ${100 - percentage}% (${formatCurrency(-difference)})`}
             `;
         }
-        
+
         // Обновляем процент расходов в быстрой статистике
         if (expensePercentage) {
             expensePercentage.textContent = `${percentage}%`;
@@ -302,9 +252,6 @@ async function updateBudgetOverview(allMetrics, periods) {
     }
 }
 
-// Флаг для отслеживания загрузки данных
-let isDataLoading = false;
-let dataLoaded = false;
 
 // Функция для инициализации страницы
 async function initPage() {
@@ -314,7 +261,7 @@ async function initPage() {
         window.location.href = './pages/login.html';
         return;
     }
-    
+
     try {
         // Загружаем данные пользователя
         const user = await authService.getCurrentUser();
@@ -322,13 +269,13 @@ async function initPage() {
             console.error('Не удалось загрузить данные пользователя');
             return;
         }
-        
+
         // Обновляем информацию о пользователе в интерфейсе
         updateUserInfo(user);
-        
+
         // Загружаем данные дашборда
         await loadDashboardData();
-        
+
         console.log('Инициализация страницы успешно завершена');
     } catch (error) {
         console.error('Ошибка при инициализации страницы:', error);
@@ -344,7 +291,7 @@ function updateUserInfo(user) {
     const userAvatarInner = document.querySelector('.user-avatar .avatar-inner');
     const userName = document.querySelector('.user-name');
     const userRole = document.querySelector('.user-role');
-    
+
     // Если элементы найдены, обновляем их
     if (userAvatarInner) {
         // Если у пользователя есть имя и фамилия, используем инициалы
@@ -353,15 +300,15 @@ function updateUserInfo(user) {
             userAvatarInner.textContent = initials;
         }
     }
-    
+
     if (userName) {
         userName.textContent = user.username || 'Пользователь';
     }
-    
+
     if (userRole) {
         userRole.textContent = user.role?.name || 'Пользователь';
     }
-    
+
     // Показываем или скрываем ссылку на админпанель в зависимости от роли
     setupAdminLink(user);
 }
@@ -370,14 +317,14 @@ function updateUserInfo(user) {
 function setupAdminLink(user) {
     const adminLink = document.querySelector('.admin-link');
     if (!adminLink) return;
-    
+
     // Показываем ссылку на админпанель только для админов и менеджеров
-        if (user.role && (user.role.name === 'admin' || user.role.name === 'manager')) {
+    if (user.role && (user.role.name === 'admin' || user.role.name === 'manager')) {
         console.log('Отображаем ссылку на админпанель для роли:', user.role.name);
-            adminLink.style.display = 'block';
-        } else {
+        adminLink.style.display = 'block';
+    } else {
         console.log('Скрываем ссылку на админпанель');
-            adminLink.style.display = 'none';
+        adminLink.style.display = 'none';
     }
 }
 
@@ -387,10 +334,10 @@ async function loadDashboardData() {
         // Загружаем данные из нового API-эндпоинта
         dashboardData = await apiClient.get('/finance/analytics/dashboard/aggregate');
         console.log('Загружены данные дашборда:', dashboardData);
-        
+
         // Обновляем бюджетную информацию
         updateBudgetInfo(dashboardData);
-        
+
         // Загружаем категории и магазины
         loadCategories(dashboardData);
     } catch (error) {
@@ -404,19 +351,19 @@ function updateBudgetInfo(data) {
     if (categoriesCount) categoriesCount.textContent = data.dashboard_metrics.count_category;
     if (storesCount) storesCount.textContent = data.dashboard_metrics.count_shops;
     if (expensePercentage) expensePercentage.textContent = `${data.dashboard_metrics.all_yearly_procent}%`;
-    
+
     // Обновляем бюджетные значения
     const monthPlan = data.month_values.month_plan;
     const monthActual = data.month_values.month_actual;
     const monthPercent = data.month_values.month_procent;
-    
+
     if (planValue) planValue.textContent = formatCurrency(monthPlan);
     if (factValue) factValue.textContent = formatCurrency(monthActual);
-    
+
     // Обновляем прогресс-бар
     if (progressBar) {
         progressBar.style.width = `${Math.min(100, monthPercent)}%`;
-        
+
         // Цвет прогресс-бара зависит от процента выполнения
         if (monthPercent < 80) {
             progressBar.style.backgroundColor = 'var(--warning)'; // Отстает от плана
@@ -425,50 +372,50 @@ function updateBudgetInfo(data) {
         } else {
             progressBar.style.backgroundColor = 'var(--danger)'; // Превышает план
         }
-        }
-        
+    }
+
     // Обновляем статус бюджета
     if (budgetStatus) {
         // Вычисляем разницу в деньгах
         const difference = monthActual - monthPlan;
         const isOverage = monthActual > monthPlan;
-        
+
         budgetStatus.className = `budget-status ${isOverage ? 'budget-status--overage' : ''}`;
         budgetStatus.innerHTML = `
             <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="${isOverage ? 'M19 14l-7 7m0 0l-7-7m7 7V3' : 'M5 10l7-7m0 0l7 7m-7-7v18'}"></path>
             </svg>
-            ${isOverage ? 
-                `Превышение: ${Math.round(monthPercent - 100)}% (${formatCurrency(difference)})` : 
-                `Экономия: ${Math.round(100 - monthPercent)}% (${formatCurrency(-difference)})`}
+            ${isOverage ?
+            `Превышение: ${Math.round(monthPercent - 100)}% (${formatCurrency(difference)})` :
+            `Экономия: ${Math.round(100 - monthPercent)}% (${formatCurrency(-difference)})`}
         `;
-                        }
+    }
 }
 
 // Функция для загрузки категорий
 function loadCategories(data) {
     if (!categoriesGrid) return;
-    
+
     categoriesGrid.innerHTML = '';
-    
+
     const categories = data.categories;
-    
+
     // Если нет категорий
     if (!categories || categories.length === 0) {
         categoriesGrid.innerHTML = '<div class="empty-state">Нет доступных категорий расходов</div>';
         return;
-        }
-        
+    }
+
     // Создаем карточки для категорий
-        categories.forEach(category => {
-            const categoryCard = document.createElement('div');
-            categoryCard.className = 'category-card';
-            categoryCard.dataset.category = category.id;
-        
+    categories.forEach(category => {
+        const categoryCard = document.createElement('div');
+        categoryCard.className = 'category-card';
+        categoryCard.dataset.category = category.id;
+
         const progressPercent = category.yearly_procent;
-            
-            categoryCard.innerHTML = `
+
+        categoryCard.innerHTML = `
                 <div style="display: flex; justify-content: space-between">
                     <div class="category-icon">
                     <svg class="category-icon__svg" viewBox="0 0 24 24">
@@ -501,91 +448,91 @@ function loadCategories(data) {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="${progressPercent > 100 ? 'M19 14l-7 7m0 0l-7-7m7 7V3' : 'M5 10l7-7m0 0l7 7m-7-7v18'}"></path>
                         </svg>
-                    ${progressPercent > 100 ? 
-                       `Превышение: ${Math.round(progressPercent - 100)}% (${formatCurrency(category.yearly_actual - category.yearly_plan)})` : 
-                       `Экономия: ${Math.round(100 - progressPercent)}% (${formatCurrency(category.yearly_plan - category.yearly_actual)})`}
+                    ${progressPercent > 100 ?
+            `Превышение: ${Math.round(progressPercent - 100)}% (${formatCurrency(category.yearly_actual - category.yearly_plan)})` :
+            `Экономия: ${Math.round(100 - progressPercent)}% (${formatCurrency(category.yearly_plan - category.yearly_actual)})`}
                     </div>
                     <div class="category-action">Выбрать</div>
                 </div>
             `;
-            
+
         // Добавляем обработчик клика
-        categoryCard.addEventListener('click', function() {
+        categoryCard.addEventListener('click', function () {
             // Убираем выделение со всех карточек
-                document.querySelectorAll('.category-card').forEach(card => {
-                    card.classList.remove('active');
-                });
-                
+            document.querySelectorAll('.category-card').forEach(card => {
+                card.classList.remove('active');
+            });
+
             // Выделяем выбранную карточку
-                categoryCard.classList.add('active');
-                
+            categoryCard.classList.add('active');
+
             // Загружаем список магазинов для выбранной категории
             loadStores(category.id);
-            
+
             // Скрываем инструкцию после выбора категории
             hideInstructionAfterSelection();
-            
+
             // Показываем второй шаг инструкции
             showInstructionStep(2);
-                
-                // Отображаем секцию с магазинами и активируем второй шаг инструкции
-                const storesSection = document.getElementById('stores-section');
-                if (storesSection) {
-                    storesSection.classList.add('active');
-                    
-                    // Активируем шаг 2 в инструкции
-                    document.querySelector('[data-step="1"]').classList.add('completed');
-                    document.querySelector('[data-step="2"]').classList.add('active');
-                    
+
+            // Отображаем секцию с магазинами и активируем второй шаг инструкции
+            const storesSection = document.getElementById('stores-section');
+            if (storesSection) {
+                storesSection.classList.add('active');
+
+                // Активируем шаг 2 в инструкции
+                document.querySelector('[data-step="1"]').classList.add('completed');
+                document.querySelector('[data-step="2"]').classList.add('active');
+
                 // Добавляем небольшую задержку перед прокруткой
-                    setTimeout(() => {
+                setTimeout(() => {
                     // Прокручиваем к секции магазинов
                     storesSection.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
+                        behavior: 'smooth',
+                        block: 'start'
                     });
-                    }, 100);
-                }
-            });
-        
+                }, 100);
+            }
+        });
+
         categoriesGrid.appendChild(categoryCard);
     });
 }
 
 // Функция для загрузки магазинов
 function loadStores(categoryId) {
-        if (!storesGrid) return;
-        
-        storesGrid.innerHTML = '';
-        
+    if (!storesGrid) return;
+
+    storesGrid.innerHTML = '';
+
     // Получаем данные выбранной категории из загруженных данных
     const categoryData = dashboardData.categories.find(category => category.id === categoryId);
     if (!categoryData) {
         console.error(`Категория с ID ${categoryId} не найдена в данных`);
-            return;
-        }
-        
+        return;
+    }
+
     // Устанавливаем имя текущей категории
     currentCategoryElement.textContent = categoryData.name;
-    
+
     // Показываем секцию магазинов
     storesSection.classList.add('active');
-    
+
     const stores = dashboardData.shops;
-                            
+
     // Если нет магазинов
     if (!stores || stores.length === 0) {
         storesGrid.innerHTML = '<div class="empty-state">Нет доступных магазинов</div>';
         return;
-                    }
-    
+    }
+
     // Создаем карточки для магазинов
     stores.forEach(store => {
-            const storeCard = document.createElement('div');
-            storeCard.className = 'store-card';
-            storeCard.dataset.store = store.id;
+        const storeCard = document.createElement('div');
+        storeCard.className = 'store-card';
+        storeCard.dataset.store = store.id;
 
-            storeCard.innerHTML = `
+        storeCard.innerHTML = `
                 <div class="store-card-header">
                 <div class="store-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
@@ -618,16 +565,16 @@ function loadStores(categoryId) {
                     </button>
                 </div>
             `;
-            
+
         // Добавляем обработчик клика на кнопку "Просмотреть отчет"
-        storeCard.querySelector('.store-view-report').addEventListener('click', function() {
+        storeCard.querySelector('.store-view-report').addEventListener('click', function () {
             // Перенаправляем на страницу с детальной информацией
             window.location.href = `./pages/finance-details.html?category=${categoryId}&store=${store.id}`;
-                
+
             // Показываем третий шаг инструкции
             showInstructionStep(3);
         });
-        
+
         storesGrid.appendChild(storeCard);
     });
 }
@@ -672,7 +619,7 @@ function hideInstructionAfterSelection() {
 }
 
 // Инициализация при загрузке страницы
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Обработчик клика по кнопке сброса выбора
     const resetButton = document.getElementById('resetSelection');
     if (resetButton) {
@@ -681,7 +628,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.category-card').forEach(card => {
                 card.classList.remove('active');
             });
-            
+
             // Скрываем секцию магазинов
             const storesSection = document.getElementById('stores-section');
             if (storesSection) {
@@ -694,23 +641,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }, 300);
             }
-            
+
             // Сбрасываем шаги в инструкции
             document.querySelector('[data-step="1"]').classList.remove('completed');
             document.querySelector('[data-step="2"]').classList.remove('active');
             document.querySelector('[data-step="2"]').classList.remove('completed');
             document.querySelector('[data-step="3"]').classList.remove('active');
-            
+
             // Прокручиваем к секции категорий
             setTimeout(() => {
-            document.querySelector('.categories-section').scrollIntoView({
+                document.querySelector('.categories-section').scrollIntoView({
                     behavior: 'smooth',
                     block: 'start'
-            });
+                });
             }, 100);
         });
     }
-    
+
     // Обработчик закрытия инструкции
     const closeInstructionButton = document.getElementById('closeInstruction');
     if (closeInstructionButton) {
@@ -721,26 +668,26 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
+
     // Обновляем дату
     const dateDisplay = document.querySelector('.date-display');
     if (dateDisplay) {
         const now = new Date();
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const options = {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'};
         dateDisplay.textContent = now.toLocaleDateString('ru-RU', options);
     }
-    
+
     // Функция для скрытия инструкции после того, как пользователь выбрал категорию
     function hideInstructionAfterSelection() {
         document.getElementById('instruction').style.display = 'none';
     }
-    
+
     // Обработчик для кнопки выхода из системы
     const logoutButton = document.querySelector('.user-dropdown-item:last-child');
     if (logoutButton) {
-        logoutButton.addEventListener('click', async function(e) {
+        logoutButton.addEventListener('click', async function (e) {
             e.preventDefault();
-            
+
             try {
                 await authService.logout();
                 window.location.href = './pages/login.html';
@@ -751,26 +698,26 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
+
     // Инициализируем работу с пользовательским выпадающим меню
     const userInfo = document.querySelector('.user-info');
     const userDropdown = document.querySelector('.user-dropdown');
-    
+
     if (userInfo && userDropdown) {
-        userInfo.addEventListener('click', function(e) {
+        userInfo.addEventListener('click', function (e) {
             if (e.target.closest('.user-avatar') || e.target.closest('.user-details')) {
                 userDropdown.classList.toggle('active');
             }
         });
-        
+
         // Закрытие выпадающего меню при клике вне его
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             if (!userInfo.contains(e.target)) {
                 userDropdown.classList.remove('active');
             }
         });
     }
-    
+
     // Инициализация страницы
     initPage();
 });

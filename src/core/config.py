@@ -32,6 +32,8 @@ class Settings(BaseModel):
     # Настройки CORS
     BACKEND_CORS_ORIGINS: List[str] = [
         "http://localhost", 
+        "http://localhost:63342",  # JetBrains WebStorm/PyCharm порт
+        "http://127.0.0.1:63342",  # JetBrains порт (IP версия)
         "http://localhost:63343",  # JetBrains WebStorm/PyCharm порт
         "http://127.0.0.1:63343",  # JetBrains порт (IP версия)
         "http://localhost:8080",
@@ -42,6 +44,9 @@ class Settings(BaseModel):
         "http://localhost:5500",       # VS Code Live Server
         "http://127.0.0.1:5500",       # VS Code Live Server
         "file://",                    # Открытие локального файла напрямую
+        "http://localhost:8000",       # API сервер
+        "http://127.0.0.1:8000",       # API сервер (IP версия)
+        "*",                          # Разрешить все источники (только для разработки!)
     ]
     
     # Наружу предоставляем CORS_ORIGINS для middleware

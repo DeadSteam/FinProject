@@ -336,8 +336,11 @@ class AnalyticsService:
         categories = await category_service.get_all(session)
         result = []
         
-        yearly_periods = await period_service.get_by_year(period.year, session)
-        yearly_period_ids = [p.id for p in yearly_periods]
+        # Получаем только годовой период вместо всех периодов года
+        yearly_period = await period_service.get_by_type(period.year, "year", session)
+        if not yearly_period:
+            # Если годовой период не найден, возвращаем пустой список
+            return result
         
         for category in categories:
             # Получаем метрики для категории
@@ -347,17 +350,16 @@ class AnalyticsService:
             yearly_actual = Decimal('0')
             yearly_plan = Decimal('0')
             
-            # Собираем данные по всем периодам года
-            for p_id in yearly_period_ids:
-                actual_values = await actual_value_service.get_by_period(p_id, session)
-                plan_values = await plan_value_service.get_by_period(p_id, session)
-                
-                # Фильтруем по метрикам данной категории
-                category_actuals = [av for av in actual_values if av.metric_id in metric_ids]
-                category_plans = [pv for pv in plan_values if pv.metric_id in metric_ids]
-                
-                yearly_actual += sum(av.value for av in category_actuals)
-                yearly_plan += sum(pv.value for pv in category_plans)
+            # Используем только годовой период вместо всех периодов года
+            actual_values = await actual_value_service.get_by_period(yearly_period.id, session)
+            plan_values = await plan_value_service.get_by_period(yearly_period.id, session)
+            
+            # Фильтруем по метрикам данной категории
+            category_actuals = [av for av in actual_values if av.metric_id in metric_ids]
+            category_plans = [pv for pv in plan_values if pv.metric_id in metric_ids]
+            
+            yearly_actual = sum(av.value for av in category_actuals)
+            yearly_plan = sum(pv.value for pv in category_plans)
             
             # Вычисляем процент выполнения
             yearly_procent = (float(yearly_actual) / float(yearly_plan) * 100) if yearly_plan != 0 else 0.0
@@ -394,20 +396,20 @@ class AnalyticsService:
         shops = await shop_service.get_all(session)
         result = []
         
-        yearly_periods = await period_service.get_by_year(period.year, session)
-        yearly_period_ids = [p.id for p in yearly_periods]
+        # Получаем только годовой период вместо всех периодов года
+        yearly_period = await period_service.get_by_type(period.year, "year", session)
+        if not yearly_period:
+            # Если годовой период не найден, возвращаем пустой список
+            return result
         
         for shop in shops:
-            yearly_actual = Decimal('0')
+            # Используем только годовой период вместо всех периодов года
+            actual_values = await actual_value_service.get_by_period(yearly_period.id, session)
             
-            # Собираем данные по всем периодам года
-            for p_id in yearly_period_ids:
-                actual_values = await actual_value_service.get_by_period(p_id, session)
-                
-                # Фильтруем по данному магазину
-                shop_actuals = [av for av in actual_values if av.shop_id == shop.id]
-                
-                yearly_actual += sum(av.value for av in shop_actuals)
+            # Фильтруем по данному магазину
+            shop_actuals = [av for av in actual_values if av.shop_id == shop.id]
+            
+            yearly_actual = sum(av.value for av in shop_actuals)
             
             result.append({
                 "id": str(shop.id),

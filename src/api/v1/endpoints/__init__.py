@@ -1,4 +1,4 @@
-# Инициализация пакета с эндпоинтами
+# Инициализация пакета с эндпоинтами 
 
 from src.api.v1.endpoints import auth, users, finance
 

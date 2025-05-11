@@ -102,4 +102,37 @@ class ActualValueService(BaseService[ActualValue, ActualValueSchema, ActualValue
             )
         )
         result = await session.execute(query)
-        return result.scalar_one_or_none() 
+        return result.scalar_one_or_none()
+    
+    async def get_by_params_list(
+        self, 
+        metric_id: uuid.UUID, 
+        period_id: uuid.UUID, 
+        session: AsyncSession,
+        shop_id: Optional[uuid.UUID] = None
+    ) -> List[ActualValueSchema]:
+        """
+        Получение списка фактических значений по параметрам.
+        
+        Args:
+            metric_id: ID метрики
+            period_id: ID периода
+            session: Сессия БД
+            shop_id: ID магазина (опционально)
+            
+        Returns:
+            Список фактических значений, подходящих под условия
+        """
+        conditions = [
+            self.model.metric_id == metric_id,
+            self.model.period_id == period_id
+        ]
+        
+        if shop_id is not None:
+            conditions.append(self.model.shop_id == shop_id)
+        
+        query = select(self.model).where(and_(*conditions))
+        result = await session.execute(query)
+        db_objs = result.scalars().all()
+        
+        return [TypeAdapter(self.schema).validate_python(obj.__dict__) for obj in db_objs] 
