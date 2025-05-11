@@ -1,5 +1,5 @@
 // Модуль для работы с графиками
-import { apiClient } from '../utils/api/index.js';
+import { apiClient } from './utils/api';
 
 // Функция для создания кнопок переключения метрик для графиков
 export function createChartSwitchButtons(metrics, chartTabsContainer) {

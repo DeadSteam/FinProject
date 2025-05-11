@@ -47,34 +47,34 @@ class ApiClient {
         try {
             console.log(`Выполняем запрос к ${url}`, fetchOptions);
             const response = await fetch(url, fetchOptions);
-            
+
             // Проверяем статус 401 - Неавторизован
             if (response.status === 401) {
                 console.error('Ошибка авторизации (401). Перенаправляем на страницу входа.');
                 // Очищаем токен из localStorage
                 localStorage.removeItem('accessToken');
                 localStorage.removeItem('tokenType');
-                
+
                 // Перенаправляем на страницу входа только если это не страница входа
                 if (!window.location.href.includes('/pages/login.html')) {
-                    window.location.href = '/client/pages/login.html';
+                    window.location.href = '../../../pages/login.html';
                 }
                 throw new Error('Ошибка авторизации');
             }
-            
+
             // Если ответ не успешный, выбрасываем ошибку
             if (!response.ok) {
                 const errorData = await response.json().catch(() => null);
                 console.error('Ошибка API:', errorData);
                 throw new Error(errorData?.detail || `Ошибка: ${response.status} ${response.statusText}`);
             }
-            
+
             // Проверяем наличие контента в ответе
             const contentType = response.headers.get('content-type');
             if (contentType && contentType.includes('application/json')) {
                 return await response.json();
             }
-            
+
             return await response.text();
         } catch (error) {
             console.error('API Error:', error);

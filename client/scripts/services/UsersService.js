@@ -1,4 +1,4 @@
-import { usersApi } from '../../utils/api/users.js';
+import { usersApi } from '../utils/api/users.js';
 import { 
     showNotification, 
     populateTable, 

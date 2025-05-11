@@ -35,20 +35,20 @@ class ApiClient {
                     queryParams.append(key, params[key]);
                 }
             }
-            
+
             const url = `${this.baseUrl}${endpoint}?${queryParams.toString()}`;
             console.log(`Выполняем GET запрос с параметрами к ${url}`);
-            
+
             const response = await fetch(url, {
                 headers: {
                     'Content-Type': 'application/json'
                 }
             });
-            
+
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
-            
+
             return await response.json();
         } catch (error) {
             console.error(`Ошибка GET запроса с параметрами: ${error.message}`);
@@ -64,11 +64,11 @@ class ApiClient {
                 headers: this.headers,
                 body: JSON.stringify(data)
             });
-            
+
             // Сохраняем текст ответа для отладки
             const responseText = await response.text();
             console.log(`Ответ на POST запрос (${response.status}):\n`, responseText);
-            
+
             if (!response.ok) {
                 // Пытаемся преобразовать ответ в JSON, если это возможно
                 let errorMessage = `HTTP error! Status: ${response.status}, Response: ${responseText}`;
@@ -81,12 +81,12 @@ class ApiClient {
                 }
                 throw new Error(errorMessage);
             }
-            
+
             // Если ответ пустой, возвращаем пустой объект
             if (!responseText) {
                 return {};
             }
-            
+
             // Иначе возвращаем распарсенный JSON
             try {
                 return JSON.parse(responseText);
@@ -108,20 +108,20 @@ class ApiClient {
                 headers: this.headers,
                 body: JSON.stringify(data)
             });
-            
+
             // Сохраняем ответ для отладки
             const responseText = await response.text();
             console.log(`Ответ на PUT запрос (${response.status}):\n`, responseText);
-            
+
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}, Response: ${responseText}`);
             }
-            
+
             // Если ответ пустой, возвращаем пустой объект
             if (!responseText) {
                 return {};
             }
-            
+
             // Иначе возвращаем распарсенный JSON
             return JSON.parse(responseText);
         } catch (error) {
@@ -154,17 +154,17 @@ class ApiClient {
                 // Добавляем параметры в строку запроса
                 url.searchParams.append(key, params[key].toString());
             }
-            
+
             console.log(`Выполняем POST запрос с параметрами к ${url.toString()}`);
-            
+
             const response = await fetch(url, {
                 method: 'POST',
                 headers: this.headers
             });
-            
+
             // Сохраняем текст ответа для отладки
             const responseText = await response.text();
-            
+
             if (!response.ok) {
                 // Пытаемся преобразовать ответ в JSON, если это возможно
                 let errorData;
@@ -176,12 +176,12 @@ class ApiClient {
                     throw new Error(`HTTP error! Status: ${response.status}, Response: ${responseText}`);
                 }
             }
-            
+
             // Если ответ пустой, возвращаем пустой объект
             if (!responseText) {
                 return {};
             }
-            
+
             // Иначе возвращаем распарсенный JSON
             return JSON.parse(responseText);
         } catch (error) {
@@ -198,18 +198,18 @@ class ApiClient {
                 // Добавляем параметры в строку запроса
                 url.searchParams.append(key, params[key].toString());
             }
-            
+
             console.log(`Выполняем PUT запрос с параметрами к ${url.toString()}`);
-            
+
             const response = await fetch(url, {
                 method: 'PUT',
                 headers: this.headers
             });
-            
+
             // Сохраняем текст ответа для отладки
             const responseText = await response.text();
             console.log(`Ответ на PUT запрос (${response.status}):\n`, responseText);
-            
+
             if (!response.ok) {
                 // Пытаемся преобразовать ответ в JSON, если это возможно
                 let errorMessage = `HTTP error! Status: ${response.status}, Response: ${responseText}`;
@@ -222,12 +222,12 @@ class ApiClient {
                 }
                 throw new Error(errorMessage);
             }
-            
+
             // Если ответ пустой, возвращаем пустой объект
             if (!responseText) {
                 return {};
             }
-            
+
             // Иначе возвращаем распарсенный JSON
             return JSON.parse(responseText);
         } catch (error) {
@@ -239,7 +239,7 @@ class ApiClient {
         const params = { metric_id: metricId, year };
         if (month !== null) params.month = month;
         if (quarter !== null) params.quarter = quarter;
-        
+
         return await this.getWithParams('/finance/actual-values/by-period', params);
     }
 
@@ -255,9 +255,9 @@ class ApiClient {
                     queryParams[key] = data[key];
                 }
             }
-            
+
             console.log('Отправляем запрос на создание фактического значения, параметры:', queryParams);
-            
+
             // Используем postWithParams вместо post
             return await this.postWithParams('/finance/actual-values/with-period', queryParams);
         } catch (error) {
@@ -275,12 +275,12 @@ class ApiClient {
                 year: year.toString(),
                 value: value.toString()
             };
-            
+
             if (month !== null) params.month = month.toString();
             if (quarter !== null) params.quarter = quarter.toString();
-            
+
             console.log('Отправляем запрос на обновление фактического значения, параметры:', params);
-            
+
             // Используем putWithParams вместо postWithParams
             return await this.putWithParams('/finance/actual-values/by-period', params);
         } catch (error) {
@@ -293,7 +293,7 @@ class ApiClient {
         const params = { metric_id: metricId, year };
         if (month !== null) params.month = month;
         if (quarter !== null) params.quarter = quarter;
-        
+
         return await this.getWithParams('/finance/plan-values/by-period', params);
     }
 
@@ -308,10 +308,10 @@ class ApiClient {
             year,
             value
         };
-        
+
         if (month !== null) data.month = month;
         if (quarter !== null) data.quarter = quarter;
-        
+
         return await this.put('/finance/plan-values/by-period', data);
     }
 }
@@ -1611,12 +1611,8 @@ async function setupCharts(metrics, periods) {
                     <div class="chart-bar-group">
                         <div class="chart-bar-label">${item.label}</div>
                         <div class="chart-bars-container">
-                            <div class="chart-bar chart-bar--plan" style="height: ${(item.plan / maxValue * 100)}%" data-label="План: ${formatNumber(item.plan)} ${currentMetric.unit}">
-                                <div class="chart-bar-value">${formatNumber(item.plan)}</div>
-                            </div>
-                            <div class="chart-bar chart-bar--fact" style="height: ${(item.fact / maxValue * 100)}%" data-label="Факт: ${formatNumber(item.fact)} ${currentMetric.unit}">
-                                <div class="chart-bar-value">${formatNumber(item.fact)}</div>
-                            </div>
+                            <div class="chart-bar chart-bar--plan" style="height: ${(item.plan / maxValue * 100)}%" data-label="План: ${formatNumber(item.plan)} ${currentMetric.unit}"></div>
+                            <div class="chart-bar chart-bar--fact" style="height: ${(item.fact / maxValue * 100)}%" data-label="Факт: ${formatNumber(item.fact)} ${currentMetric.unit}"></div>
                         </div>
                     </div>
                 `).join('')}
@@ -1643,7 +1639,7 @@ async function setupCharts(metrics, periods) {
                     height: 100%;
                 }
                 .chart-bar-label {
-                    margin-top: 10px;
+                    margin: 24px 0;
                     font-size: 12px;
                     text-align: center;
                 }
@@ -1674,10 +1670,12 @@ async function setupCharts(metrics, periods) {
                     transform: translateX(-50%);
                     font-size: 12px;
                     white-space: nowrap;
+                    z-index: 200;
                 }
                 .chart-bar:hover {
                     opacity: 0.9;
                     box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+
                 }
                 .chart-bar--plan:hover::before,
                 .chart-bar--fact:hover::before {
@@ -1694,7 +1692,7 @@ async function setupCharts(metrics, periods) {
                     white-space: nowrap;
                     margin-bottom: 5px;
                     pointer-events: none;
-                    z-index: 10;
+                    z-index: 25;
                 }
                 .chart-bar--plan:hover::after,
                 .chart-bar--fact:hover::after {
@@ -2330,20 +2328,8 @@ function renderMetricsTable(metrics, periods) {
                 const factCell = factVal !== null && factVal !== 0
                     ? `<td data-sort-value="${factVal}">
                         ${formatNumber(factVal)} ${metric.unit}
-                        <button type="button" class="edit-value-btn edit-fact-btn" data-metric-id="${metric.id}" data-period-id="${quarterPeriod.id}" data-value="${factVal}" data-type="fact" title="Редактировать факт">
-                            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
-                            </svg>
-                        </button>
                       </td>` 
-                    : `<td class="empty-value">
-                        <button type="button" class="add-fact-btn" data-metric-id="${metric.id}" data-period-id="${quarterPeriod.id}" data-period-quarter="${quarter}">
-                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                            </svg>
-                            Внести факт
-                        </button>
-                      </td>`;
+                    : `<td class="empty-value">—</td>`;
                 
                 const diffCell = factVal !== null && factVal !== 0
                     ? `<td class="${diffClass}" data-sort-value="${diff}">${formattedDiff} ${metric.unit} (${formattedDiffPercentage}%)</td>` 
@@ -2428,13 +2414,13 @@ function renderMetricsTable(metrics, periods) {
                         </button>
                       </td>` 
                     : `<td class="empty-value">
-                        <button type="button" class="add-fact-btn" data-metric-id="${metric.id}" data-period-id="${period.id}" data-period-month="${period.month}">
-                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                            </svg>
-                            Внести факт
-                        </button>
-                      </td>`;
+                            <button type="button" class="add-fact-btn" data-metric-id="${metric.id}" data-period-id="${period.id}" data-period-month="${period.month}">
+                                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                Внести факт
+                            </button>
+                          </td>`;
                 
                 const diffCell = factVal !== null && factVal !== 0
                     ? `<td class="${diffClass}" data-sort-value="${diff}">${formattedDiff} ${metric.unit} (${formattedDiffPercentage}%)</td>` 

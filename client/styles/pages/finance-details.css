@@ -609,11 +609,11 @@
 }
 
 .legend-color--plan {
-  background-color: var(--primary);
+  background-color: var(--primary-light);
 }
 
 .legend-color--fact {
-  background-color: var(--accent);
+  background-color: var(--primary);
 }
 
 .chart {

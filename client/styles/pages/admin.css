@@ -768,4 +768,73 @@ label {
 .image-preview .category-icon {
     background-color: white;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Стили для галереи изображений в модальном окне категорий */
+.image-gallery-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+
+.image-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.image-item:hover {
+    border-color: #ccc;
+    background-color: #f9f9f9;
+}
+
+.image-item.selected {
+    border-color: var(--primary-color);
+    background-color: rgba(var(--primary-rgb), 0.1);
+}
+
+.image-item .category-icon {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 5px;
+}
+
+.image-item .empty-image {
+    width: 60px;
+    height: 60px;
+    border: 2px dashed #ddd;
+    border-radius: 4px;
+    margin-bottom: 5px;
+}
+
+.image-item .image-name {
+    font-size: 12px;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    white-space: nowrap;
+}
+
+/* Стили для иконок категорий в таблице */
+.category-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color);
 } 

@@ -490,7 +490,7 @@
         async function loadDashboardData() {
             try {
                 // Импортируем API клиент
-                const apiModule = await import('../utils/api/index.js');
+                const apiModule = await import('../scripts/utils/api');
                 const apiClient = apiModule.apiClient;
                 
                 // Загрузка статистики

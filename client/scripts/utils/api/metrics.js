@@ -50,24 +50,6 @@ class MetricsApi {
     async getAllCategories() {
         return this.apiClient.get('/finance/categories');
     }
-    
-    // Получение бюджетной статистики
-    async getBudgetStatistics(shopId = null, year = null, month = null) {
-        const params = {};
-        if (shopId) params.shop_id = shopId;
-        if (year) params.year = year;
-        if (month) params.month = month;
-        
-        return this.apiClient.get('/finance/budget-statistics', params);
-    }
-    
-    // Получение периодов, сгруппированных по типу
-    async getPeriodsGrouped(year = null) {
-        const params = {};
-        if (year) params.year = year;
-        
-        return this.apiClient.get('/finance/periods/grouped', params);
-    }
 }
 
 // Экспортируем экземпляр API для метрик

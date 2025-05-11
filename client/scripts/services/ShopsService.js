@@ -1,8 +1,8 @@
-import { shopsApi } from '../../utils/api/shops.js';
-import { 
-    showNotification, 
-    populateTable, 
-    generateShopTableRow, 
+import { shopsApi } from '../utils/api/shops.js';
+import {
+    showNotification,
+    populateTable,
+    generateShopTableRow,
     confirmAction,
     openModal,
     closeModal,
@@ -78,7 +78,7 @@ export class ShopsService {
         if (this.tableBody) {
             this.tableBody.addEventListener('click', this.handleTableActions.bind(this));
         }
-        
+
         // Закрытие модального окна
         const modalCloseButtons = document.querySelectorAll('.modal-close, .modal-cancel');
         modalCloseButtons.forEach(btn => {
@@ -111,11 +111,11 @@ export class ShopsService {
      */
     handleSearchInput(event) {
         const searchValue = event.target.value.trim().toLowerCase();
-        
+
         // Текущее значение фильтра по статусу
         const statusValue = this.statusFilter ? this.statusFilter.value : 'all';
         const statusFilter = statusValue !== 'all' ? statusValue === 'active' : null;
-        
+
         this.loadFilteredShops(searchValue, statusFilter);
     }
 
@@ -124,16 +124,16 @@ export class ShopsService {
      */
     handleStatusFilter(event) {
         const statusValue = event.target.value;
-        
+
         // Текущее значение поиска
         const searchValue = this.shopSearchInput ? this.shopSearchInput.value.trim() : '';
-        
+
         // Преобразуем значение статуса в булевый тип для API
         const statusFilter = statusValue !== 'all' ? statusValue === 'active' : null;
-        
+
         this.loadFilteredShops(searchValue, statusFilter);
     }
-    
+
     /**
      * Загрузка отфильтрованных магазинов с использованием серверной фильтрации
      */
@@ -154,11 +154,11 @@ export class ShopsService {
     handleAddShop() {
         const modalTitle = this.shopModal.querySelector('.modal-title');
         modalTitle.textContent = 'Добавить магазин';
-        
+
         // Очистка формы
         resetForm(this.shopForm);
         document.getElementById('shop-id').value = '';
-        
+
         // Открытие модального окна
         openModal(this.shopModal);
     }
@@ -168,11 +168,11 @@ export class ShopsService {
      */
     handleTableActions(event) {
         const target = event.target.closest('.row-action');
-        
+
         if (!target) return;
-        
+
         const shopId = target.getAttribute('data-id');
-        
+
         if (target.classList.contains('edit-shop-btn')) {
             this.handleEditShop(shopId);
         } else if (target.classList.contains('delete-shop-btn')) {
@@ -186,18 +186,18 @@ export class ShopsService {
     async handleEditShop(shopId) {
         try {
             const shop = await this.shopsApi.getShopById(shopId);
-            
+
             // Заполнение формы данными магазина
             const modalTitle = this.shopModal.querySelector('.modal-title');
             modalTitle.textContent = 'Редактировать магазин';
-            
+
             document.getElementById('shop-id').value = shop.id;
             document.getElementById('shop-name').value = shop.name;
             document.getElementById('shop-address').value = shop.address || '';
             document.getElementById('shop-description').value = shop.description || '';
             document.getElementById('shop-number-of-staff').value = shop.number_of_staff;
             document.getElementById('shop-status').checked = shop.status;
-            
+
             // Открытие модального окна
             openModal(this.shopModal);
         } catch (error) {
@@ -210,12 +210,12 @@ export class ShopsService {
      */
     handleDeleteShop(shopId) {
         const shop = this.shops.find(s => s.id === shopId);
-        
+
         if (!shop) {
             showNotification('Магазин не найден', 'error');
             return;
         }
-        
+
         confirmAction(
             `Вы уверены, что хотите удалить магазин "${shop.name}"? Это действие нельзя отменить.`,
             async () => {
@@ -239,7 +239,7 @@ export class ShopsService {
             this.shopForm.reportValidity();
             return;
         }
-        
+
         const shopId = document.getElementById('shop-id').value;
         const shopData = {
             name: document.getElementById('shop-name').value,
@@ -248,26 +248,26 @@ export class ShopsService {
             number_of_staff: parseInt(document.getElementById('shop-number-of-staff').value) || 0,
             status: document.getElementById('shop-status').checked
         };
-        
+
         try {
             let shop;
-            
+
             if (shopId) {
                 // Обновление существующего магазина
                 shop = await this.shopsApi.updateShop(shopId, shopData);
-                
+
                 // Обновление списка магазинов
                 this.shops = this.shops.map(s => s.id === shopId ? shop : s);
                 showNotification('Магазин успешно обновлен', 'success');
             } else {
                 // Создание нового магазина
                 shop = await this.shopsApi.createShop(shopData);
-                
+
                 // Добавление в список магазинов
                 this.shops.push(shop);
                 showNotification('Магазин успешно создан', 'success');
             }
-            
+
             // Перерисовка таблицы и закрытие модального окна
             this.renderShops();
             closeModal(this.shopModal);
@@ -285,4 +285,4 @@ export class ShopsService {
             closeModal(modal);
         }
     }
-} 
+}

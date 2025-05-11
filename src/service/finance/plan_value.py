@@ -240,9 +240,13 @@ class PlanValueService(BaseService[PlanValue, PlanValueSchema, PlanValueCreate, 
         """
         Пересчет плана с учетом фактического значения.
         
-        Корректирует плановые значения на основе фактического значения
-        за указанный месяц. Перераспределяет оставшуюся часть годового
-        плана на будущие месяцы.
+        Шаги:
+        1. Получаем годовой план (он остается неизменным)
+        2. Суммируем фактические значения за все месяцы до указанного включительно
+           (для месяца с actual_month используем переданное actual_value)
+        3. Вычитаем сумму из годового плана
+        4. Распределяем остаток поровну на месяцы, следующие за указанным месяцем
+        5. Обновляем квартальные планы суммой месячных планов
         
         Args:
             metric_id: ID метрики
@@ -255,10 +259,6 @@ class PlanValueService(BaseService[PlanValue, PlanValueSchema, PlanValueCreate, 
         Returns:
             Список обновленных плановых значений
         """
-        # Получаем текущую дату для определения текущего месяца
-        now = datetime.now()
-        current_month = now.month if now.year == year else 1
-        
         # Находим годовой период
         year_period = await self.period_service.get_by_year_quarter_month(
             year=year, 
@@ -267,15 +267,6 @@ class PlanValueService(BaseService[PlanValue, PlanValueSchema, PlanValueCreate, 
             month=None     # Годовой период не имеет месяца
         )
         
-        if not year_period:
-            # Если годовой период не найден, создаем его
-            year_period = await self.period_service.get_or_create_by_params(
-                year=year,
-                month=None,
-                quarter=None,
-                session=session
-            )
-        
         # Получаем годовое плановое значение
         year_plan = await self.get_by_metric_shop_period(metric_id, shop_id, year_period.id, session)
         
@@ -283,11 +274,8 @@ class PlanValueService(BaseService[PlanValue, PlanValueSchema, PlanValueCreate, 
             # Если годовой план не найден, возвращаем пустой список
             return []
             
-        yearly_value = year_plan.value
+        yearly_value = year_plan.value  # Годовой план, который останется неизменным
         updated_plans = []
-        
-        # Определяем квартал для месяца
-        quarter = (actual_month - 1) // 3 + 1
         
         # Получаем все периоды для года
         year_periods = await self.period_service.get_by_year(year, session)
@@ -315,67 +303,70 @@ class PlanValueService(BaseService[PlanValue, PlanValueSchema, PlanValueCreate, 
                 if plan:
                     quarter_plans[period.quarter] = plan
         
-        # Обновляем план для месяца с фактическим значением
-        if actual_month in month_periods and actual_month in month_plans:
-            month_plan = month_plans[actual_month]
-            month_plan_update = PlanValueUpdate(value=actual_value)
-            updated_plan = await self.update(month_plan.id, month_plan_update, session)
-            updated_plans.append(updated_plan)
-            
-            # Рассчитываем разницу между планом и фактом
-            diff = actual_value - month_plan.value
-        else:
-            diff = Decimal('0')
-            
-        # Если месяц с фактическим значением уже прошел, корректируем планы для будущих месяцев
-        if actual_month < current_month:
-            # Подсчитываем сумму планов для месяцев после указанного до текущего
-            sum_past_plans = Decimal('0')
-            for month in range(actual_month + 1, current_month):
-                if month in month_plans:
-                    sum_past_plans += month_plans[month].value
-                    
-            # Корректируем разницу на сумму прошедших планов
-            diff += sum_past_plans
+        # Считаем сумму фактических значений за все месяцы до текущего и включая текущий
+        sum_actual_values = Decimal('0')
         
-        # Получаем список месяцев, для которых нужно скорректировать план
-        future_months = [m for m in range(max(actual_month + 1, current_month), 13)]
+        # Складываем фактические значения для месяцев до текущего
+        for month in range(1, actual_month):
+            if month in month_plans:
+                sum_actual_values += month_plans[month].value
+        
+        # Добавляем фактическое значение для текущего месяца
+        sum_actual_values += actual_value
+        
+        # Вычисляем остаток для распределения
+        remaining_plan = yearly_value - sum_actual_values
+        
+        # Если остаток отрицательный, устанавливаем его в ноль
+        if remaining_plan < 0:
+            remaining_plan = Decimal('0')
+        
+        # Получаем список месяцев, следующих за месяцем с фактическим значением
+        future_months = [m for m in range(actual_month + 1, 13)]
         
         if not future_months:
-            # Если нет будущих месяцев, просто возвращаем обновленный план для месяца с фактом
-            return updated_plans
-            
-        # Распределяем разницу по оставшимся месяцам
-        adjustment_per_month = round(diff / len(future_months), 2)
+            # Если нет будущих месяцев, просто возвращаем пустой список
+            return []
         
-        # Остаток от округления
-        remaining = diff - (adjustment_per_month * len(future_months))
+        # Распределяем остаток равномерно по будущим месяцам
+        plan_per_month = round(remaining_plan / len(future_months), 2)
+        
+        # Остаток от округления добавим к последнему месяцу
+        rounding_remainder = remaining_plan - (plan_per_month * len(future_months))
         
         # Обновляем планы для будущих месяцев
         for i, month in enumerate(future_months):
-            if month in month_periods and month in month_plans:
-                # У нас есть и период, и план для месяца
-                month_plan = month_plans[month]
+            # Определяем значение для месяца
+            new_value = plan_per_month
+            
+            # Для последнего месяца добавляем остаток от округления
+            if i == len(future_months) - 1:
+                new_value += rounding_remainder
+            
+            if month in month_periods:
+                # Если есть период для месяца
+                if month in month_plans:
+                    # Если есть план - обновляем его
+                    month_plan = month_plans[month]
+                    month_plan_update = PlanValueUpdate(value=new_value)
+                    updated_plan = await self.update(month_plan.id, month_plan_update, session)
+                else:
+                    # Если нет плана - создаем новый
+                    plan_create = PlanValueCreate(
+                        metric_id=metric_id,
+                        shop_id=shop_id,
+                        period_id=month_periods[month].id,
+                        value=new_value
+                    )
+                    updated_plan = await self.create(plan_create, session)
                 
-                # Вычисляем новое значение
-                new_value = month_plan.value - adjustment_per_month
-                
-                # Для последнего месяца добавляем остаток
-                if i == len(future_months) - 1:
-                    new_value -= remaining
-                    
-                # Проверяем, что значение не отрицательное
-                if new_value < 0:
-                    new_value = Decimal('0')
-                    
-                # Обновляем план
-                month_plan_update = PlanValueUpdate(value=new_value)
-                updated_plan = await self.update(month_plan.id, month_plan_update, session)
                 updated_plans.append(updated_plan)
-                
+                # Обновляем словарь планов
+                month_plans[month] = updated_plan
+        
         # Обновляем квартальные планы
         for q in range(1, 5):
-            if q in quarter_periods and q in quarter_plans:
+            if q in quarter_periods:
                 # Определяем месяцы в квартале
                 quarter_months = [m for m in range((q-1)*3+1, q*3+1)]
                 
@@ -383,30 +374,31 @@ class PlanValueService(BaseService[PlanValue, PlanValueSchema, PlanValueCreate, 
                 sum_month_plans = Decimal('0')
                 for month in quarter_months:
                     if month in month_plans:
-                        # Если это месяцы до текущего, берем факт для месяца с фактом
+                        # Используем плановое значение для всех месяцев, кроме месяца с фактом
                         if month == actual_month:
                             sum_month_plans += actual_value
                         else:
                             sum_month_plans += month_plans[month].value
-                            
-                # Обновляем квартальный план
-                quarter_plan = quarter_plans[q]
-                quarter_plan_update = PlanValueUpdate(value=sum_month_plans)
-                updated_plan = await self.update(quarter_plan.id, quarter_plan_update, session)
+                
+                # Обновляем или создаем квартальный план
+                if q in quarter_plans:
+                    # Обновляем существующий
+                    quarter_plan = quarter_plans[q]
+                    quarter_plan_update = PlanValueUpdate(value=sum_month_plans)
+                    updated_plan = await self.update(quarter_plan.id, quarter_plan_update, session)
+                else:
+                    # Создаем новый
+                    plan_create = PlanValueCreate(
+                        metric_id=metric_id,
+                        shop_id=shop_id,
+                        period_id=quarter_periods[q].id,
+                        value=sum_month_plans
+                    )
+                    updated_plan = await self.create(plan_create, session)
+                
                 updated_plans.append(updated_plan)
-                
-        # Обновляем годовой план
-        # Считаем сумму квартальных планов
-        sum_quarter_plans = Decimal('0')
-        for q in range(1, 5):
-            if q in quarter_plans:
-                sum_quarter_plans += quarter_plans[q].value
-                
-        # Если сумма квартальных планов отличается от годового, обновляем годовой
-        if sum_quarter_plans != yearly_value:
-            year_plan_update = PlanValueUpdate(value=sum_quarter_plans)
-            updated_plan = await self.update(year_plan.id, year_plan_update, session)
-            updated_plans.append(updated_plan)
+        
+        # Годовой план не меняется, поэтому не обновляем его
         
         return updated_plans
     

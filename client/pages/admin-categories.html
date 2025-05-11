@@ -186,10 +186,10 @@
                     </div>
                     <div class="form-group">
                         <label for="category-image">Изображение</label>
-                        <select id="category-image" class="form-control">
-                            <option value="">Без изображения</option>
+                        <input type="hidden" name="image_id" value="">
+                        <div id="image-gallery" class="image-gallery-container">
                             <!-- Изображения будут загружены динамически -->
-                        </select>
+                        </div>
                     </div>
                     <div class="form-group form-check">
                         <input type="checkbox" id="category-status" class="form-check-input" checked>
@@ -232,36 +232,7 @@
 
 <script type="module">
     import authService from '../scripts/auth/auth.js';
-    
-    // Функция для отображения уведомлений
-    function showToast(message, type = 'success') {
-        let toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        
-        // Добавляем иконку в зависимости от типа уведомления
-        let icon = '';
-        if (type === 'success') {
-            icon = '<i class="fas fa-check-circle"></i>';
-        } else if (type === 'error') {
-            icon = '<i class="fas fa-exclamation-circle"></i>';
-        } else if (type === 'warning') {
-            icon = '<i class="fas fa-exclamation-triangle"></i>';
-        } else if (type === 'info') {
-            icon = '<i class="fas fa-info-circle"></i>';
-        }
-        
-        toast.innerHTML = `<div class="toast-content">${icon}<span>${message}</span></div><button class='toast-close'>&times;</button>`;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.classList.add('show'), 10);
-        toast.querySelector('.toast-close').onclick = () => {
-            toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 300);
-        };
-        setTimeout(() => { 
-            toast.classList.remove('show'); 
-            setTimeout(() => toast.remove(), 300); 
-        }, 4000);
-    }
+    import {showToast} from '../scripts/utils/helper.js'
 
     // Проверка авторизации и загрузка данных пользователя
     document.addEventListener('DOMContentLoaded', async function() {
