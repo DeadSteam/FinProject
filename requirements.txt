@@ -1,12 +1,33 @@
+# Основные зависимости
 fastapi==0.103.1
 uvicorn==0.23.2
+starlette==0.27.0
+
+# Базы данных и ORM
 sqlalchemy==2.0.20
 asyncpg==0.28.0
+psycopg2-binary==2.9.7
+alembic==1.12.0
+
+# Pydantic и валидация
 pydantic==2.3.0
 pydantic-settings==2.0.3
+pydantic-core==2.6.3
+email-validator==2.2.0
+annotated-types==0.7.0
+
+# Аутентификация и безопасность
 python-jose==3.3.0
 passlib==1.7.4
+bcrypt==4.3.0
 python-multipart==0.0.6
-alembic==1.12.0
-psycopg2-binary==2.9.7
-email-validator==2.2.0 
+itsdangerous==2.2.0
+
+# HTTP и сеть
+anyio==3.7.1
+httpx==0.28.1
+requests==2.32.3
+
+# Утилиты
+python-dotenv==1.1.0
+typing-extensions==4.13.2 
