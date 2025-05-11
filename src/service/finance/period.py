@@ -311,10 +311,10 @@ class PeriodService(BaseService[Period, PeriodSchema, PeriodCreate, PeriodUpdate
         quarter: Optional[int] = None
     ) -> PeriodSchema:
         """
-        Получение или создание периода по параметрам.
+        Получение или создание периода по заданным параметрам.
         
         Args:
-            year: Год для поиска/создания
+            year: Год
             session: Сессия БД
             month: Месяц (опционально)
             quarter: Квартал (опционально)
@@ -322,22 +322,103 @@ class PeriodService(BaseService[Period, PeriodSchema, PeriodCreate, PeriodUpdate
         Returns:
             Найденный или созданный период
         """
-        period = await self.get_by_params_first(
+        period = await self.get_by_year_quarter_month(
             year=year,
-            month=month,
+            session=session,
             quarter=quarter,
-            session=session
+            month=month
         )
         
         if period:
             return period
             
-        # Создаем новый период
-        period_data = {
-            "year": year,
-            "month": month,
-            "quarter": quarter
+        # Создаем период, если он не найден
+        period_create = PeriodCreate(
+            year=year,
+            quarter=quarter,
+            month=month
+        )
+        
+        created_period = await self.create(period_create, session)
+        return created_period
+
+    async def create_periods_for_year(
+        self,
+        year: int,
+        session: AsyncSession
+    ) -> Dict[str, List[PeriodSchema]]:
+        """
+        Создание периодов для года, кварталов и месяцев этого года.
+        
+        Функция создает:
+        1. Один период для года
+        2. Четыре периода для кварталов (1-4)
+        3. Двенадцать периодов для месяцев (1-12)
+        
+        Args:
+            year: Год для создания периодов
+            session: Сессия БД
+            
+        Returns:
+            Словарь с созданными периодами, сгруппированными по типу
+        """
+        created_periods = {
+            "years": [],
+            "quarters": [],
+            "months": []
         }
         
-        period_in = PeriodCreate(**period_data)
-        return await self.create(period_in, session=session) 
+        # Создаем период для года
+        year_period = await self.get_or_create_by_params(
+            year=year,
+            session=session,
+            month=None,
+            quarter=None
+        )
+        created_periods["years"].append(year_period)
+        
+        # Создаем периоды для кварталов
+        for quarter in range(1, 5):
+            quarter_period = await self.get_or_create_by_params(
+                year=year,
+                session=session,
+                month=None,
+                quarter=quarter
+            )
+            created_periods["quarters"].append(quarter_period)
+        
+        # Создаем периоды для месяцев
+        for month in range(1, 13):
+            # Определяем квартал для месяца
+            quarter = (month - 1) // 3 + 1
+            
+            month_period = await self.get_or_create_by_params(
+                year=year,
+                session=session,
+                month=month,
+                quarter=quarter
+            )
+            created_periods["months"].append(month_period)
+        
+        return created_periods
+    
+    async def get_available_years(
+        self,
+        session: AsyncSession
+    ) -> List[int]:
+        """
+        Получение списка всех доступных годов из периодов.
+        
+        Args:
+            session: Сессия БД
+            
+        Returns:
+            Отсортированный список годов
+        """
+        # Получаем уникальные годы из таблицы периодов
+        query = select(self.model.year).distinct()
+        result = await session.execute(query)
+        years = [year for (year,) in result]
+        
+        # Сортируем годы по возрастанию
+        return sorted(years) 

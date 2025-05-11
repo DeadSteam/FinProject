@@ -314,6 +314,16 @@ class ApiClient {
 
         return await this.put('/finance/plan-values/by-period', data);
     }
+
+    // Добавляем новый метод в класс ApiClient для получения доступных годов
+    async getAvailableYears() {
+        return await this.get('/finance/periods/years');
+    }
+
+    // Добавляем новый метод в класс ApiClient для инициализации года
+    async initializeYear(year) {
+        return await this.post(`/finance/periods/years/${year}/init`);
+    }
 }
 
 // Создаем экземпляр ApiClient
@@ -324,7 +334,8 @@ function getUrlParams() {
     const params = new URLSearchParams(window.location.search);
     return {
         categoryId: params.get('category') || '',
-        storeId: params.get('store') || ''
+        storeId: params.get('store') || '',
+        year: params.get('year') || ''
     };
 }
 
@@ -1104,15 +1115,29 @@ function addMetricActionButtons(metrics) {
         actionButtons = document.createElement('div');
         actionButtons.className = 'action-buttons';
         
-        // Добавляем кнопку для добавления новой метрики
-        actionButtons.innerHTML = `
-            <button class="btn btn-primary" id="add-metric-btn">
-                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                </svg>
-                Добавить метрику
-            </button>
+        // Добавляем кнопку для инициализации года
+        const initYearBtn = document.createElement('button');
+        initYearBtn.className = 'btn btn-secondary';
+        initYearBtn.id = 'initYearBtn';
+        initYearBtn.innerHTML = `
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            Инициализация года
         `;
+        actionButtons.appendChild(initYearBtn);
+        
+        // Добавляем кнопку для добавления новой метрики
+        const addMetricBtn = document.createElement('button');
+        addMetricBtn.className = 'btn btn-primary';
+        addMetricBtn.id = 'add-metric-btn';
+        addMetricBtn.innerHTML = `
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Добавить метрику
+        `;
+        actionButtons.appendChild(addMetricBtn);
         
         // Добавляем контейнер перед таблицей
         const tableContainer = document.querySelector('.salary-table-container');
@@ -1122,6 +1147,9 @@ function addMetricActionButtons(metrics) {
         document.getElementById('add-metric-btn').addEventListener('click', () => {
             document.getElementById('add-metric-modal').classList.add('active');
         });
+        
+        // Добавляем обработчик для кнопки инициализации года
+        document.getElementById('initYearBtn').addEventListener('click', showInitYearModal);
     }
     
     // Добавляем кнопку для добавления годового плана
@@ -1736,18 +1764,26 @@ async function setupCharts(metrics, periods) {
 }
 
 // Добавляем вызов функции setupCharts после загрузки метрик
-async function loadMetrics() {
+async function loadMetrics(selectedYear = null, selectedShopId = null) {
     try {
-        const { categoryId, storeId } = getUrlParams();
+        let categoryId, storeId;
+
+        // Получаем параметры из URL, если они не переданы явно
+        const urlParams = getUrlParams();
+        categoryId = urlParams.categoryId;
         
+        // Используем переданные параметры или берем из URL
+        storeId = selectedShopId || urlParams.storeId;
+        
+        // Если параметры не переданы и не указаны в URL, выходим
         if (!categoryId || !storeId) {
             return;
         }
         
         showLoading();
         
-        // Получаем текущий год
-        const currentYear = new Date().getFullYear(); // Используем текущий год вместо фиксированного
+        // Получаем текущий год или используем переданный
+        const currentYear = selectedYear || urlParams.year || new Date().getFullYear();
         
         // Получаем все данные через новый API-эндпоинт детальных метрик
         const detailedMetrics = await apiClient.get(`/finance/analytics/metrics/details/${categoryId}/${storeId}/${currentYear}`);
@@ -1777,7 +1813,7 @@ async function loadMetrics() {
                 // Здесь мы не имеем ID периода, но можем создать виртуальный
                 const yearPeriodObj = {
                     id: `year-${currentYear}`,
-                    year: currentYear,
+                    year: parseInt(currentYear),
                     quarter: null,
                     month: null
                 };
@@ -1812,7 +1848,7 @@ async function loadMetrics() {
                 if (quarterNumber > 0) {
                     const quarterPeriodObj = {
                         id: `quarter-${currentYear}-${quarterNumber}`,
-                        year: currentYear,
+                        year: parseInt(currentYear),
                         quarter: quarterNumber,
                         month: null
                     };
@@ -2047,7 +2083,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.head.appendChild(styleElement);
     
     // Получаем параметры из URL
-    const { categoryId, storeId } = getUrlParams();
+    const { categoryId, storeId, year } = getUrlParams();
     
     // Если параметры отсутствуют, показываем сообщение об ошибке
     if (!categoryId || !storeId) {
@@ -2062,14 +2098,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     createEditValueModal();
     
         try {
-    // Загружаем метрики
-    await loadMetrics();
+    // Настраиваем фильтры
+    setupFilters();
+    
+    // Загружаем метрики (передаем год из URL, если он есть)
+    await loadMetrics(year || null);
     
     // Настраиваем сортировку таблицы - перемещаем после загрузки метрик
     setupTableSorting();
-    
-    // Настраиваем фильтры
-    setupFilters();
     
     // Настраиваем кнопку экспорта
     setupExportButton();
@@ -2089,80 +2125,283 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Функция настройки фильтров
 function setupFilters() {
+    // Получаем элементы фильтров
+    const yearFilter = document.getElementById('yearFilter');
     const shopFilter = document.getElementById('shopFilter');
-    if (shopFilter) {
-        // Проверяем, есть ли уже загруженные магазины в локальном хранилище
-        const cachedShops = localStorage.getItem('financeShops');
-        if (cachedShops) {
-            try {
-                const shops = JSON.parse(cachedShops);
-                populateShopFilter(shops);
-            } catch (e) {
-                console.error('Ошибка при парсинге кэшированных магазинов', e);
-                // Если произошла ошибка при парсинге, загружаем данные заново
-                fetchShops();
-            }
-        } else {
-            // Иначе загружаем список магазинов для фильтра
-            fetchShops();
+    
+    // Загружаем доступные годы и магазины
+    fetchYears();
+    fetchShops();
+    
+    // Обработчик изменения года
+    yearFilter?.addEventListener('change', function() {
+        const selectedYear = this.value;
+        updateDataByFilters(selectedYear, shopFilter.value);
+    });
+    
+    // Обработчик изменения магазина
+    shopFilter?.addEventListener('change', function() {
+        const selectedShop = this.value;
+        updateDataByFilters(yearFilter.value, selectedShop);
+    });
+    
+    // Внутренняя функция для загрузки доступных годов
+    async function fetchYears() {
+        try {
+            showLoading();
+            const apiClient = new ApiClient();
+            const years = await apiClient.getAvailableYears();
+            populateYearFilter(years);
+            hideLoading();
+        } catch (error) {
+            console.error('Ошибка при загрузке годов:', error);
+            hideLoading();
+            showNotification('Не удалось загрузить список годов', 'error');
         }
-
-        // Добавляем обработчик изменения фильтра
-        shopFilter.addEventListener('change', function() {
-            if (this.value) {
-                // Если выбран конкретный магазин, обновляем URL и перезагружаем страницу
-                const { categoryId } = getUrlParams();
-                window.location.href = `./page.html?category=${categoryId}&store=${this.value}`;
-            }
+    }
+    
+    // Функция для заполнения селектора годов
+    function populateYearFilter(years) {
+        if (!yearFilter) return;
+        
+        yearFilter.innerHTML = '';
+        
+        // Если нет годов, добавляем текущий
+        if (!years.length) {
+            const currentYear = new Date().getFullYear();
+            const option = document.createElement('option');
+            option.value = currentYear;
+            option.textContent = `${currentYear} год`;
+            yearFilter.appendChild(option);
+            return;
+        }
+        
+        // Добавляем все доступные годы
+        years.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = `${year} год`;
+            yearFilter.appendChild(option);
         });
+        
+        // Выбираем год из URL, если он есть
+        const { year } = getUrlParams();
+        if (year && yearFilter.querySelector(`option[value="${year}"]`)) {
+            yearFilter.value = year;
+        } else if (years.length > 0) {
+            // Иначе выбираем текущий или последний доступный год
+            const currentYear = new Date().getFullYear();
+            if (yearFilter.querySelector(`option[value="${currentYear}"]`)) {
+                yearFilter.value = currentYear;
+            } else {
+                yearFilter.value = years[years.length - 1]; // Последний год в списке
+            }
+        }
     }
     
-    // Функция для получения списка магазинов через API
-    function fetchShops() {
-        apiClient.get('/finance/shops')
-            .then(shops => {
-                // Кэшируем список магазинов для последующего использования
-                localStorage.setItem('financeShops', JSON.stringify(shops));
-                // Заполняем выпадающий список
-                populateShopFilter(shops);
-            })
-            .catch(error => {
-                console.error('Ошибка при загрузке магазинов:', error);
-            });
-    }
-    
-    // Функция для заполнения выпадающего списка магазинов
-    function populateShopFilter(shops) {
-                // Очищаем список магазинов
-                while (shopFilter.firstChild) {
-                    shopFilter.removeChild(shopFilter.firstChild);
+    // Функция для обновления данных по выбранным фильтрам
+    async function updateDataByFilters(year, shop) {
+        try {
+            showLoading();
+            
+            // Получаем текущие параметры из URL
+            const { categoryId } = getUrlParams();
+            
+            // Если нет выбранной категории, показываем уведомление
+            if (!categoryId) {
+                hideLoading();
+                showNotification('Не выбрана категория для фильтрации', 'error');
+                return;
+            }
+            
+            // Если выбран год и магазин, загружаем данные для них
+            if (year && shop) {
+                // Создаем новый URL с выбранными параметрами
+                window.history.pushState({}, '', `?category=${categoryId}&store=${shop}&year=${year}`);
+                
+                // Обновляем заголовок
+                const shopSelect = document.getElementById('shopFilter');
+                if (shopSelect) {
+                    const selectedOption = shopSelect.options[shopSelect.selectedIndex];
+                    if (selectedOption) {
+                        document.querySelector('.salary-report__subtitle').textContent = selectedOption.textContent;
+                    }
                 }
                 
-                // Добавляем опцию "Все магазины"
-                const allOption = document.createElement('option');
-                allOption.textContent = 'Все магазины';
-                allOption.value = '';
-                shopFilter.appendChild(allOption);
-        
-        // Получаем текущий выбранный магазин
-        const currentStoreId = getUrlParams().storeId;
+                // Загружаем метрики с новыми параметрами
+                const apiClient = new ApiClient();
+                const detailedMetrics = await apiClient.get(`/finance/analytics/metrics/details/${categoryId}/${shop}/${year}`);
                 
-                // Добавляем магазины в список
-                shops.forEach(shop => {
-                    if (!shop.status) return; // Пропускаем неактивные магазины
-                    
+                // Обновляем метрики и таблицу
+                await loadMetrics(year, shop);
+                
+                // Обновляем графики
+                if (window.loadedMetricsData && window.loadedPeriodsData) {
+                    setupCharts(window.loadedMetricsData, window.loadedPeriodsData);
+                }
+            } else {
+                hideLoading();
+                showNotification('Выберите год и магазин для фильтрации', 'warning');
+                return;
+            }
+            
+            hideLoading();
+        } catch (error) {
+            console.error('Ошибка при обновлении данных:', error);
+            hideLoading();
+            showNotification('Не удалось обновить данные: ' + error.message, 'error');
+        }
+    }
+    
+    // Функция для загрузки списка магазинов
+    async function fetchShops() {
+        try {
+            const apiClient = new ApiClient();
+            const shops = await apiClient.get('/finance/shops');
+            populateShopFilter(shops);
+        } catch (error) {
+            console.error('Ошибка при загрузке магазинов:', error);
+            showNotification('Не удалось загрузить список магазинов', 'error');
+        }
+    }
+    
+    // Функция для заполнения селектора магазинов
+    function populateShopFilter(shops) {
+        if (!shopFilter) return;
+        
+        shopFilter.innerHTML = '';
+        
+        // Добавляем все магазины
+        shops.forEach(shop => {
+            const option = document.createElement('option');
+            option.value = shop.id;
+            option.textContent = shop.name;
+            shopFilter.appendChild(option);
+        });
+        
+        // Выбираем магазин из URL, если он есть
+        const { storeId } = getUrlParams();
+        if (storeId && shopFilter.querySelector(`option[value="${storeId}"]`)) {
+            shopFilter.value = storeId;
+        } else if (shops.length > 0) {
+            // Если нет магазина в URL, выбираем первый магазин
+            shopFilter.value = shops[0].id;
+        }
+    }
+}
+
+// Функция для отображения модального окна инициализации года
+function showInitYearModal() {
+    // Создаем модальное окно
+    const modalContainer = document.createElement('div');
+    modalContainer.className = 'modal active';
+    modalContainer.id = 'initYearModal';
+    
+    // Получаем текущий год
+    const currentYear = new Date().getFullYear();
+    
+    // Создаем содержимое модального окна
+    modalContainer.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Инициализация года</h3>
+                <button class="modal-close">
+                    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Укажите год для инициализации периодов (год, кварталы, месяцы):</p>
+                <div class="form-group">
+                    <label for="init-year">Год</label>
+                    <input type="number" id="init-year" class="form-control" value="${currentYear}" min="2000" max="2100">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-cancel">Отмена</button>
+                <button class="btn btn-primary" id="init-year-btn">Инициализировать</button>
+            </div>
+        </div>
+    `;
+    
+    // Добавляем модальное окно в DOM
+    document.body.appendChild(modalContainer);
+    
+    // Обработчики закрытия модального окна
+    const closeBtn = modalContainer.querySelector('.modal-close');
+    const cancelBtn = modalContainer.querySelector('.modal-cancel');
+    
+    closeBtn.addEventListener('click', () => {
+        modalContainer.remove();
+    });
+    
+    cancelBtn.addEventListener('click', () => {
+        modalContainer.remove();
+    });
+    
+    // Обработчик кнопки инициализации
+    const initBtn = modalContainer.querySelector('#init-year-btn');
+    initBtn.addEventListener('click', async () => {
+        const yearInput = document.getElementById('init-year');
+        const year = parseInt(yearInput.value);
+        
+        if (!year || year < 2000 || year > 2100) {
+            showNotification('Введите корректный год (2000-2100)', 'error');
+            return;
+        }
+        
+        try {
+            showLoading();
+            const apiClient = new ApiClient();
+            const result = await apiClient.initializeYear(year);
+            modalContainer.remove();
+            
+            // Обновляем список годов
+            const years = await apiClient.getAvailableYears();
+            const yearFilter = document.getElementById('yearFilter');
+            
+            if (yearFilter) {
+                // Сохраняем текущее выбранное значение
+                const currentSelectedYear = yearFilter.value;
+                
+                // Заполняем селект годами
+                yearFilter.innerHTML = '';
+                years.forEach(y => {
                     const option = document.createElement('option');
-                    option.textContent = shop.name;
-                    option.value = shop.id;
-                    
-                    // Выбираем текущий магазин
-            if (shop.id === currentStoreId) {
+                    option.value = y;
+                    option.textContent = `${y} год`;
+                    // Если это новый добавленный год или ранее выбранный год
+                    if (y === year || y.toString() === currentSelectedYear) {
                         option.selected = true;
                     }
-                    
-                    shopFilter.appendChild(option);
+                    yearFilter.appendChild(option);
                 });
-    }
+                
+                // Получаем текущие параметры URL
+                const { categoryId, storeId } = getUrlParams();
+                
+                // Обновляем URL с новым годом
+                if (categoryId && storeId) {
+                    window.history.pushState({}, '', `?category=${categoryId}&store=${storeId}&year=${year}`);
+                }
+                
+                // Загружаем данные для нового года
+                await loadMetrics(year);
+                
+                // Вызываем событие change, чтобы обновились данные
+                const event = new Event('change');
+                yearFilter.dispatchEvent(event);
+            }
+            
+            hideLoading();
+            showNotification(`Периоды для ${year} года успешно созданы`, 'success');
+        } catch (error) {
+            console.error('Ошибка при инициализации года:', error);
+            hideLoading();
+            showNotification('Не удалось инициализировать год: ' + error.message, 'error');
+        }
+    });
 }
 
 // Функция настройки кнопки экспорта

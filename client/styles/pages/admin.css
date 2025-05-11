@@ -768,7 +768,7 @@ label {
 .image-preview .category-icon {
     background-color: white;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
+} 
 
 /* Стили для галереи изображений в модальном окне категорий */
 .image-gallery-container {

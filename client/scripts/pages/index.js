@@ -568,8 +568,11 @@ function loadStores(categoryId) {
 
         // Добавляем обработчик клика на кнопку "Просмотреть отчет"
         storeCard.querySelector('.store-view-report').addEventListener('click', function () {
+            // Получаем текущий год
+            const currentYear = new Date().getFullYear();
+            
             // Перенаправляем на страницу с детальной информацией
-            window.location.href = `./pages/finance-details.html?category=${categoryId}&store=${store.id}`;
+            window.location.href = `./pages/finance-details.html?category=${categoryId}&store=${store.id}&year=${currentYear}`;
 
             // Показываем третий шаг инструкции
             showInstructionStep(3);

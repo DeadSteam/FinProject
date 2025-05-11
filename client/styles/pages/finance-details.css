@@ -64,7 +64,7 @@
 }
 
 .filter-select {
-  padding: 0.6rem 1.2rem 0.6rem 1rem;
+  padding: 0.6rem 1.8rem 0.6rem 1rem;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: white;
@@ -941,9 +941,19 @@ td.negative::after {
 /* Кнопки действий */
 .action-buttons {
   display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
+  justify-content: flex-start;
+  gap: 10px;
   margin-bottom: 1rem;
+}
+
+.action-buttons .btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.action-buttons .btn svg {
+  margin-right: 4px;
 }
 
 /* Уведомления */
