@@ -19,6 +19,13 @@
         max-width: 100%;
         padding: 0 1rem;
     }
+    
+    /* Адаптивный заголовок */
+    .header {
+        padding: 0 1rem;
+        width: 100%;
+        background-color: white;
+    }
 }
 
 @media (max-width: 992px) {
@@ -40,6 +47,11 @@
     
     .card {
         padding: 1.2rem;
+    }
+    
+    /* Начинаем сжимать детали пользователя */
+    .user-details {
+        max-width: 130px;
     }
 }
 
@@ -68,6 +80,32 @@
     
     .btn {
         padding: 0.6rem 1.2rem;
+    }
+    
+    /* Шапка адаптивная */
+    .header {
+        padding: 0 0.75rem;
+        width: 100%;
+        background-color: white;
+        flex-direction: row;
+        height: var(--header-height);
+    }
+    
+    .header-logo {
+        font-size: 1rem;
+    }
+    
+    .header-nav {
+        margin-left: 0.5rem;
+    }
+    
+    .header-nav a {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    /* Сжимаем детали пользователя */
+    .user-details {
+        max-width: 100px;
     }
     
     /* Сайдбар и навигация */
@@ -140,6 +178,53 @@
     .btn {
         padding: 0.5rem 1rem;
         font-size: 0.9rem;
+    }
+    
+    /* Адаптивная шапка */
+    .header {
+        padding: 0 0.5rem;
+        width: 100%;
+        background-color: white;
+        height: var(--header-height);
+        flex-direction: row;
+    }
+    
+    .header-logo {
+        font-size: 0;
+    }
+    
+    .header-logo svg {
+        width: 24px;
+        height: 24px;
+        margin-right: 0;
+    }
+    
+    .header-nav {
+        flex: 1;
+        margin-left: 0.5rem;
+        justify-content: center;
+    }
+    
+    .header-nav a {
+        padding: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .header-actions {
+        gap: 0.75rem;
+    }
+    
+    /* Скрываем детали пользователя */
+    .user-details {
+        max-width: 0;
+        opacity: 0;
+        visibility: hidden;
+    }
+    
+    /* Адаптация выпадающего меню пользователя */
+    .user-dropdown {
+        width: 200px;
+        right: -0.5rem;
     }
     
     /* Топбар и заголовок */
@@ -250,7 +335,7 @@
     }
 }
 
-/* Очень маленькие устройства */
+/* Очень малые устройства */
 @media (max-width: 375px) {
     .btn {
         padding: 0.4rem 0.8rem;
@@ -258,11 +343,11 @@
     }
     
     .topbar {
-        padding: 0.75rem 0;
+        padding: 0.75rem;
     }
     
     .page-title {
-        font-size: 1.3rem;
+        font-size: 1.2rem;
     }
     
     .modal-header,
@@ -271,10 +356,9 @@
         padding: 0.75rem;
     }
     
-    /* Еще больше уменьшаем размер шрифта для очень маленьких экранов */
     .data-table th,
     .data-table td {
-        padding: 0.6rem 0.4rem;
+        padding: 0.5rem 0.25rem;
         font-size: 0.8rem;
     }
 } 

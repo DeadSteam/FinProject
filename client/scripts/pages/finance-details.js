@@ -1232,34 +1232,8 @@ function updateMetricSelect(metrics) {
 
 // Обработчик сортировки таблицы
 function setupTableSorting() {
-    // Функция будет добавлять обработчики сортировки после создания заголовков таблицы
-    // Поэтому вызываем её после обновления заголовков в renderMetricsTable
-    
-    document.querySelectorAll('.sortable').forEach(header => {
-        // Добавляем иконку сортировки
-        header.innerHTML += ' <span class="sort-icon">⇵</span>';
-        
-        header.addEventListener('click', function() {
-            const sortKey = this.dataset.sort;
-            const currentDirection = this.getAttribute('data-direction') || 'asc';
-            const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
-            
-            // Сбрасываем все направления
-            document.querySelectorAll('.sortable').forEach(h => {
-                h.removeAttribute('data-direction');
-                const icon = h.querySelector('.sort-icon');
-                if (icon) icon.textContent = '⇵';
-            });
-            
-            // Устанавливаем новое направление и иконку
-            this.setAttribute('data-direction', newDirection);
-            const icon = this.querySelector('.sort-icon');
-            if (icon) icon.textContent = newDirection === 'asc' ? '↑' : '↓';
-            
-            // Выполняем сортировку таблицы по выбранному столбцу
-            sortTable(sortKey, newDirection);
-        });
-    });
+    // Функция отключена для исключения возможности сортировки
+    console.log('Сортировка таблицы отключена');
 }
 
 // Функция сортировки таблицы
@@ -2454,16 +2428,208 @@ function setupExportButton() {
             showLoading();
             
             // Выполняем экспорт данных
-            const { categoryId, storeId } = getUrlParams();
-            
-            // Здесь будет логика экспорта данных, пока показываем сообщение
-            setTimeout(() => {
-                hideLoading();
-                showNotification('Отчет успешно экспортирован!', 'success');
-            }, 1500);
+            exportTableToExcel();
         });
     }
-} 
+}
+
+// Функция экспорта данных в Excel
+function exportTableToExcel() {
+    try {
+        // Получаем таблицу и заголовок отчета
+        const table = document.querySelector('.salary-table');
+        const reportTitle = document.querySelector('.salary-report__title').textContent;
+        const reportSubtitle = document.querySelector('.salary-report__subtitle').textContent;
+        
+        if (!table) {
+            showNotification('Таблица не найдена', 'error');
+            hideLoading();
+            return;
+        }
+        
+        // Создаем рабочую книгу и лист
+        const wb = XLSX.utils.book_new();
+        
+        // Подготовка данных для Excel
+        const rows = [];
+        
+        // Добавляем заголовок отчета
+        rows.push([reportTitle]);
+        rows.push([reportSubtitle]);
+        rows.push([]); // Пустая строка
+        
+        // Получаем все строки из таблицы
+        const headerRows = table.querySelectorAll('thead tr');
+        const bodyRows = table.querySelectorAll('tbody tr');
+        const footerRows = table.querySelectorAll('tfoot tr');
+        
+        // Первая строка заголовка (Период, Метрика 1, Метрика 2, ...)
+        const firstHeaderRow = headerRows[0];
+        const firstHeaderCells = firstHeaderRow.querySelectorAll('th');
+        
+        const firstRowData = [];
+        firstHeaderCells.forEach(cell => {
+            // Первая ячейка - "Период" - добавляем как есть
+            if (cell.cellIndex === 0) {
+                firstRowData.push(cell.textContent.trim());
+            } else {
+                // Метрики добавляем с учетом colspan
+                const colspan = parseInt(cell.getAttribute('colspan')) || 1;
+                const content = cell.textContent.trim();
+                firstRowData.push(content);
+                
+                // Добавляем пустые ячейки для colspan
+                for (let i = 1; i < colspan; i++) {
+                    firstRowData.push('');
+                }
+            }
+        });
+        rows.push(firstRowData);
+        
+        // Вторая строка заголовка (План, Факт, Отклонение)
+        const secondHeaderRow = headerRows[1];
+        const secondHeaderCells = secondHeaderRow.querySelectorAll('td');
+        
+        const secondRowData = [''];  // Первый столбец пустой из-за rowspan в первой строке
+        secondHeaderCells.forEach(cell => {
+            secondRowData.push(cell.textContent.trim());
+        });
+        rows.push(secondRowData);
+        
+        // Добавляем строки данных из тела таблицы
+        bodyRows.forEach(row => {
+            const rowData = [];
+            const cells = row.querySelectorAll('td');
+            
+            cells.forEach(cell => {
+                // Извлекаем только текстовое содержимое без HTML
+                let content = cell.textContent.trim();
+                
+                // Если ячейка содержит кнопку "Внести факт", заменяем на пустое значение
+                if (content.includes('Внести факт')) {
+                    content = '—';
+                }
+                
+                rowData.push(content);
+            });
+            
+            rows.push(rowData);
+        });
+        
+        // Добавляем итоговую строку
+        footerRows.forEach(row => {
+            const rowData = [];
+            const cells = row.querySelectorAll('td');
+            
+            cells.forEach(cell => {
+                rowData.push(cell.textContent.trim());
+            });
+            
+            rows.push(rowData);
+        });
+        
+        // Создаем лист с данными
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        
+        // Стили и форматирование для заголовков
+        if (!ws['!merges']) ws['!merges'] = [];
+        
+        // Объединяем ячейки в заголовке отчета
+        ws['!merges'].push(
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 10 } },  // Первая строка (заголовок)
+            { s: { r: 1, c: 0 }, e: { r: 1, c: 10 } }   // Вторая строка (подзаголовок)
+        );
+        
+        // Добавляем объединение ячеек для заголовков метрик
+        const headerRowData = rows[3]; // Первая строка заголовка
+        let colIndex = 1; // Начинаем с 1, т.к. "Период" занимает первую колонку
+        
+        // Обрабатываем заголовки метрик
+        for (let i = 1; i < headerRowData.length; i++) {
+            // Если ячейка не пустая, то это заголовок метрики
+            if (headerRowData[i] && headerRowData[i] !== '') {
+                // Ищем следующую непустую ячейку
+                let endColIndex = i;
+                while (endColIndex + 1 < headerRowData.length && 
+                      (headerRowData[endColIndex + 1] === '' || headerRowData[endColIndex + 1] === undefined)) {
+                    endColIndex++;
+                }
+                
+                // Объединяем ячейки заголовка метрики
+                if (endColIndex > i) {
+                    ws['!merges'].push({
+                        s: { r: 3, c: i },
+                        e: { r: 3, c: endColIndex }
+                    });
+                    i = endColIndex;
+                }
+            }
+        }
+        
+        // Объединяем ячейку "Период" по вертикали
+        ws['!merges'].push({
+            s: { r: 3, c: 0 },
+            e: { r: 4, c: 0 }
+        });
+        
+        // Устанавливаем ширину столбцов
+        ws['!cols'] = Array(firstRowData.length).fill({ wch: 18 });
+        
+        // Первый столбец (Период) может быть шире
+        ws['!cols'][0] = { wch: 15 };
+        
+        // Добавляем стили ячеек
+        for (let i = 0; i < rows.length; i++) {
+            for (let j = 0; j < rows[i].length; j++) {
+                const cellRef = XLSX.utils.encode_cell({ r: i, c: j });
+                
+                if (!ws[cellRef]) {
+                    ws[cellRef] = { v: rows[i][j] };
+                }
+                
+                // Устанавливаем стили для заголовков
+                if (i <= 1) {
+                    // Стили для заголовка отчета
+                    ws[cellRef].s = {
+                        font: { bold: true, sz: 14 },
+                        alignment: { horizontal: 'center' }
+                    };
+                } else if (i === 3 || i === 4) {
+                    // Стили для заголовков таблицы
+                    ws[cellRef].s = {
+                        font: { bold: true },
+                        fill: { fgColor: { rgb: 'F1F5F9' } },
+                        alignment: { horizontal: j === 0 ? 'left' : 'center' }
+                    };
+                } else if (i === rows.length - 1) {
+                    // Стили для итоговой строки
+                    ws[cellRef].s = {
+                        font: { bold: true },
+                        fill: { fgColor: { rgb: 'F0F3FF' } }
+                    };
+                }
+            }
+        }
+        
+        // Добавляем лист в книгу
+        XLSX.utils.book_append_sheet(wb, ws, 'Отчет');
+        
+        // Генерируем имя файла на основе заголовка и текущей даты
+        const date = new Date();
+        const formattedDate = `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()}`;
+        const fileName = `${reportTitle.replace(/[^\wа-яА-Я\s]/gi, '')}_${formattedDate}.xlsx`;
+        
+        // Сохраняем файл
+        XLSX.writeFile(wb, fileName);
+        
+        hideLoading();
+        showNotification('Отчет успешно экспортирован!', 'success');
+    } catch (error) {
+        console.error('Ошибка при экспорте данных:', error);
+        hideLoading();
+        showNotification('Ошибка при экспорте данных: ' + error.message, 'error');
+    }
+}
 
 // Рендеринг таблицы метрик
 function renderMetricsTable(metrics, periods) {
@@ -2876,22 +3042,16 @@ function updateMetricHeaders(metrics) {
         headerCell.textContent = `${metric.name} (${metric.unit})`;
         headerRow.appendChild(headerCell);
         
-        // Подзаголовки (План, Факт, Отклонение)
+        // Подзаголовки (План, Факт, Отклонение) без классов sortable
         const planCell = document.createElement('td');
-        planCell.className = 'sortable';
-        planCell.dataset.sort = `metric${index + 1}-plan`;
         planCell.textContent = 'План';
         subHeaderRow.appendChild(planCell);
         
         const factCell = document.createElement('td');
-        factCell.className = 'sortable';
-        factCell.dataset.sort = `metric${index + 1}-fact`;
         factCell.textContent = 'Факт';
         subHeaderRow.appendChild(factCell);
         
         const diffCell = document.createElement('td');
-        diffCell.className = 'sortable';
-        diffCell.dataset.sort = `metric${index + 1}-diff`;
         diffCell.textContent = 'Отклонение';
         subHeaderRow.appendChild(diffCell);
     });

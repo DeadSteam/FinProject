@@ -8,6 +8,8 @@
   <link rel="stylesheet" href="../styles/pages/finance-details.css">
   <link rel="stylesheet" href="../styles/responsive.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <!-- Добавляем библиотеку SheetJS -->
+  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
 </head>
 <body>
   <div class="content-wrapper">
@@ -24,26 +26,26 @@
     </nav>
     <div class="header-actions">
  <div class="user-info">
-                <a href="./profile.html" class="user-avatar">
-                    <div class="avatar-inner">АП</div>
-                </a>
-                <div class="user-details">
-                    <div class="user-name">Загрузка...</div>
-                    <div class="user-role">Загрузка...</div>
-                </div>
-                <div class="user-dropdown">
-                    <a href="./profile.html" class="user-dropdown-item">
-                        <i class="fa fa-user"></i> Профиль
-                    </a>
-                    <a href="./settings.html" class="user-dropdown-item">
-                        <i class="fa fa-cog"></i> Настройки
-                    </a>
-                    <div class="user-dropdown-divider"></div>
-                    <a href="#" class="user-dropdown-item logout-btn">
-                        <i class="fa fa-sign-out-alt"></i> Выйти
-                    </a>
-                </div>
-            </div>
+    <div class="user-avatar">
+        <div class="avatar-inner">АП</div>
+    </div>
+    <div class="user-details">
+        <div class="user-name">Загрузка...</div>
+        <div class="user-role">Загрузка...</div>
+    </div>
+    <div class="user-dropdown">
+        <a href="./profile.html" class="user-dropdown-item">
+            <i class="fa fa-user"></i> Профиль
+        </a>
+        <a href="./settings.html" class="user-dropdown-item">
+            <i class="fa fa-cog"></i> Настройки
+        </a>
+        <div class="user-dropdown-divider"></div>
+        <a href="#" class="user-dropdown-item logout-btn">
+            <i class="fa fa-sign-out-alt"></i> Выйти
+        </a>
+    </div>
+</div>
     </div>
   </header>
   
@@ -65,14 +67,14 @@
         <div class="breadcrumbs">
           <a href="../index.html" class="breadcrumb-item">Главная</a>
           <span class="breadcrumb-separator">/</span>
-          <span class="breadcrumb-item active">Заработная плата</span>
+          <span class="breadcrumb-item active">Отчет</span>
           </div>
         </div>
         
       <div class="salary-header">
         <div>
-          <h1 class="salary-report__title">Заработная плата</h1>
-          <h2 class="salary-report__subtitle">Магазин 1</h2>
+          <h1 class="salary-report__title">Загрузка...</h1>
+          <h2 class="salary-report__subtitle">Загрузка...</h2>
         </div>
         <div class="salary-filters">
             <select class="filter-select" id="yearFilter">
@@ -92,7 +94,7 @@
           </div>
         </div>
         
-        <!-- Ключевые показатели -->
+        <!-- Ключевые показатели
         <div class="data-visual">
           <div class="data-card">
             <div class="data-card__title">Общий фонд оплаты труда</div>
@@ -105,7 +107,7 @@
               0.4% от планового
             </div>
           </div>
-          
+
           <div class="data-card">
             <div class="data-card__title">Отработанные часы</div>
             <div class="data-card__value">1 944 ч.</div>
@@ -117,7 +119,7 @@
               0.4% от планового
             </div>
           </div>
-          
+
           <div class="data-card">
             <div class="data-card__title">Средняя зарплата</div>
             <div class="data-card__value">121 500 ₽</div>
@@ -129,13 +131,13 @@
               1.2% от прошлого года
             </div>
           </div>
-        </div>
-        
+        </div>-->
+
         <!-- Селектор типа данных для визуализации -->
         <div class="chart-controls">
           <div class="chart-tabs">
-            <button class="chart-tab active" data-chart="hours">Рабочие часы</button>
-            <button class="chart-tab" data-chart="salary">Заработная плата</button>
+            <button class="chart-tab active" data-chart="hours">Загрузка данных...</button>
+            <button class="chart-tab" data-chart="salary">Загрузка данных...</button>
           </div>
           <div class="chart-view-toggle">
             <button class="chart-view-btn active" data-view="quarters">
@@ -156,7 +158,7 @@
         <!-- Визуализация данных -->
         <div class="chart-container">
           <div class="chart-header">
-            <div class="chart-title">Сравнение рабочих часов по кварталам (ч.)</div>
+            <div class="chart-title">Загрузка данных...</div>
             <div class="chart-legend">
               <div class="legend-item">
                 <div class="legend-color legend-color--plan"></div>
