@@ -22,6 +22,14 @@ class DatabaseConfig(BaseModel):
     
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
+class RedisConfig(BaseModel):
+    URL: str
+    ENCODING: str = "utf-8"
+    DECODE_RESPONSES: bool = True
+    DEFAULT_TIMEOUT: int = 10  # 10 секунд
+    
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
 class Settings(BaseModel):
     # Базовые настройки
     RUN: RunConfig = RunConfig()
@@ -65,6 +73,9 @@ class Settings(BaseModel):
     DATABASE_URL: str = "postgresql+asyncpg://postgres:Akrawer1@localhost:5434/finance_db"
     USERS_DATABASE_URL: str = "postgresql+asyncpg://postgres:Akrawer1@localhost:5435/users_db"
     
+    # Настройки Redis
+    REDIS_URL: str = "redis://localhost:6379/0"
+    
     # Автоматическое создание объектов конфигурации баз данных
     @property
     def FINANCE_DATABASE(self) -> DatabaseConfig:
@@ -73,6 +84,10 @@ class Settings(BaseModel):
     @property
     def USERS_DATABASE(self) -> DatabaseConfig:
         return DatabaseConfig(URL=self.USERS_DATABASE_URL)
+    
+    @property
+    def REDIS(self) -> RedisConfig:
+        return RedisConfig(URL=self.REDIS_URL)
     
     # Другие настройки
     DEBUG: bool = True

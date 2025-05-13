@@ -1,6 +1,54 @@
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine, AsyncSession, async_sessionmaker
+import redis.asyncio as aioredis
+import json
+import uuid
+import datetime
+import re
+from typing import Any, Optional
 
 from src.core.config import settings
+
+
+# Кастомный JSON-энкодер для обработки UUID и других специальных типов
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, uuid.UUID):
+            # Преобразуем UUID в строку
+            return str(obj)
+        elif isinstance(obj, (datetime.datetime, datetime.date)):
+            # Преобразуем даты и время в ISO формат
+            return obj.isoformat()
+        elif isinstance(obj, datetime.timedelta):
+            # Преобразуем timedelta в секунды
+            return obj.total_seconds()
+        # Другие специальные типы можно обработать здесь
+        return super().default(obj)
+
+
+# Регулярное выражение для распознавания строк в ISO формате даты/времени
+ISO_DATE_REGEX = re.compile(r'^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?)?$')
+
+
+def parse_json_with_dates(json_str: str) -> Any:
+    """
+    Парсит JSON-строку, пытаясь преобразовать строки в ISO формате в объекты datetime.
+    """
+    def object_hook(obj):
+        for key, value in obj.items():
+            if isinstance(value, str) and ISO_DATE_REGEX.match(value):
+                try:
+                    if 'T' in value:
+                        # Это datetime
+                        obj[key] = datetime.datetime.fromisoformat(value.replace('Z', '+00:00'))
+                    else:
+                        # Это date
+                        obj[key] = datetime.date.fromisoformat(value)
+                except (ValueError, TypeError):
+                    # Если не удается преобразовать, оставляем как есть
+                    pass
+        return obj
+    
+    return json.loads(json_str, object_hook=object_hook)
 
 
 class DBHelper:
@@ -33,6 +81,88 @@ class DBHelper:
         async with self.session_factory as session:
             yield session
 
+
+class RedisHelper:
+    def __init__(
+        self,
+        url: str,
+        encoding: str = "utf-8",
+        decode_responses: bool = True,
+    ):
+        self.client = aioredis.from_url(
+            url,
+            encoding=encoding,
+            decode_responses=decode_responses,
+        )
+        print(f"Инициализирован Redis-клиент с URL: {url}")
+    
+    async def set(self, key: str, value: Any, expire: int = settings.REDIS.DEFAULT_TIMEOUT) -> bool:
+        """Сохранение данных в Redis с временем истечения."""
+        try:
+            if not isinstance(value, (str, int, float, bool)):
+                # Преобразуем сложные объекты в JSON с использованием кастомного энкодера
+                print(f"Сериализация объекта для ключа '{key}', тип: {type(value)}")
+                serialized_value = json.dumps(value, cls=CustomJSONEncoder)
+            else:
+                serialized_value = value
+            
+            result = await self.client.set(key, serialized_value, ex=expire)
+            print(f"Результат сохранения в Redis для ключа '{key}': {result}")
+            return result
+        except Exception as e:
+            print(f"Ошибка при сохранении в Redis: {str(e)}")
+            import traceback
+            print(traceback.format_exc())
+            return False
+    
+    async def get(self, key: str) -> Optional[Any]:
+        """Получение данных из Redis."""
+        try:
+            value = await self.client.get(key)
+            if value is None:
+                print(f"Ключ '{key}' не найден в Redis")
+                return None
+            
+            print(f"Получено значение из Redis для ключа '{key}', тип: {type(value)}")
+            
+            # Пробуем десериализовать, если это JSON
+            try:
+                if isinstance(value, str) and (value.startswith('{') or value.startswith('[')):
+                    # Используем нашу функцию для десериализации с поддержкой дат
+                    deserialized_value = parse_json_with_dates(value)
+                    print(f"Успешно десериализован JSON для ключа '{key}'")
+                    return deserialized_value
+                return value
+            except (TypeError, json.JSONDecodeError) as e:
+                print(f"Ошибка десериализации для ключа '{key}': {str(e)}")
+                return value
+        except Exception as e:
+            print(f"Ошибка при получении из Redis для ключа '{key}': {str(e)}")
+            import traceback
+            print(traceback.format_exc())
+            return None
+    
+    async def delete(self, key: str) -> bool:
+        """Удаление данных из Redis."""
+        try:
+            result = await self.client.delete(key) > 0
+            print(f"Удален ключ '{key}' из Redis: {result}")
+            return result
+        except Exception as e:
+            print(f"Ошибка при удалении ключа '{key}' из Redis: {str(e)}")
+            return False
+    
+    async def exists(self, key: str) -> bool:
+        """Проверка существования ключа в Redis."""
+        try:
+            result = await self.client.exists(key) > 0
+            print(f"Проверка существования ключа '{key}' в Redis: {result}")
+            return result
+        except Exception as e:
+            print(f"Ошибка при проверке существования ключа '{key}' в Redis: {str(e)}")
+            return False
+
+
 users_db_helper = DBHelper(
     url=settings.USERS_DATABASE.URL,
     echo=settings.USERS_DATABASE.ECHO,
@@ -46,4 +176,11 @@ finances_db_helper = DBHelper(
     echo_pool=settings.FINANCE_DATABASE.ECHO_POOL,
     pool_size=settings.FINANCE_DATABASE.POOL_SIZE,
     max_overflow=settings.FINANCE_DATABASE.MAX_OVERFLOW,
+)
+
+# Создаем Redis-хелпер
+redis_helper = RedisHelper(
+    url=settings.REDIS.URL,
+    encoding=settings.REDIS.ENCODING,
+    decode_responses=settings.REDIS.DECODE_RESPONSES,
 ) 

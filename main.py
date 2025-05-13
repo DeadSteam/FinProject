@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.core.config import settings
 from src.core.middleware import setup_middlewares
@@ -22,6 +23,16 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     openapi_tags=tags_metadata
+)
+
+# Настраиваем CORS напрямую в основном приложении
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Временно разрешаем все источники для отладки
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Настройка middleware

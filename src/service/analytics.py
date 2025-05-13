@@ -1,6 +1,7 @@
 import uuid
 from typing import List, Dict, Optional, Tuple, Any
 from decimal import Decimal
+import json
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,6 +11,7 @@ from src.service.finance import (
     period_service, shop_service, metric_service, category_service,
     actual_value_service, plan_value_service, image_service
 )
+from src.repository import redis_helper
 
 
 class AnalyticsService:
@@ -226,6 +228,23 @@ class AnalyticsService:
         Returns:
             Структура данных для дашборда со всеми необходимыми метриками
         """
+        # Проверяем наличие данных в кэше
+        cache_key = "dashboard:aggregate"
+        print(f"Проверка кэша для ключа: {cache_key}")
+        cached_data = await redis_helper.get(cache_key)
+        
+        if cached_data and isinstance(cached_data, dict) and cached_data.get("dashboard_metrics"):
+            print(f"Данные найдены в кэше: {cached_data.get('dashboard_metrics')}")
+            # Возвращаем данные из кэша, если они там есть и не пустые
+            return cached_data
+        else:
+            print("Данные в кэше отсутствуют или некорректны, получаем из БД")
+            # Временно инвалидируем кэш, если там пустые данные
+            if cached_data:
+                await redis_helper.delete(cache_key)
+        
+        # Если данных в кэше нет, продолжаем их получать из БД
+        
         # Получаем текущий период (можно настроить логику)
         current_period = await period_service.get_current_period(session)
         if not current_period:
@@ -233,28 +252,58 @@ class AnalyticsService:
             all_periods = await period_service.get_all(session)
             if not all_periods:
                 # Если периодов нет, вернем пустые данные
-                return self._get_empty_aggregated_data()
+                empty_data = self._get_empty_aggregated_data()
+                print("Периоды не найдены, возвращаем пустые данные")
+                # НЕ кэшируем пустые данные чтобы не блокировать получение реальных данных
+                return empty_data
             current_period = all_periods[-1]
+            print(f"Используем последний период: год {current_period.year}, квартал {current_period.quarter}, месяц {current_period.month}")
+        else:
+            print(f"Используем текущий период: год {current_period.year}, квартал {current_period.quarter}, месяц {current_period.month}")
         
-        # Получаем данные по текущему месяцу
-        month_values = await self._calculate_month_values(current_period, session)
-        
-        # Получаем метрики для дашборда
-        dashboard_metrics = await self._calculate_dashboard_metrics(current_period, session)
-        
-        # Получаем данные по категориям
-        categories_data = await self._aggregate_categories_data(current_period, session)
-        
-        # Получаем данные по магазинам
-        shops_data = await self._aggregate_shops_data(current_period, session)
-        
-        # Формируем результат
-        return {
-            "month_values": month_values,
-            "dashboard_metrics": dashboard_metrics,
-            "categories": categories_data,
-            "shops": shops_data
-        }
+        try:
+            # Получаем данные по текущему месяцу
+            month_values = await self._calculate_month_values(current_period, session)
+            print(f"Месячные значения: {month_values}")
+            
+            # Получаем метрики для дашборда
+            dashboard_metrics = await self._calculate_dashboard_metrics(current_period, session)
+            print(f"Метрики дашборда: {dashboard_metrics}")
+            
+            # Получаем данные по категориям
+            categories_data = await self._aggregate_categories_data(current_period, session)
+            print(f"Получено категорий: {len(categories_data)}")
+            
+            # Получаем данные по магазинам
+            shops_data = await self._aggregate_shops_data(current_period, session)
+            print(f"Получено магазинов: {len(shops_data)}")
+            
+            # Формируем результат
+            result = {
+                "month_values": month_values,
+                "dashboard_metrics": dashboard_metrics,
+                "categories": categories_data,
+                "shops": shops_data
+            }
+            
+            # Проверяем, что результат не пустой
+            if dashboard_metrics.get("count_category", 0) > 0 or dashboard_metrics.get("count_shops", 0) > 0:
+                # Кэшируем результат в Redis только если он содержит данные
+                print(f"Сохраняем данные в кэш, размер данных: категорий {len(categories_data)}, магазинов {len(shops_data)}")
+                success = await redis_helper.set(cache_key, result)
+                print(f"Результат сохранения в кэш: {success}")
+            else:
+                print("Результат содержит пустые данные, не кэшируем")
+            
+            return result
+        except Exception as e:
+            # В случае ошибки возвращаем пустые данные
+            empty_data = self._get_empty_aggregated_data()
+            # Логирование ошибки
+            print(f"Ошибка при получении агрегированных данных: {str(e)}")
+            import traceback
+            print(traceback.format_exc())
+            return empty_data
 
     async def _calculate_month_values(self, period: Period, session: AsyncSession) -> Dict[str, float]:
         """Вычисляет значения для текущего месяца.

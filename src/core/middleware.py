@@ -16,8 +16,7 @@ def setup_middlewares(app: FastAPI) -> None:
     # Настройка CORS
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.CORS_ORIGINS,
-        allow_origin_regex=None,
+        allow_origins=["*"],  # Временно разрешаем все источники для отладки
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
