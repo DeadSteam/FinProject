@@ -25,6 +25,9 @@
     --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
+/* Импорт стилей для модальных окон */
+@import url("./components/modal.css");
+
 * {
     margin: 0;
     padding: 0;
