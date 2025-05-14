@@ -19,8 +19,6 @@
          * Проверяем доступ к админ-панели
          */
         async function checkAccess() {
-            console.log('Проверка доступа к админ-панели...');
-            
             try {
                 // Проверяем авторизацию
                 if (!authService.isAuthenticated()) {
@@ -30,24 +28,19 @@
                     return;
                 }
                 
-                console.log('Пользователь авторизован, токен:', localStorage.getItem('accessToken'));
-                
                 // Получаем данные пользователя
                 const user = await authService.getCurrentUser();
-                console.log('Данные пользователя для проверки доступа:', user);
                 
                 // Проверяем наличие ролей admin или manager напрямую (без запроса к API)
                 let hasAccess = false;
                 if (user && user.role && (user.role.name === 'admin' || user.role.name === 'manager')) {
                     hasAccess = true;
                 }
-                
-                console.log('Результат проверки доступа по данным пользователя:', hasAccess);
+
                 
                 if (!hasAccess) {
                     // Делаем запасную проверку через hasRole
                     hasAccess = await authService.hasRole(['admin', 'manager']);
-                    console.log('Результат запасной проверки через API:', hasAccess);
                 }
                 
                 if (!hasAccess) {
@@ -57,8 +50,6 @@
                     window.location.href = '/client/index.html';
                     return;
                 }
-                
-                console.log('Доступ разрешен, показываем содержимое страницы');
                 // Обновляем информацию о пользователе
                 updateUserInfo(user);
                 // Показываем контент сразу (не ждем полной загрузки DOM)
@@ -75,12 +66,10 @@
          */
         function updateUserInfo(user) {
             if (!user) return;
-            
-            console.log('Обновление информации о пользователе:', user);
+
             
             // Ждем полной загрузки DOM
             document.addEventListener('DOMContentLoaded', () => {
-                console.log('DOM загружен, обновляем данные пользователя в интерфейсе');
                 
                 const userAvatar = document.querySelector('.user-avatar .avatar-inner');
                 const userName = document.querySelector('.user-name');
@@ -89,17 +78,14 @@
                 if (userAvatar && user.username) {
                     const initials = user.username.substring(0, 2).toUpperCase();
                     userAvatar.textContent = initials;
-                    console.log('Обновлены инициалы пользователя:', initials);
                 }
                 
                 if (userName) {
                     userName.textContent = user.username || 'Пользователь';
-                    console.log('Обновлено имя пользователя:', user.username);
                 }
                 
                 if (userRole && user.role) {
                     userRole.textContent = user.role.name || 'Пользователь';
-                    console.log('Обновлена роль пользователя:', user.role.name);
                 }
                 
                 // Добавляем обработчики для выпадающего меню
@@ -129,9 +115,6 @@
                 });
             });
         }
-        
-        // Запускаем проверку сразу
-        console.log('Запуск проверки доступа...');
         checkAccess();
     </script>
     <style>
@@ -374,7 +357,6 @@
         if (logoutButton) {
             logoutButton.addEventListener('click', async function(e) {
                 e.preventDefault();
-                console.log('Выполняем выход из системы...');
                 
                 try {
                     // Импортируем сервис авторизации для выхода
@@ -382,7 +364,6 @@
                     const authService = authModule.default;
                     
                     await authService.logout();
-                    console.log('Выход выполнен успешно, перенаправляем на страницу входа');
                     window.location.href = '/client/pages/login.html';
                 } catch (error) {
                     console.error('Ошибка при выходе из системы:', error);

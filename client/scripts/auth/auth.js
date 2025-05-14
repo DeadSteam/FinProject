@@ -17,7 +17,6 @@ class AuthService {
      */
     async login(identifier, password) {
         try {
-            console.log(`Попытка входа с идентификатором ${identifier} и паролем ${password}`);
             
             // Определяем тип идентификатора
             let requestBody = { password };
@@ -46,7 +45,6 @@ class AuthService {
             }
             
             const data = await response.json();
-            console.log('Данные токенов:', data);
             
             // Сохраняем токен в localStorage
             localStorage.setItem('accessToken', data.access_token);
@@ -54,7 +52,6 @@ class AuthService {
             
             // Получаем данные профиля
             const user = await this.getCurrentUser();
-            console.log('Данные пользователя после входа:', user);
             
             return {
                 tokens: data,
@@ -65,35 +62,7 @@ class AuthService {
             throw error;
         }
     }
-    
-    /**
-     * Регистрация нового пользователя
-     * @param {Object} userData - Данные пользователя
-     * @returns {Promise<Object>} - Данные созданного пользователя
-     */
-    async register(userData) {
-        try {
-            console.log('Регистрация пользователя:', userData);
-            const response = await fetch(`${API_BASE_URL}/auth/register`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(userData)
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                console.error('Ошибка регистрации:', errorData);
-                throw new Error(errorData.detail || 'Ошибка регистрации');
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('Ошибка при регистрации:', error);
-            throw error;
-        }
-    }
+
     
     /**
      * Выход из системы
@@ -101,7 +70,6 @@ class AuthService {
      */
     async logout() {
         try {
-            console.log('Выполняем выход из системы...');
             const response = await fetch(`${API_BASE_URL}/auth/logout`, {
                 method: 'POST',
                 credentials: 'include' // Для работы с куками
@@ -110,8 +78,7 @@ class AuthService {
             // Очищаем токены из localStorage
             localStorage.removeItem('accessToken');
             localStorage.removeItem('tokenType');
-            
-            console.log('Выход выполнен успешно');
+
             return await response.json();
         } catch (error) {
             console.error('Ошибка при выходе:', error);
@@ -128,7 +95,6 @@ class AuthService {
      */
     async refreshToken() {
         try {
-            console.log('Обновление токена...');
             const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
                 method: 'POST',
                 credentials: 'include' // Для работы с куками
@@ -140,7 +106,6 @@ class AuthService {
             }
             
             const data = await response.json();
-            console.log('Токен обновлен:', data);
             
             // Сохраняем новый токен в localStorage
             localStorage.setItem('accessToken', data.access_token);
@@ -155,40 +120,11 @@ class AuthService {
     }
     
     /**
-     * Запрос на сброс пароля
-     * @param {string} email - Email пользователя
-     * @returns {Promise<Object>} - Результат запроса
-     */
-    async requestPasswordReset(email) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email })
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || 'Ошибка при запросе сброса пароля');
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('Ошибка при запросе сброса пароля:', error);
-            throw error;
-        }
-    }
-    
-    /**
      * Получение данных текущего пользователя
      * @returns {Promise<Object>} - Данные пользователя
      */
     async getCurrentUser() {
         try {
-            console.log('Запрос данных текущего пользователя...');
-            console.log('Токен авторизации:', this.getAuthHeader());
             
             // Проверяем наличие токена
             if (!this.isAuthenticated()) {
@@ -210,7 +146,6 @@ class AuthService {
             let userData;
             try {
                 userData = await response.json();
-                console.log('Данные пользователя получены:', userData);
             } catch (jsonError) {
                 console.error('Ошибка при парсинге JSON:', jsonError);
                 throw new Error('Ошибка при обработке ответа сервера');
@@ -228,22 +163,17 @@ class AuthService {
                     
                     if (roleResponse.ok) {
                         const roleData = await roleResponse.json();
-                        console.log('Данные роли получены дополнительно:', roleData);
                         
                         // Добавляем информацию о роли в данные пользователя
                         if (roleData.role) {
                             userData.role = { name: roleData.role };
-                            console.log('Данные пользователя дополнены информацией о роли:', userData);
                         }
                     }
                 } catch (roleError) {
                     console.error('Ошибка при получении дополнительной информации о роли:', roleError);
                     // Не прерываем выполнение, продолжаем с тем, что есть
                 }
-            } else {
-                console.log('Роль пользователя из ответа API:', userData.role);
             }
-            
             return userData;
         } catch (error) {
             console.error('Ошибка при получении данных пользователя:', error);
@@ -258,7 +188,6 @@ class AuthService {
      */
     async updateProfile(userData) {
         try {
-            console.log('Обновление профиля пользователя:', userData);
             const response = await this.authenticatedRequest(`${API_BASE_URL}/users/me`, {
                 method: 'PUT',
                 headers: {
@@ -274,7 +203,6 @@ class AuthService {
             }
             
             const updatedUser = await response.json();
-            console.log('Профиль обновлен:', updatedUser);
             return updatedUser;
         } catch (error) {
             console.error('Ошибка при обновлении профиля:', error);
@@ -288,7 +216,6 @@ class AuthService {
      */
     isAuthenticated() {
         const token = localStorage.getItem('accessToken');
-        console.log('Проверка авторизации, токен:', token);
         return !!token;
     }
     
@@ -299,19 +226,15 @@ class AuthService {
      */
     async hasRole(allowedRoles) {
         if (!this.isAuthenticated()) {
-            console.log('Пользователь не авторизован при проверке роли');
             return false;
         }
         
         try {
-            console.log('Проверка ролей пользователя:', allowedRoles);
             
             // Проверяем из кеша
             const user = await this.getCurrentUser();
-            console.log('Данные пользователя для проверки роли:', user);
             
             if (!user) {
-                console.log('Нет данных пользователя');
                 return false;
             }
             
@@ -319,12 +242,8 @@ class AuthService {
             if (user.role && user.role.name) {
                 const userRole = user.role.name;
                 const hasAccess = allowedRoles.includes(userRole);
-                console.log(`Проверка роли из данных пользователя: ${userRole}, разрешенные роли: [${allowedRoles.join(', ')}], доступ: ${hasAccess}`);
                 return hasAccess;
             }
-            
-            // Если в данных пользователя нет роли, пробуем запросить напрямую
-            console.log('Роль не найдена в данных пользователя, запрашиваем через API...');
             
             try {
                 const response = await this.authenticatedRequest(`${API_BASE_URL}/users/me/role`, {
@@ -334,13 +253,11 @@ class AuthService {
                 // Если получили успешный ответ
                 if (response.ok) {
                     const roleData = await response.json();
-                    console.log('Данные роли из API:', roleData);
                     
                     // Проверяем наличие роли в ответе
                     if (roleData && roleData.role) {
                         const userRole = roleData.role;
                         const hasAccess = allowedRoles.includes(userRole);
-                        console.log(`Проверка роли из API: ${userRole}, разрешенные роли: [${allowedRoles.join(', ')}], доступ: ${hasAccess}`);
                         return hasAccess;
                     }
                 } else {
@@ -349,9 +266,7 @@ class AuthService {
             } catch (apiError) {
                 console.error('Ошибка при запросе роли через API:', apiError);
             }
-            
-            // Если не удалось определить роль ни одним из способов
-            console.log('Роль пользователя не определена');
+
             return false;
         } catch (error) {
             console.error('Ошибка при проверке роли:', error);
@@ -368,12 +283,10 @@ class AuthService {
         const tokenType = localStorage.getItem('tokenType') || 'Bearer';
         
         if (!token) {
-            console.log('Токен отсутствует');
             return null;
         }
         
         const authHeader = `${tokenType} ${token}`;
-        console.log('Заголовок авторизации:', authHeader);
         return authHeader;
     }
     
@@ -381,7 +294,6 @@ class AuthService {
      * Очистка данных авторизации
      */
     clearAuthData() {
-        console.log('Очистка данных авторизации');
         localStorage.removeItem('accessToken');
         localStorage.removeItem('tokenType');
     }
@@ -393,7 +305,6 @@ class AuthService {
      * @returns {Promise<Response>} - Ответ на запрос
      */
     async authenticatedRequest(url, options = {}) {
-        console.log(`Выполнение авторизованного запроса к ${url}`);
         
         if (!this.isAuthenticated()) {
             console.error('Пользователь не авторизован');
@@ -415,8 +326,6 @@ class AuthService {
             'Expires': '0'
         };
         
-        console.log('Заголовки запроса:', headers);
-        
         try {
             // Добавляем timestamp для предотвращения кэширования
             const timestamp = Date.now();
@@ -425,17 +334,14 @@ class AuthService {
                 : `${url}?_=${timestamp}`;
                 
             let response = await fetch(urlWithTimestamp, { ...options, headers });
-            console.log('Получен ответ:', response.status);
             
             // Если получили 401, пробуем обновить токен и повторить запрос
             if (response.status === 401) {
-                console.log('Получен код 401, обновляем токен...');
                 try {
                     await this.refreshToken();
                     
                     // Повторяем запрос с новым токеном
                     headers.Authorization = this.getAuthHeader();
-                    console.log('Повторный запрос с новым токеном');
                     
                     // Обновляем timestamp для второго запроса
                     const newTimestamp = Date.now();

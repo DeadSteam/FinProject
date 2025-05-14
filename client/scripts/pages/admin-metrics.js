@@ -2,8 +2,6 @@ import {MetricsService} from '../services/MetricsService.js'
 
 // Инициализация сервиса метрик при загрузке страницы
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log("Инициализация страницы управления магазинами...");
-
     try {
         // Инициализируем метрик
         const  metricsService = new MetricsService();

@@ -49,7 +49,7 @@
         </div>
         <nav class="header-nav">
             <a href="#" class="active">Главная</a>
-            <a href="./pages/admin-dashboard.html" class="admin-link" style="display: none;">Админпанель</a>
+            <a href="./pages/admin-users.html" class="admin-link" style="display: none;">Админпанель</a>
         </nav>
         <div class="header-actions">
             <div class="user-info">
@@ -64,9 +64,9 @@
                     <a href="./pages/profile.html" class="user-dropdown-item">
                         <i class="fa fa-user"></i> Профиль
                     </a>
-                    <a href="./pages/settings.html" class="user-dropdown-item">
-                        <i class="fa fa-cog"></i> Настройки
-                    </a>
+<!--                    <a href="./pages/settings.html" class="user-dropdown-item">-->
+<!--                        <i class="fa fa-cog"></i> Настройки-->
+<!--                    </a>-->
                     <div class="user-dropdown-divider"></div>
                     <a href="#" class="user-dropdown-item logout-btn">
                         <i class="fa fa-sign-out-alt"></i> Выйти
@@ -236,7 +236,6 @@
             }
             
             // Загрузка данных пользователя происходит в index.js
-            console.log('Инициализация главной страницы выполняется в index.js');
         } catch (error) {
             console.error('Ошибка инициализации страницы:', error);
             window.location.href = './pages/login.html';
@@ -266,8 +265,6 @@
         if (userRole && user.role) {
             userRole.textContent = user.role.name || 'Пользователь';
         }
-        
-        console.log('Информация о пользователе обновлена в интерфейсе');
     }
     
     // Функция для настройки видимости ссылки на админпанель
@@ -277,10 +274,8 @@
         
         // Показываем ссылку на админпанель только для админов и менеджеров
         if (user.role && (user.role.name === 'admin' || user.role.name === 'manager')) {
-            console.log('Отображаем ссылку на админпанель для роли:', user.role.name);
             adminLink.style.display = 'block';
         } else {
-            console.log('Скрываем ссылку на админпанель');
             adminLink.style.display = 'none';
         }
     }

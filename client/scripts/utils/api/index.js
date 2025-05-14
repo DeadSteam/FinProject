@@ -45,7 +45,6 @@ class ApiClient {
         };
 
         try {
-            console.log(`Выполняем запрос к ${url}`, fetchOptions);
             const response = await fetch(url, fetchOptions);
 
             // Проверяем статус 401 - Неавторизован

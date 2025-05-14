@@ -12,7 +12,6 @@ class ApiClient {
 
     async get(endpoint) {
         try {
-            console.log(`Выполняем GET запрос к ${this.baseUrl}${endpoint}`);
             const response = await fetch(`${this.baseUrl}${endpoint}`, {
                 headers: this.headers
             });
@@ -40,7 +39,6 @@ class ApiClient {
             }
 
             const url = `${this.baseUrl}${endpoint}?${queryParams.toString()}`;
-            console.log(`Выполняем GET запрос с параметрами к ${url}`);
 
             const response = await fetch(url, {
                 headers: {
@@ -61,7 +59,6 @@ class ApiClient {
 
     async post(endpoint, data) {
         try {
-            console.log(`Выполняем POST запрос к ${this.baseUrl}${endpoint}`, data);
             const response = await fetch(`${this.baseUrl}${endpoint}`, {
                 method: 'POST',
                 headers: this.headers,
@@ -70,7 +67,6 @@ class ApiClient {
 
             // Сохраняем текст ответа для отладки
             const responseText = await response.text();
-            console.log(`Ответ на POST запрос (${response.status}):\n`, responseText);
 
             if (!response.ok) {
                 // Пытаемся преобразовать ответ в JSON, если это возможно
@@ -105,7 +101,6 @@ class ApiClient {
 
     async put(endpoint, data) {
         try {
-            console.log(`Выполняем PUT запрос к ${this.baseUrl}${endpoint}`, data);
             const response = await fetch(`${this.baseUrl}${endpoint}`, {
                 method: 'PUT',
                 headers: this.headers,
@@ -114,7 +109,6 @@ class ApiClient {
 
             // Сохраняем ответ для отладки
             const responseText = await response.text();
-            console.log(`Ответ на PUT запрос (${response.status}):\n`, responseText);
 
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}, Response: ${responseText}`);
@@ -158,8 +152,6 @@ class ApiClient {
                 url.searchParams.append(key, params[key].toString());
             }
 
-            console.log(`Выполняем POST запрос с параметрами к ${url.toString()}`);
-
             const response = await fetch(url, {
                 method: 'POST',
                 headers: this.headers
@@ -202,8 +194,6 @@ class ApiClient {
                 url.searchParams.append(key, params[key].toString());
             }
 
-            console.log(`Выполняем PUT запрос с параметрами к ${url.toString()}`);
-
             const response = await fetch(url, {
                 method: 'PUT',
                 headers: this.headers
@@ -211,7 +201,6 @@ class ApiClient {
 
             // Сохраняем текст ответа для отладки
             const responseText = await response.text();
-            console.log(`Ответ на PUT запрос (${response.status}):\n`, responseText);
 
             if (!response.ok) {
                 // Пытаемся преобразовать ответ в JSON, если это возможно
@@ -259,8 +248,6 @@ class ApiClient {
                 }
             }
 
-            console.log('Отправляем запрос на создание фактического значения, параметры:', queryParams);
-
             // Используем postWithParams вместо post
             return await this.postWithParams('/finance/actual-values/with-period', queryParams);
         } catch (error) {
@@ -282,7 +269,6 @@ class ApiClient {
             if (month !== null) params.month = month.toString();
             if (quarter !== null) params.quarter = quarter.toString();
 
-            console.log('Отправляем запрос на обновление фактического значения, параметры:', params);
 
             // Используем putWithParams вместо postWithParams
             return await this.putWithParams('/finance/actual-values/by-period', params);
@@ -629,14 +615,6 @@ function createFactValueModal() {
             const recalculatePlan = document.getElementById('recalculate-plan').checked;
             const planValue = parseFloat(document.getElementById('plan-value-display').getAttribute('data-value') || 0);
 
-            console.log('Данные формы:', {
-                metricId, 
-                periodMonth, 
-                periodId, 
-                factValue, 
-                recalculatePlan, 
-                planValue
-            });
             
             try {
                 showLoading();
@@ -656,21 +634,11 @@ function createFactValueModal() {
                 // Получаем ID магазина
                 const shopId = getUrlParams().storeId;
                 
-                console.log('Параметры периода:', {
-                    year,
-                    month: periodMonth,
-                    quarter,
-                    shopId
-                });
-                
                 // Проверяем, существует ли уже фактическое значение для этого периода
                 try {
                     const existingValues = await apiClient.getActualValuesByPeriodParams(metricId, year, periodMonth);
-                    console.log('Существующие значения:', existingValues);
                     
                     if (existingValues && existingValues.length > 0) {
-                        // Обновляем существующее фактическое значение
-                        console.log('Обновляем существующее значение');
                         const updateResult = await apiClient.updateActualValueByPeriod(
                             metricId, 
                             shopId, 
@@ -679,10 +647,7 @@ function createFactValueModal() {
                             periodMonth, 
                             quarter
                         );
-                        console.log('Результат обновления:', updateResult);
                     } else {
-                        // Создаем новое фактическое значение
-                        console.log('Создаем новое значение');
                         const actualData = {
                             metric_id: metricId,
                             shop_id: shopId,
@@ -694,17 +659,13 @@ function createFactValueModal() {
                         if (periodMonth) actualData.month = periodMonth;
                         if (quarter) actualData.quarter = quarter;
                         
-                        console.log('Данные для создания фактического значения:', actualData);
-                        
                         // Создаем фактическое значение
                         const createResult = await apiClient.createActualValueWithPeriod(actualData);
-                        console.log('Результат создания:', createResult);
                     }
                     
                     // Если нужно пересчитать план на оставшиеся месяцы
                     if (recalculatePlan && planValue !== factValue) {
                         // Отправляем запрос на пересчет плана
-                        console.log('Запрос на пересчет плана');
                         const recalcResult = await apiClient.postWithParams('/finance/plan-values/recalculate-with-actual', {
                             metric_id: metricId,
                             shop_id: shopId,
@@ -712,7 +673,6 @@ function createFactValueModal() {
                             actual_month: parseInt(periodMonth),
                             actual_value: parseFloat(factValue)
                         });
-                        console.log('Результат пересчета:', recalcResult);
                         
                         showNotification('Значение добавлено и план пересчитан', 'success');
                     } else {
@@ -760,7 +720,6 @@ function createFactValueModal() {
         if (!metricId || !periodMonth) {
             document.getElementById('plan-value-display').textContent = '—';
             document.getElementById('plan-value-display').setAttribute('data-value', '0');
-            console.log('Метрика или период не выбраны');
             return;
         }
         
@@ -786,7 +745,6 @@ function createFactValueModal() {
                 if (planValues && planValues.length > 0) {
                     // Если значение найдено, используем его
                     planValue = parseFloat(planValues[0].value);
-                    console.log(`Найдено плановое значение: ${planValue}`);
                 } else {
                     // Если для месяца нет значения, попробуем получить квартальное
                     const quarterValues = await apiClient.getPlanValuesByPeriodParams(metricId, currentYear, null, quarter);
@@ -794,7 +752,6 @@ function createFactValueModal() {
                     if (quarterValues && quarterValues.length > 0) {
                         // Берем квартальное значение и делим на 3
                         planValue = parseFloat(quarterValues[0].value) / 3;
-                        console.log(`Используем квартальное значение: ${quarterValues[0].value} / 3 = ${planValue}`);
             } else {
                         // Если для квартала нет значения, попробуем получить годовое
                         const yearValues = await apiClient.getPlanValuesByPeriodParams(metricId, currentYear);
@@ -802,7 +759,6 @@ function createFactValueModal() {
                         if (yearValues && yearValues.length > 0) {
                             // Берем годовое значение и делим на 12
                             planValue = parseFloat(yearValues[0].value) / 12;
-                            console.log(`Используем годовое значение: ${yearValues[0].value} / 12 = ${planValue}`);
                         }
                     }
                 }
@@ -1233,12 +1189,6 @@ function updateMetricSelect(metrics) {
     });
 }
 
-// Обработчик сортировки таблицы
-function setupTableSorting() {
-    // Функция отключена для исключения возможности сортировки
-    console.log('Сортировка таблицы отключена');
-}
-
 // Функция сортировки таблицы
 function sortTable(sortKey, direction) {
     const tableBody = document.getElementById('salaryTableBody');
@@ -1488,7 +1438,6 @@ async function loadMetrics(selectedYear = null, selectedShopId = null) {
         
         // Получаем все данные через новый API-эндпоинт детальных метрик
         const detailedMetrics = await apiClient.get(`/finance/analytics/metrics/details/${categoryId}/${storeId}/${currentYear}`);
-        console.log('Загружены детальные метрики:', detailedMetrics);
         
         if (!detailedMetrics || !detailedMetrics.metrics || detailedMetrics.metrics.length === 0) {
             hideLoading();
@@ -1651,19 +1600,12 @@ async function loadMetrics(selectedYear = null, selectedShopId = null) {
         // Сохраняем периоды в глобальной переменной для доступа из других функций
         window.loadedPeriodsData = periods;
         
-        console.log('Преобразованные метрики:', metrics);
-        console.log('Извлеченные периоды:', periods);
-        
         // Получаем месячные периоды
         const monthPeriods = periods.filter(p => p.month !== null);
         // Получаем квартальные периоды
         const quarterPeriods = periods.filter(p => p.quarter !== null && p.month === null);
         // Получаем годовой период
         const yearPeriods = periods.filter(p => p.quarter === null && p.month === null);
-        
-        console.log('Месячные периоды:', monthPeriods.length);
-        console.log('Квартальные периоды:', quarterPeriods.length);
-        console.log('Годовые периоды:', yearPeriods.length);
         
         // Обновляем UI с загруженными данными
         
@@ -1761,7 +1703,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         // Проверяем права пользователя
         userHasAdminRights = await hasAdminRights();
-        console.log('Пользователь имеет права администратора/менеджера:', userHasAdminRights);
     } catch (authError) {
         console.error('Ошибка при проверке прав пользователя:', authError);
         userHasAdminRights = false;
@@ -1779,9 +1720,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Загружаем метрики (передаем год из URL, если он есть)
     await loadMetrics(year || null);
-    
-    // Настраиваем сортировку таблицы - перемещаем после загрузки метрик
-    setupTableSorting();
     
     // Настраиваем кнопку экспорта
     setupExportButton();
@@ -2577,13 +2515,7 @@ function renderMetricsTable(metrics, periods) {
             const periodId = this.dataset.periodId;
             const periodMonth = this.dataset.periodMonth;
             const periodQuarter = this.dataset.periodQuarter;
-            
-            console.log('Нажата кнопка добавления факта:', {
-                metricId,
-                periodId,
-                periodMonth,
-                periodQuarter
-            });
+
             
             // Открываем модальное окно для добавления фактического значения
             const modal = document.getElementById('add-fact-modal');
@@ -2632,11 +2564,6 @@ function renderMetricsTable(metrics, periods) {
                 
                 // Показываем модальное окно
                 modal.classList.add('active');
-                console.log('Открыто модальное окно с параметрами:', {
-                    metricId: document.getElementById('metric-id').value,
-                    periodId: document.getElementById('period-id').value,
-                    period: document.getElementById('period-select').value
-                });
             } else {
                 showNotification('Модальное окно для добавления значений не найдено', 'error');
             }
@@ -2645,9 +2572,6 @@ function renderMetricsTable(metrics, periods) {
     
     // Настраиваем обработчики для кнопок редактирования
     setupEditButtons();
-    
-    // Настраиваем сортировку таблицы
-    setupTableSorting();
 }
 
 // Функция для обновления заголовков метрик
@@ -2715,8 +2639,6 @@ async function updateTotalRow(metrics, monthPeriods) {
             totalPlan = metric.planValues
                 .filter(pv => pv.period && pv.period.month !== null)
                 .reduce((sum, pv) => sum + parseFloat(pv.value), 0);
-            
-            console.log(`Рассчитано годовое значение плана по месяцам: ${totalPlan}`);
         }
         
         // Суммируем фактические значения
@@ -2771,11 +2693,9 @@ async function updateTotalRow(metrics, monthPeriods) {
 
 // Функция для настройки обработчиков кнопок редактирования
 function setupEditButtons() {
-    console.log('Настройка обработчиков кнопок редактирования');
     
     // Если у пользователя нет прав администратора, не добавляем обработчики
     if (!userHasAdminRights) {
-        console.log('Пропуск добавления обработчиков редактирования - нет прав');
         return;
     }
     

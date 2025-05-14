@@ -2,8 +2,6 @@ import { UsersService } from '../services/UsersService.js';
 
 // Инициализация сервиса пользователей при загрузке страницы
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log("Инициализация страницы управления пользователями...");
-    
     try {
         // Инициализируем сервис пользователей
         const usersService = new UsersService();

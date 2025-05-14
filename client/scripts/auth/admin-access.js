@@ -10,22 +10,17 @@ import authService from './auth.js';
  */
 export async function checkAdminAccess(allowedRoles = ['admin', 'manager']) {
     try {
-        // Добавляем отладочную информацию
-        console.log('Проверка доступа к админпанели...');
         
         // Проверяем, авторизован ли пользователь
         if (!authService.isAuthenticated()) {
-            console.log('Пользователь не авторизован');
             window.location.href = '/client/pages/login.html';
             return null;
         }
         
         // Проверяем роль пользователя
         const user = await authService.getCurrentUser();
-        console.log('Данные пользователя:', user);
         
         const hasAccess = await authService.hasRole(allowedRoles);
-        console.log('Разрешенные роли:', allowedRoles, 'Роль пользователя:', user?.role?.name, 'Доступ:', hasAccess);
         
         if (!hasAccess) {
             alert('У вас нет прав доступа к админпанели. Вы будете перенаправлены на главную страницу.');

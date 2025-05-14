@@ -17,7 +17,6 @@ class ApiClient {
 
     async get(endpoint) {
         try {
-            console.log(`Выполняем GET запрос к ${this.baseUrl}${endpoint}`);
             const response = await fetch(`${this.baseUrl}${endpoint}`, {
                 headers: this.headers
             });
@@ -276,7 +275,6 @@ async function initPage() {
         // Загружаем данные дашборда
         await loadDashboardData();
 
-        console.log('Инициализация страницы успешно завершена');
     } catch (error) {
         console.error('Ошибка при инициализации страницы:', error);
         // Если произошла ошибка аутентификации, перенаправляем на страницу входа
@@ -320,10 +318,8 @@ function setupAdminLink(user) {
 
     // Показываем ссылку на админпанель только для админов и менеджеров
     if (user.role && (user.role.name === 'admin' || user.role.name === 'manager')) {
-        console.log('Отображаем ссылку на админпанель для роли:', user.role.name);
         adminLink.style.display = 'block';
     } else {
-        console.log('Скрываем ссылку на админпанель');
         adminLink.style.display = 'none';
     }
 }
@@ -333,7 +329,6 @@ async function loadDashboardData() {
     try {
         // Загружаем данные из нового API-эндпоинта
         dashboardData = await apiClient.get('/finance/analytics/dashboard/aggregate');
-        console.log('Загружены данные дашборда:', dashboardData);
 
         // Обновляем бюджетную информацию
         updateBudgetInfo(dashboardData);

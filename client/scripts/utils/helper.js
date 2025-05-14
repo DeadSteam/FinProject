@@ -196,7 +196,6 @@ export function resetForm(form) {
 
 // Функция для генерации HTML строки таблицы метрики
 export function generateMetricTableRow(metric) {
-    console.log('Генерация строки для метрики:', metric);
     
     // Получаем имя категории, учитывая разные варианты представления данных с сервера
     let categoryName = 'Не указана';
@@ -220,8 +219,6 @@ export function generateMetricTableRow(metric) {
     if (categoryName.trim() === '') {
         categoryName = 'Не указана';
     }
-    
-    console.log('Имя категории для метрики:', categoryName);
 
     return `
     <tr data-id="${metric.id}">

@@ -30,9 +30,9 @@
                 <a href="./profile.html" class="user-dropdown-item">
                     <i class="fa fa-user"></i> Профиль
                 </a>
-                <a href="./settings.html" class="user-dropdown-item">
-                    <i class="fa fa-cog"></i> Настройки
-                </a>
+<!--                <a href="./settings.html" class="user-dropdown-item">-->
+<!--                    <i class="fa fa-cog"></i> Настройки-->
+<!--                </a>-->
                 <div class="user-dropdown-divider"></div>
                 <a href="#" class="user-dropdown-item logout-btn">
                     <i class="fa fa-sign-out-alt"></i> Выйти
@@ -210,8 +210,6 @@
             if (userData.phone_number) {
                 profileForm.querySelector('#phone').value = userData.phone_number;
             }
-            
-            console.log('Данные пользователя загружены:', userData);
         } catch (error) {
             console.error('Ошибка при загрузке данных пользователя:', error);
             showToast('Ошибка при загрузке данных пользователя', 'error');

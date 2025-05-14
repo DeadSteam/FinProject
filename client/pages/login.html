@@ -82,27 +82,27 @@
                 
                 <button type="submit" class="login-btn" id="loginButton">Войти</button>
                 
-                <div class="login-divider">
-                    <span>или</span>
-                </div>
-                
-                <div class="social-login">
-                    <button type="button" class="social-btn social-google">
-                        <svg viewBox="0 0 24 24" width="18" height="18">
-                            <path d="M12.545 10.239v3.818h5.556c-.226 1.338-1.682 3.673-5.556 3.673-3.442 0-6.251-2.851-6.251-6.364s2.809-6.364 6.251-6.364c1.898 0 3.17.81 3.898 1.515l2.665-2.565C17.951 2.984 15.566 2 12.545 2 7.021 2 2.543 6.477 2.543 12s4.478 10 10.002 10c5.776 0 9.612-4.091 9.612-9.818 0-.757-.085-1.41-.189-2.018l-9.423.075z" fill="#EA4335"/>
-                        </svg>
-                        <span>Google</span>
-                    </button>
-                    <button type="button" class="social-btn social-microsoft">
-                        <svg viewBox="0 0 24 24" width="18" height="18">
-                            <path d="M11.4 24H0V12.6h11.4V24z" fill="#F25022"/>
-                            <path d="M24 24H12.6V12.6H24V24z" fill="#00A4EF"/>
-                            <path d="M11.4 11.4H0V0h11.4v11.4z" fill="#7FBA00"/>
-                            <path d="M24 11.4H12.6V0H24v11.4z" fill="#FFB900"/>
-                        </svg>
-                        <span>Microsoft</span>
-                    </button>
-                </div>
+<!--                <div class="login-divider">-->
+<!--                    <span>или</span>-->
+<!--                </div>-->
+<!--                -->
+<!--                <div class="social-login">-->
+<!--                    <button type="button" class="social-btn social-google">-->
+<!--                        <svg viewBox="0 0 24 24" width="18" height="18">-->
+<!--                            <path d="M12.545 10.239v3.818h5.556c-.226 1.338-1.682 3.673-5.556 3.673-3.442 0-6.251-2.851-6.251-6.364s2.809-6.364 6.251-6.364c1.898 0 3.17.81 3.898 1.515l2.665-2.565C17.951 2.984 15.566 2 12.545 2 7.021 2 2.543 6.477 2.543 12s4.478 10 10.002 10c5.776 0 9.612-4.091 9.612-9.818 0-.757-.085-1.41-.189-2.018l-9.423.075z" fill="#EA4335"/>-->
+<!--                        </svg>-->
+<!--                        <span>Google</span>-->
+<!--                    </button>-->
+<!--                    <button type="button" class="social-btn social-microsoft">-->
+<!--                        <svg viewBox="0 0 24 24" width="18" height="18">-->
+<!--                            <path d="M11.4 24H0V12.6h11.4V24z" fill="#F25022"/>-->
+<!--                            <path d="M24 24H12.6V12.6H24V24z" fill="#00A4EF"/>-->
+<!--                            <path d="M11.4 11.4H0V0h11.4v11.4z" fill="#7FBA00"/>-->
+<!--                            <path d="M24 11.4H12.6V0H24v11.4z" fill="#FFB900"/>-->
+<!--                        </svg>-->
+<!--                        <span>Microsoft</span>-->
+<!--                    </button>-->
+<!--                </div>-->
                 
                 <div class="login-footer">
                     <div class="security-info">
@@ -112,7 +112,7 @@
                         </svg>
                         <span>Защищено шифрованием</span>
                     </div>
-                    <p>© 2024 <a href="#">RealTimeFinanceAnalytics</a></p>
+                    <p>© 2025 <a href="#">RealTimeFinanceAnalytics</a></p>
                 </div>
             </form>
         </div>
@@ -231,7 +231,6 @@
             
             // Если все в порядке, отправляем форму
             if (isIdentifierValid && isPasswordValid) {
-                console.log('Попытка входа:', { identifier, password });
                 const button = document.getElementById('loginButton');
                 button.disabled = true;
                 button.textContent = 'Подождите...';
@@ -239,13 +238,6 @@
                 try {
                     // Выполняем запрос авторизации через API
                     const authResult = await authService.login(identifier, password);
-                    
-                    // Выводим информацию о токене в консоль для отладки
-                    console.log('Успешная авторизация', {
-                        token: authResult.tokens.access_token,
-                        tokenType: authResult.tokens.token_type,
-                        user: authResult.user
-                    });
                     
                     // Если вход успешен, перенаправляем на главную страницу
                     window.location.href = "../index.html";

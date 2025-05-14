@@ -109,11 +109,9 @@ export class MetricsService {
     async loadCategories() {
         try {
             const categories = await this.metricsApi.getAllCategories();
-            console.log('Загруженные категории:', categories);
 
             // Если категории не загружены или массив пуст, очищаем списки
             if (!categories || categories.length === 0) {
-                console.log('Категории не найдены');
                 this.categories = [];
                 this.populateCategoryDropdowns();
                 return;
@@ -135,7 +133,6 @@ export class MetricsService {
      * Заполнение выпадающих списков категорий
      */
     populateCategoryDropdowns() {
-        console.log('Заполнение выпадающих списков категорий:', this.categories);
 
         const categorySelects = document.querySelectorAll('#category');
         if (!categorySelects.length) {
@@ -210,11 +207,9 @@ export class MetricsService {
     async loadMetrics() {
         try {
             const metrics = await this.metricsApi.getAllMetrics();
-            console.log('Загруженные метрики:', metrics);
 
             // Если метрики не загружены или массив пуст, показываем пустую таблицу
             if (!metrics || metrics.length === 0) {
-                console.log('Метрики не найдены');
                 this.metrics = [];
                 this.renderMetrics([]);
                 return;

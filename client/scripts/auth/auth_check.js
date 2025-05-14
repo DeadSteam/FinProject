@@ -13,12 +13,10 @@ function getAuthHeader() {
     const tokenType = localStorage.getItem('tokenType') || 'Bearer';
     
     if (!token) {
-        console.log('Токен авторизации отсутствует');
         return null;
     }
     
     const authHeader = `${tokenType} ${token}`;
-    console.log('Заголовок авторизации:', authHeader);
     return authHeader;
 }
 
@@ -33,16 +31,13 @@ async function getCurrentUser() {
     }
     
     try {
-        console.log('Запрос данных пользователя...');
         const response = await fetch(`${API_BASE_URL}/users/me`, {
             method: 'GET',
             headers: {
                 'Authorization': authHeader
             }
         });
-        
-        console.log('Статус ответа:', response.status);
-        
+
         if (!response.ok) {
             const errorData = await response.json();
             console.error('Ошибка получения пользователя:', errorData);
@@ -50,7 +45,6 @@ async function getCurrentUser() {
         }
         
         const userData = await response.json();
-        console.log('Данные пользователя:', userData);
         
         return userData;
     } catch (error) {
@@ -70,15 +64,12 @@ async function getUserRole() {
     }
     
     try {
-        console.log('Запрос роли пользователя...');
         const response = await fetch(`${API_BASE_URL}/users/me/role`, {
             method: 'GET',
             headers: {
                 'Authorization': authHeader
             }
         });
-        
-        console.log('Статус ответа:', response.status);
         
         if (!response.ok) {
             const errorData = await response.json();
@@ -87,7 +78,6 @@ async function getUserRole() {
         }
         
         const roleData = await response.json();
-        console.log('Данные роли:', roleData);
         
         return roleData;
     } catch (error) {
@@ -107,15 +97,12 @@ async function getAllRoles() {
     }
     
     try {
-        console.log('Запрос всех ролей...');
         const response = await fetch(`${API_BASE_URL}/users/roles`, {
             method: 'GET',
             headers: {
                 'Authorization': authHeader
             }
         });
-        
-        console.log('Статус ответа:', response.status);
         
         if (!response.ok) {
             const errorData = await response.json();
@@ -124,7 +111,6 @@ async function getAllRoles() {
         }
         
         const rolesData = await response.json();
-        console.log('Список ролей:', rolesData);
         
         return rolesData;
     } catch (error) {
@@ -148,7 +134,6 @@ async function checkUserRole(allowedRoles = ['admin', 'manager']) {
     const userRole = roleData.role;
     
     const hasAccess = allowedRoles.includes(userRole);
-    console.log(`Проверка роли: ${userRole}, разрешенные роли: [${allowedRoles.join(', ')}], доступ: ${hasAccess}`);
     
     return hasAccess;
 }
