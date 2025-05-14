@@ -31,4 +31,5 @@ INSERT INTO roles (name) VALUES
 -- Создаем индексы для оптимизации запросов
 CREATE INDEX idx_users_username ON users(username);
 CREATE INDEX idx_users_role_id ON users(role_id);
-CREATE INDEX idx_users_phone_number ON users(phone_number); 
+CREATE INDEX idx_users_phone_number ON users(phone_number);
+CREATE INDEX idx_users_email ON users(email);
