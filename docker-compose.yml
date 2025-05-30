@@ -1,22 +1,6 @@
 version: '3.8'
 
 services:
-  app:
-    build: .
-    ports:
-      - "8000:8000"
-    volumes:
-      - .:/app
-    environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:Akrawer1@finance_db:5432/finance_db
-      - USERS_DATABASE_URL=postgresql+asyncpg://postgres:Akrawer1@users_db:5432/users_db
-      - REDIS_URL=redis://redis:6379/0
-    depends_on:
-      - finance_db
-      - users_db
-      - redis
-    networks:
-      - app-network
 
   finance_db:
     image: postgres:15

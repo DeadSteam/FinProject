@@ -1375,8 +1375,19 @@ async function createYearlyPlanModal() {
             try {
                 showLoading();
                 
-                // Получаем текущий год
-                const currentYear = new Date().getFullYear();
+                // Получаем год из фильтра
+                const yearFilter = document.getElementById('yearFilter');
+                const selectedYear = yearFilter ? parseInt(yearFilter.value) : new Date().getFullYear();
+                
+                // Получаем текущий storeId из селектора магазинов
+                const shopFilter = document.getElementById('shop-filter');
+                const storeId = shopFilter ? shopFilter.value : getUrlParams().storeId;
+                
+                if (!storeId) {
+                    hideLoading();
+                    showNotification('Необходимо выбрать магазин', 'warning');
+                    return;
+                }
                 
                 // Проверка корректности UUID 
                 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -1384,16 +1395,15 @@ async function createYearlyPlanModal() {
                     throw new Error('Некорректный ID метрики');
                 }
                 
-                const storeId = getUrlParams().storeId;
                 if (!uuidPattern.test(storeId)) {
                     throw new Error('Некорректный ID магазина');
                 }
                 
-                // Отправляем запрос на сервер
+                // Отправляем запрос на сервер с выбранным годом
                 await apiClient.postWithParams('/finance/plan-values/distribute-yearly', {
                     metric_id: metricId,
                     shop_id: storeId,
-                    year: currentYear,
+                    year: selectedYear,
                     yearly_value: yearlyValue
                 });
                 
@@ -1401,8 +1411,8 @@ async function createYearlyPlanModal() {
                 hideLoading();
                 document.getElementById('yearly-plan-modal').classList.remove('active');
                 
-                // Обновляем таблицу метрик
-                await loadMetrics();
+                // Обновляем таблицу метрик с выбранным годом
+                await loadMetrics(selectedYear);
                 
             } catch (error) {
                 hideLoading();
@@ -1415,20 +1425,14 @@ async function createYearlyPlanModal() {
 }
 
 // Добавляем вызов функции setupCharts после загрузки метрик
-async function loadMetrics(selectedYear = null, selectedShopId = null) {
+async function loadMetrics(selectedYear = null) {
     try {
-        let categoryId, storeId;
-
         // Получаем параметры из URL
         const urlParams = getUrlParams();
-        categoryId = urlParams.categoryId;
-        
-        // Используем переданные параметры или берем из URL
-        storeId = selectedShopId || urlParams.storeId;
+        const { categoryId, storeId } = urlParams;
         
         // Если параметры не переданы и не указаны в URL, выходим
         if (!categoryId || !storeId) {
-            showNotification('Необходимо выбрать категорию и магазин', 'warning');
             return;
         }
         
@@ -1437,199 +1441,266 @@ async function loadMetrics(selectedYear = null, selectedShopId = null) {
         // Получаем текущий год или используем переданный
         const currentYear = selectedYear || urlParams.year || new Date().getFullYear();
         
-        try {
-            // Получаем все данные через новый API-эндпоинт детальных метрик
-            const detailedMetrics = await apiClient.get(`/finance/analytics/metrics/details/${categoryId}/${storeId}/${currentYear}`);
+        // Получаем все данные через новый API-эндпоинт детальных метрик
+        const detailedMetrics = await apiClient.get(`/finance/analytics/metrics/details/${categoryId}/${storeId}/${currentYear}`);
+        
+        // Обновляем заголовок с данными категории и магазина
+        document.querySelector('.salary-report__title').textContent = detailedMetrics.category_name || 'Заработная плата';
+        document.querySelector('.salary-report__subtitle').textContent = detailedMetrics.shop_name || 'Магазин';
+        
+        if (!detailedMetrics || !detailedMetrics.metrics || detailedMetrics.metrics.length === 0) {
+            hideLoading();
+            // Очищаем таблицу и показываем плашку
+            const tableBody = document.getElementById('salaryTableBody');
+            const tableHead = document.querySelector('.salary-table thead');
             
-            if (!detailedMetrics || !detailedMetrics.metrics || detailedMetrics.metrics.length === 0) {
-                hideLoading();
-                showNotification('Нет доступных метрик для выбранной категории и магазина', 'warning');
-                return;
-            }
-
-            // Очищаем кэш только если изменился магазин
-            if (selectedShopId) {
-                window.loadedMetricsData = [];
-                window.loadedPeriodsData = [];
-            }
+            // Очищаем заголовки таблицы
+            tableHead.querySelector('tr:first-child').innerHTML = '<th rowspan="2">Период</th>';
+            tableHead.querySelector('tr.sub-header').innerHTML = '';
             
-            // Преобразуем данные в формат, понятный для существующих функций
-            const metrics = detailedMetrics.metrics.map(metric => {
-                // Создаем объект метрики
-                const metricObj = {
-                    id: metric.metric_id,
-                    name: metric.metric_name,
-                    unit: metric.unit,
-                    category_id: categoryId,
-                    planValues: [],
-                    actualValues: []
+            // Добавляем плашку с кнопкой добавления метрики
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="empty-metrics">
+                        <div class="empty-metrics-container">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="16"></line>
+                                <line x1="8" y1="12" x2="16" y2="12"></line>
+                            </svg>
+                            <p>В данной категории пока нет метрик</p>
+                            <button class="add-metric-btn" onclick="document.getElementById('add-metric-modal').classList.add('active')">
+                                Добавить метрику
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            
+            // Добавляем стили для плашки
+            const styleElement = document.createElement('style');
+            styleElement.textContent = `
+                .empty-metrics {
+                    padding: 40px !important;
+                }
+                .empty-metrics-container {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 16px;
+                    color: var(--text-secondary);
+                }
+                .empty-metrics-container svg {
+                    color: var(--text-secondary);
+                    opacity: 0.5;
+                }
+                .empty-metrics-container p {
+                    margin: 0;
+                    font-size: 16px;
+                }
+                .add-metric-btn {
+                    padding: 8px 16px;
+                    background: var(--primary);
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    transition: background 0.2s ease;
+                }
+                .add-metric-btn:hover {
+                    background: var(--primary-dark);
+                }
+            `;
+            document.head.appendChild(styleElement);
+            
+            return;
+        }
+        
+        // Преобразуем данные в формат, понятный для существующих функций
+        const metrics = detailedMetrics.metrics.map(metric => {
+            // Создаем объект метрики
+            const metricObj = {
+                id: metric.metric_id,
+                name: metric.metric_name,
+                unit: metric.unit,
+                category_id: categoryId,
+                planValues: [],
+                actualValues: []
+            };
+            
+            // Обрабатываем годовые данные
+            if (metric.periods_value.year) {
+                const yearData = metric.periods_value.year;
+                // Здесь мы не имеем ID периода, но можем создать виртуальный
+                const yearPeriodObj = {
+                    id: `year-${currentYear}`,
+                    year: parseInt(currentYear),
+                    quarter: null,
+                    month: null
                 };
                 
-                // Обрабатываем годовые данные
-                if (metric.periods_value.year) {
-                    const yearData = metric.periods_value.year;
-                    // Здесь мы не имеем ID периода, но можем создать виртуальный
-                    const yearPeriodObj = {
-                        id: `year-${currentYear}`,
+                // Добавляем плановое значение
+                if (yearData.plan !== undefined) {
+                    metricObj.planValues.push({
+                        metric_id: metric.metric_id,
+                        shop_id: storeId,
+                        value: yearData.plan,
+                        period_id: yearPeriodObj.id,
+                        period: yearPeriodObj
+                    });
+                }
+                
+                // Добавляем фактическое значение
+                if (yearData.actual !== undefined) {
+                    metricObj.actualValues.push({
+                        metric_id: metric.metric_id,
+                        shop_id: storeId,
+                        value: yearData.actual,
+                        period_id: yearPeriodObj.id,
+                        period: yearPeriodObj
+                    });
+                }
+            }
+            
+            // Обрабатываем квартальные данные
+            Object.entries(metric.periods_value.quarters).forEach(([quarterName, quarterData]) => {
+                // Извлекаем номер квартала из названия (например, "I квартал" -> 1)
+                const quarterNumber = ["I квартал", "II квартал", "III квартал", "IV квартал"].indexOf(quarterName) + 1;
+                if (quarterNumber > 0) {
+                    const quarterPeriodObj = {
+                        id: `quarter-${currentYear}-${quarterNumber}`,
                         year: parseInt(currentYear),
-                        quarter: null,
+                        quarter: quarterNumber,
                         month: null
                     };
                     
                     // Добавляем плановое значение
-                    if (yearData.plan !== undefined) {
+                    if (quarterData.plan !== undefined) {
                         metricObj.planValues.push({
                             metric_id: metric.metric_id,
                             shop_id: storeId,
-                            value: yearData.plan,
-                            period_id: yearPeriodObj.id,
-                            period: yearPeriodObj
+                            value: quarterData.plan,
+                            period_id: quarterPeriodObj.id,
+                            period: quarterPeriodObj
                         });
                     }
                     
                     // Добавляем фактическое значение
-                    if (yearData.actual !== undefined) {
+                    if (quarterData.actual !== undefined) {
                         metricObj.actualValues.push({
                             metric_id: metric.metric_id,
                             shop_id: storeId,
-                            value: yearData.actual,
-                            period_id: yearPeriodObj.id,
-                            period: yearPeriodObj
+                            value: quarterData.actual,
+                            period_id: quarterPeriodObj.id,
+                            period: quarterPeriodObj
                         });
                     }
                 }
+            });
+            
+            // Обрабатываем месячные данные
+            Object.entries(metric.periods_value.months).forEach(([monthName, monthData]) => {
+                // Соответствие названий месяцев и их номеров
+                const monthNameToNumber = {
+                    'январь': 1, 'февраль': 2, 'март': 3, 'апрель': 4, 'май': 5, 'июнь': 6,
+                    'июль': 7, 'август': 8, 'сентябрь': 9, 'октябрь': 10, 'ноябрь': 11, 'декабрь': 12
+                };
                 
-                // Обрабатываем квартальные данные
-                Object.entries(metric.periods_value.quarters).forEach(([quarterName, quarterData]) => {
-                    // Извлекаем номер квартала из названия (например, "I квартал" -> 1)
-                    const quarterNumber = ["I квартал", "II квартал", "III квартал", "IV квартал"].indexOf(quarterName) + 1;
-                    if (quarterNumber > 0) {
-                        const quarterPeriodObj = {
-                            id: `quarter-${currentYear}-${quarterNumber}`,
-                            year: parseInt(currentYear),
-                            quarter: quarterNumber,
-                            month: null
-                        };
-                        
-                        // Добавляем плановое значение
-                        if (quarterData.plan !== undefined) {
-                            metricObj.planValues.push({
-                                metric_id: metric.metric_id,
-                                shop_id: storeId,
-                                value: quarterData.plan,
-                                period_id: quarterPeriodObj.id,
-                                period: quarterPeriodObj
-                            });
-                        }
-                        
-                        // Добавляем фактическое значение
-                        if (quarterData.actual !== undefined) {
-                            metricObj.actualValues.push({
-                                metric_id: metric.metric_id,
-                                shop_id: storeId,
-                                value: quarterData.actual,
-                                period_id: quarterPeriodObj.id,
-                                period: quarterPeriodObj
-                            });
-                        }
-                    }
-                });
-                
-                // Обрабатываем месячные данные
-                Object.entries(metric.periods_value.months).forEach(([monthName, monthData]) => {
-                    // Соответствие названий месяцев и их номеров
-                    const monthNameToNumber = {
-                        'январь': 1, 'февраль': 2, 'март': 3, 'апрель': 4, 'май': 5, 'июнь': 6,
-                        'июль': 7, 'август': 8, 'сентябрь': 9, 'октябрь': 10, 'ноябрь': 11, 'декабрь': 12
+                const monthNumber = monthNameToNumber[monthName.toLowerCase()];
+                if (monthNumber) {
+                    // Определяем квартал по месяцу
+                    const quarter = Math.ceil(monthNumber / 3);
+                    
+                    const monthPeriodObj = {
+                        id: `month-${currentYear}-${monthNumber}`,
+                        year: currentYear,
+                        quarter: quarter,
+                        month: monthNumber
                     };
                     
-                    const monthNumber = monthNameToNumber[monthName.toLowerCase()];
-                    if (monthNumber) {
-                        // Определяем квартал по месяцу
-                        const quarter = Math.ceil(monthNumber / 3);
-                        
-                        const monthPeriodObj = {
-                            id: `month-${currentYear}-${monthNumber}`,
-                            year: currentYear,
-                            quarter: quarter,
-                            month: monthNumber
-                        };
-                        
-                        // Добавляем плановое значение
-                        if (monthData.plan !== undefined) {
-                            metricObj.planValues.push({
-                                metric_id: metric.metric_id,
-                                shop_id: storeId,
-                                value: monthData.plan,
-                                period_id: monthPeriodObj.id,
-                                period: monthPeriodObj
-                            });
-                        }
-                        
-                        // Добавляем фактическое значение
-                        if (monthData.actual !== undefined) {
-                            metricObj.actualValues.push({
-                                metric_id: metric.metric_id,
-                                shop_id: storeId,
-                                value: monthData.actual,
-                                period_id: monthPeriodObj.id,
-                                period: monthPeriodObj
-                            });
-                        }
+                    // Добавляем плановое значение
+                    if (monthData.plan !== undefined) {
+                        metricObj.planValues.push({
+                            metric_id: metric.metric_id,
+                            shop_id: storeId,
+                            value: monthData.plan,
+                            period_id: monthPeriodObj.id,
+                            period: monthPeriodObj
+                        });
                     }
-                });
-                
-                return metricObj;
+                    
+                    // Добавляем фактическое значение
+                    if (monthData.actual !== undefined) {
+                        metricObj.actualValues.push({
+                            metric_id: metric.metric_id,
+                            shop_id: storeId,
+                            value: monthData.actual,
+                            period_id: monthPeriodObj.id,
+                            period: monthPeriodObj
+                        });
+                    }
+                }
             });
             
-            // Сохраняем преобразованные метрики в глобальной переменной
-            window.loadedMetricsData = metrics;
-            
-            // Создаем массив периодов из данных метрик
-            const periods = [];
-            metrics.forEach(metric => {
-                // Из плановых значений
-                metric.planValues.forEach(pv => {
-                    if (pv.period && !periods.some(p => p.id === pv.period.id)) {
-                        periods.push(pv.period);
-                    }
-                });
-                
-                // Из фактических значений
-                metric.actualValues.forEach(av => {
-                    if (av.period && !periods.some(p => p.id === av.period.id)) {
-                        periods.push(av.period);
-                    }
-                });
-            });
-            
-            // Сохраняем периоды в глобальной переменной
-            window.loadedPeriodsData = periods;
-            
-            // Обновляем UI с загруженными данными
-            document.querySelector('.salary-report__title').textContent = detailedMetrics.category_name || 'Заработная плата';
-            document.querySelector('.salary-report__subtitle').textContent = detailedMetrics.shop_name || 'Магазин';
-            
-            // Обновляем таблицу метрик
-            renderMetricsTable(metrics, periods);
-            
-            // Обновляем выпадающий список метрик
-            updateMetricSelect(metrics);
-            
-            // Добавляем кнопки действий
-            addMetricActionButtons(metrics);
-            
-            // Настраиваем графики
-            await setupCharts(metrics, periods);
-            
-            hideLoading();
-            
-        } catch (error) {
-            console.error('Ошибка при загрузке данных:', error);
-            hideLoading();
-            showNotification('Ошибка при загрузке данных: ' + error.message, 'error');
-        }
+            return metricObj;
+        });
         
+        // Сохраняем преобразованные метрики в глобальной переменной для доступа из других функций
+        window.loadedMetricsData = metrics;
+        
+        // Создаем массив периодов из данных метрик
+        const periods = [];
+        
+        // Для каждой метрики обрабатываем периоды
+        metrics.forEach(metric => {
+            // Из плановых значений
+            metric.planValues.forEach(pv => {
+                if (pv.period && !periods.some(p => p.id === pv.period.id)) {
+                    periods.push(pv.period);
+                }
+            });
+            
+            // Из фактических значений
+            metric.actualValues.forEach(av => {
+                if (av.period && !periods.some(p => p.id === av.period.id)) {
+                    periods.push(av.period);
+                }
+            });
+        });
+        
+        // Сохраняем периоды в глобальной переменной для доступа из других функций
+        window.loadedPeriodsData = periods;
+        
+        // Получаем месячные периоды
+        const monthPeriods = periods.filter(p => p.month !== null);
+        // Получаем квартальные периоды
+        const quarterPeriods = periods.filter(p => p.quarter !== null && p.month === null);
+        // Получаем годовой период
+        const yearPeriods = periods.filter(p => p.quarter === null && p.month === null);
+        
+        // Обновляем UI с загруженными данными
+        
+        // Обновляем заголовок с данными категории и магазина
+        document.querySelector('.salary-report__title').textContent = detailedMetrics.category_name || 'Заработная плата';
+        document.querySelector('.salary-report__subtitle').textContent = detailedMetrics.shop_name || 'Магазин';
+        
+        // Обновляем таблицу метрик
+        renderMetricsTable(metrics, periods);
+        
+        // Обновляем выпадающий список метрик в модальном окне
+        updateMetricSelect(metrics);
+        
+        // Добавляем кнопки действий для метрик
+        addMetricActionButtons(metrics);
+        
+        // Настраиваем графики
+        setupCharts(metrics, periods);
+        
+        hideLoading();
+        
+        // Удаляем этот вызов, так как он уже происходит внутри setupCharts
+        // fixChartContainerSize();
     } catch (error) {
         hideLoading();
         showNotification('Ошибка при загрузке метрик: ' + error.message, 'error');
@@ -1755,9 +1826,25 @@ function setupFilters() {
     });
     
     // Обработчик изменения магазина
-    shopFilter?.addEventListener('change', function() {
-        const selectedShop = this.value;
-        updateDataByFilters(yearFilter.value, selectedShop);
+    shopFilter?.addEventListener('change', async (event) => {
+        const selectedShopId = event.target.value;
+        const { categoryId, year } = getUrlParams();
+        
+        // Обновляем URL
+        if (categoryId) {
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.set('store', selectedShopId);
+            window.history.pushState({}, '', newUrl.toString());
+            
+            // Перезагружаем метрики
+            await loadMetrics();
+            
+            // Обновляем модальное окно годового плана, если оно открыто
+            const yearlyPlanModal = document.getElementById('yearly-plan-modal');
+            if (yearlyPlanModal && yearlyPlanModal.classList.contains('active')) {
+                await updateMetricSelect(window.loadedMetricsData || []);
+            }
+        }
     });
     
     // Внутренняя функция для загрузки доступных годов
@@ -1815,16 +1902,32 @@ function setupFilters() {
     }
     
     // Функция для обновления данных по выбранным фильтрам
-    async function updateDataByFilters(year, shop) {
+    async function updateDataByFilters(selectedYear, selectedShop) {
         try {
-            showLoading();
-            
-            // Если выбран год и магазин, загружаем данные
-            if (year && shop) {
-                // Загружаем новые данные
-                await loadMetrics(year, shop);
+            if (selectedYear && selectedShop) {
+                showLoading();
                 
-                // После загрузки данных setupCharts будет вызвана из loadMetrics
+                // Получаем текущие параметры URL
+                const { categoryId } = getUrlParams();
+                
+                if (categoryId) {
+                    // Обновляем URL с новыми параметрами
+                    const newUrl = new URL(window.location.href);
+                    newUrl.searchParams.set('year', selectedYear);
+                    newUrl.searchParams.set('store', selectedShop);
+                    window.history.pushState({}, '', newUrl.toString());
+                    
+                    // Загружаем метрики с новыми параметрами
+                    await loadMetrics(selectedYear);
+                    
+                    // Обновляем модальное окно годового плана, если оно открыто
+                    const yearlyPlanModal = document.getElementById('yearly-plan-modal');
+                    if (yearlyPlanModal && yearlyPlanModal.classList.contains('active')) {
+                        await updateMetricSelect(window.loadedMetricsData || []);
+                    }
+                }
+                
+                hideLoading();
             } else {
                 hideLoading();
                 showNotification('Необходимо выбрать год и магазин', 'warning');
@@ -2831,113 +2934,4 @@ function setupEditButtons() {
             }
         });
     });
-}
-
-// Добавляем функцию обновления при смене магазина
-async function handleStoreChange(newStoreId) {
-    if (!newStoreId) return;
-    
-    try {
-        showLoading();
-        
-        // Получаем текущие параметры URL
-        const { year, categoryId } = getUrlParams();
-        
-        // Обновляем URL с новым storeId
-        const newUrl = new URL(window.location.href);
-        newUrl.searchParams.set('store', newStoreId);
-        window.history.pushState({}, '', newUrl.toString());
-        
-        // Очищаем все кэшированные данные
-        window.loadedMetricsData = [];
-        window.loadedPeriodsData = [];
-        
-        // Загружаем новые данные
-        await loadMetrics(year, newStoreId);
-        
-        // Обновляем заголовок с данными магазина
-        try {
-            const shopResponse = await apiClient.get(`/finance/shops/${newStoreId}`);
-            if (shopResponse && shopResponse.name) {
-                document.querySelector('.salary-report__subtitle').textContent = shopResponse.name;
-            }
-        } catch (error) {
-            console.error('Ошибка при получении данных магазина:', error);
-            showNotification('Ошибка при получении данных магазина', 'warning');
-        }
-        
-    } catch (error) {
-        console.error('Ошибка при смене магазина:', error);
-        showNotification('Ошибка при обновлении данных магазина: ' + error.message, 'error');
-    } finally {
-        hideLoading();
-    }
-}
-
-// Обновляем обработчик события изменения магазина
-document.addEventListener('DOMContentLoaded', () => {
-    const storeSelect = document.getElementById('store-filter');
-    if (storeSelect) {
-        storeSelect.addEventListener('change', async (event) => {
-            await handleStoreChange(event.target.value);
-        });
-    }
-});
-
-async function addNewValue(metricId, periodId, value, type) {
-    try {
-        const { storeId, year } = getUrlParams();
-        if (!storeId) {
-            showNotification('Не выбран магазин', 'error');
-            return;
-        }
-
-        showLoading();
-
-        // Определяем параметры периода из periodId
-        let periodYear = year;
-        let periodMonth = null;
-        let periodQuarter = null;
-
-        if (periodId.startsWith('month-')) {
-            const parts = periodId.split('-');
-            periodYear = parseInt(parts[1]);
-            periodMonth = parseInt(parts[2]);
-            periodQuarter = Math.ceil(periodMonth / 3);
-        } else if (periodId.startsWith('quarter-')) {
-            const parts = periodId.split('-');
-            periodYear = parseInt(parts[1]);
-            periodQuarter = parseInt(parts[2]);
-        }
-
-        const endpoint = type === 'plan' ? '/finance/plan-values/with-period' : '/finance/actual-values/with-period';
-        const data = {
-            metric_id: metricId,
-            shop_id: storeId,
-            year: periodYear,
-            value: parseFloat(value)
-        };
-
-        if (periodMonth !== null) data.month = periodMonth;
-        if (periodQuarter !== null) data.quarter = periodQuarter;
-
-        const response = await apiClient.post(endpoint, data);
-
-        if (response) {
-            // Очищаем кэш перед загрузкой новых данных
-            window.loadedMetricsData = [];
-            window.loadedPeriodsData = [];
-
-            // Перезагружаем данные
-            await loadMetrics(periodYear, storeId);
-            
-            showNotification('Значение успешно добавлено', 'success');
-        }
-        
-        hideLoading();
-    } catch (error) {
-        hideLoading();
-        console.error('Ошибка при добавлении значения:', error);
-        showNotification('Ошибка при добавлении значения: ' + error.message, 'error');
-    }
 } 

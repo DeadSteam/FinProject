@@ -426,14 +426,10 @@ class AnalyticsService:
             metrics = await metric_service.get_by_category(category.id, session)
             metric_ids = [m.id for m in metrics]
             
-            if not metric_ids:
-                # Если у категории нет метрик, пропускаем
-                continue
-            
-            # Фильтруем значения по метрикам данной категории
+            # Фильтруем значения по метрикам данной категории, если они есть
             # Учитываем все магазины при суммировании
-            category_actuals = [av for av in all_actual_values if av.metric_id in metric_ids]
-            category_plans = [pv for pv in all_plan_values if pv.metric_id in metric_ids]
+            category_actuals = [av for av in all_actual_values if av.metric_id in metric_ids] if metric_ids else []
+            category_plans = [pv for pv in all_plan_values if pv.metric_id in metric_ids] if metric_ids else []
             
             yearly_actual = sum(av.value for av in category_actuals)
             yearly_plan = sum(pv.value for pv in category_plans)
@@ -556,12 +552,24 @@ class AnalyticsService:
         # Получаем все периоды для указанного года
         periods = await period_service.get_by_year(year, session)
         if not periods:
-            raise ValueError(f"Периоды для года {year} не найдены")
+            # Если периоды не найдены, возвращаем пустую структуру
+            return {
+                "metrics": [],
+                "category_name": category.name,
+                "shop_name": shop.name,
+                "year": year
+            }
         
         # Получаем метрики для данной категории
         metrics = await metric_service.get_by_category(category_id, session)
         if not metrics:
-            raise ValueError(f"Метрики для категории {category.name} не найдены")
+            # Если метрики не найдены, возвращаем пустую структуру
+            return {
+                "metrics": [],
+                "category_name": category.name,
+                "shop_name": shop.name,
+                "year": year
+            }
         
         # Разделяем периоды по типам
         year_period = None
