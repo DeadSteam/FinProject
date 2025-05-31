@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки | RealTimeFinanceAnalytics</title>
+    <link rel="stylesheet" href="../styles/common.css">
+    <link rel="stylesheet" href="../styles/pages/profile.css">
+    <link rel="stylesheet" href="../styles/responsive.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+<header class="header">
+    <div class="header-logo">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm3 5a1 1 0 0 0 0 2h10a1 1 0 1 0 0-2H7zm0 4a1 1 0 0 0 0 2h10a1 1 0 1 0 0-2H7z"/>
+        </svg>
+        RealTimeFinanceAnalytics
+    </div>
+    <div class="header-actions">
+        <div class="user-info">
+            <a href="./profile.html" class="user-avatar">
+                <div class="avatar-inner">АП</div>
+            </a>
+            <div class="user-details">
+                <div class="user-name">Загрузка...</div>
+                <div class="user-role">Загрузка...</div>
+            </div>
+            <div class="user-dropdown">
+                <a href="./profile.html" class="user-dropdown-item">
+                    <i class="fa fa-user"></i> Профиль
+                </a>
+                <a href="./settings.html" class="user-dropdown-item">
+                    <i class="fa fa-cog"></i> Настройки
+                </a>
+                <div class="user-dropdown-divider"></div>
+                <a href="#" class="user-dropdown-item logout-btn">
+                    <i class="fa fa-sign-out-alt"></i> Выйти
+                </a>
+            </div>
+        </div>
+    </div>
+</header>
+<main class="profile-content">
+    <div class="profile-navigation">
+        <a href="../index.html" class="back-button">
+            <i class="fa fa-arrow-left"></i> На главную
+        </a>
+    </div>
+    <div class="profile-section">
+        <h2 class="section-title">Настройки</h2>
+        <div class="profile-card">
+            <div class="settings-list">
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Уведомления по email</div>
+                        <div class="setting-desc">Получать уведомления о важных событиях</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Темная тема</div>
+                        <div class="setting-desc">Включить темную тему оформления</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Двухфакторная аутентификация</div>
+                        <div class="setting-desc">Дополнительная защита вашего аккаунта</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="form-actions mt-4">
+                <a href="../index.html" class="btn btn-secondary">Назад</a>
+            </div>
+        </div>
+    </div>
+</main>
+<script type="module">
+    import authService from '../scripts/auth/auth.js';
+    import {showToast} from '../scripts/utils/helper.js'
+
+    document.addEventListener('DOMContentLoaded', async function() {
+        try {
+            // Проверяем авторизацию пользователя
+            if (!authService.isAuthenticated()) {
+                window.location.href = './login.html';
+                return;
+            }
+            
+            // Загружаем данные пользователя
+            const userData = await authService.getCurrentUser();
+            if (userData) {
+                // Заполняем информацию о пользователе
+                const initials = userData.username.slice(0, 2).toUpperCase();
+                document.querySelector('.user-avatar .avatar-inner').textContent = initials;
+                
+                // Заполняем информацию в шапке
+                document.querySelector('.user-name').textContent = userData.username;
+                
+                // Добавляем информацию о роли
+                if (userData.role) {
+                    document.querySelector('.user-role').textContent = userData.role.name;
+                } else {
+                    document.querySelector('.user-role').textContent = 'Без роли';
+                }
+            }
+            
+            // Обработчик для кнопки выхода
+            document.querySelector('.logout-btn').addEventListener('click', async function(e) {
+                e.preventDefault();
+                try {
+                    await authService.logout();
+                    window.location.href = './login.html';
+                } catch (error) {
+                    console.error('Ошибка при выходе из системы:', error);
+                    showToast('Ошибка при выходе из системы', 'error');
+                }
+            });
+        } catch (error) {
+            console.error('Ошибка при загрузке данных пользователя:', error);
+        }
+        
+        // Универсальное выпадающее меню пользователя
+        const userInfo = document.querySelector('.user-info');
+        const userDropdown = document.querySelector('.user-dropdown');
+        userInfo.addEventListener('click', function(e) {
+            if (e.target.closest('.user-avatar') || e.target.closest('.user-details')) {
+                userDropdown.classList.toggle('active');
+            }
+        });
+        document.addEventListener('click', function(e) {
+            if (!userInfo.contains(e.target)) {
+                userDropdown.classList.remove('active');
+            }
+        });
+        
+        // Обработка переключателей
+        const switches = document.querySelectorAll('.switch input');
+        switches.forEach(switchInput => {
+            switchInput.addEventListener('change', function() {
+                // Здесь будет логика сохранения настроек
+                const settingName = this.closest('.setting-item').querySelector('.setting-title').textContent;
+                showToast(`Настройка "${settingName}" ${this.checked ? 'включена' : 'отключена'}`, 'success');
+            });
+        });
+    });
+</script>
+</body>
+</html> 
