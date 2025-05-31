@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RealTimeFinanceAnalytics</title>
-    <link rel="stylesheet" href="./styles/common.css">
-    <link rel="stylesheet" href="./styles/pages/index.css">
-    <link rel="stylesheet" href="./styles/responsive.css">
+    <link rel="stylesheet" href="/styles/common.css">
+    <link rel="stylesheet" href="/styles/pages/index.css">
+    <link rel="stylesheet" href="/styles/responsive.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         /* Стили для индикатора загрузки */
@@ -49,11 +49,11 @@
         </div>
         <nav class="header-nav">
             <a href="#" class="active">Главная</a>
-            <a href="./pages/admin-users.html" class="admin-link" style="display: none;">Админпанель</a>
+            <a href="/pages/admin-users.html" class="admin-link" style="display: none;">Админпанель</a>
         </nav>
         <div class="header-actions">
             <div class="user-info">
-                <a href="./pages/profile.html" class="user-avatar">
+                <a href="/pages/profile.html" class="user-avatar">
                     <div class="avatar-inner">АП</div>
                 </a>
                 <div class="user-details">
@@ -61,7 +61,7 @@
                     <div class="user-role">Загрузка...</div>
                 </div>
                 <div class="user-dropdown">
-                    <a href="./pages/profile.html" class="user-dropdown-item">
+                    <a href="/pages/profile.html" class="user-dropdown-item">
                         <i class="fa fa-user"></i> Профиль
                     </a>
 <!--                    <a href="./pages/settings.html" class="user-dropdown-item">-->
@@ -193,7 +193,7 @@
 
 <!-- Подключение скриптов -->
 <script type="module">
-    import authService from './scripts/auth/auth.js';
+    import authService from '/scripts/auth/auth.js';
     
     // Функция для отображения уведомлений
     function showToast(message, type = 'success') {
@@ -231,14 +231,14 @@
             // Проверяем авторизацию пользователя
             if (!authService.isAuthenticated()) {
                 // Если пользователь не авторизован, перенаправляем на страницу логина
-                window.location.href = './pages/login.html';
+                window.location.href = '/pages/login.html';
                 return;
             }
             
             // Загрузка данных пользователя происходит в index.js
         } catch (error) {
             console.error('Ошибка инициализации страницы:', error);
-            window.location.href = './pages/login.html';
+            window.location.href = '/pages/login.html';
         }
     });
     
@@ -280,6 +280,6 @@
         }
     }
 </script>
-<script type="module" src="./scripts/pages/index.js"></script>
+<script type="module" src="/scripts/pages/index.js"></script>
 </body>
 </html>

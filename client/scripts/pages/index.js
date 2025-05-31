@@ -1,9 +1,11 @@
-// Импортируем модуль авторизации
+// Updated: 2025-05-31 19:48 - NO PROCESS DEPENDENCY
+// Импортируем модуль авторизации и конфигурацию
 import authService from '../auth/auth.js';
+import { API_BASE_URL } from '../config.js';
 
 // Класс для работы с API
 class ApiClient {
-    constructor(baseUrl = 'http://localhost:8000/api/v1') {
+    constructor(baseUrl = API_BASE_URL) {
         this.baseUrl = baseUrl;
         this.headers = {
             'Content-Type': 'application/json'
@@ -33,7 +35,7 @@ class ApiClient {
                 } catch (refreshError) {
                     // Если не удалось обновить токен, перенаправляем на страницу входа
                     console.error('Ошибка обновления токена:', refreshError);
-                    window.location.href = '/client/pages/login.html';
+                    window.location.href = '/pages/login.html';
                     throw refreshError;
                 }
             }
@@ -55,7 +57,7 @@ class ApiClient {
 }
 
 // Создаем экземпляр ApiClient
-const apiClient = new ApiClient('http://localhost:8000/api/v1');
+const apiClient = new ApiClient();
 
 // Элементы DOM
 const categoriesGrid = document.querySelector('.categories-grid');
@@ -73,6 +75,40 @@ const currentCategoryElement = document.getElementById('current-category');
 // Глобальная переменная для хранения данных дашборда
 let dashboardData = null;
 
+// Текущий год для получения данных - определяется динамически на основе доступных данных
+let currentYear = new Date().getFullYear(); // По умолчанию текущий год, будет обновлен при инициализации
+
+// Функция для определения рабочего года на основе доступных данных
+async function determineWorkingYear() {
+    try {
+        // Получаем список доступных годов из API
+        const availableYears = await apiClient.get('/finance/periods/years');
+        
+        if (!availableYears || availableYears.length === 0) {
+            console.warn('Нет доступных годов в базе данных, используем текущий год');
+            return new Date().getFullYear();
+        }
+        
+        const currentCalendarYear = new Date().getFullYear();
+        
+        // Проверяем, есть ли текущий календарный год среди доступных
+        if (availableYears.includes(currentCalendarYear)) {
+            console.log(`Используем текущий год: ${currentCalendarYear}`);
+            return currentCalendarYear;
+        }
+        
+        // Если текущего года нет, используем последний доступный год
+        const latestYear = Math.max(...availableYears);
+        console.log(`Текущий год ${currentCalendarYear} недоступен, используем последний доступный: ${latestYear}`);
+        return latestYear;
+        
+    } catch (error) {
+        console.error('Ошибка при получении доступных годов:', error);
+        console.log('Используем текущий календарный год как fallback');
+        return new Date().getFullYear();
+    }
+}
+
 // Форматирование денежных значений
 function formatCurrency(value) {
     return new Intl.NumberFormat('ru-RU', {
@@ -81,9 +117,6 @@ function formatCurrency(value) {
         minimumFractionDigits: 2
     }).format(value);
 }
-
-// Текущий год для получения данных - используем 2025, так как в базе данных есть данные для этого года
-const currentYear = 2025; // Фиксированный год для данных вместо new Date().getFullYear()
 
 // Функция для обновления бюджетной карточки и быстрой статистики
 async function updateBudgetOverview(allMetrics, periods) {
@@ -96,10 +129,9 @@ async function updateBudgetOverview(allMetrics, periods) {
         const budgetStatus = document.querySelector('.budget-status');
         const expensePercentage = document.querySelector('.quick-stat-item:nth-child(3) .quick-stat-value');
 
-        // Получаем текущий месяц и используем фиксированный год
+        // Получаем текущий месяц и используем динамически определенный год
         const now = new Date();
         const currentMonth = now.getMonth() + 1; // JavaScript месяцы с 0, нам нужно с 1
-        // Используем фиксированный год вместо now.getFullYear()
 
         // Месяцы на русском
         const monthNames = {
@@ -262,6 +294,10 @@ async function initPage() {
     }
 
     try {
+        // Определяем рабочий год на основе доступных данных
+        currentYear = await determineWorkingYear();
+        console.log(`Установлен рабочий год: ${currentYear}`);
+        
         // Загружаем данные пользователя
         const user = await authService.getCurrentUser();
         if (!user) {
@@ -563,11 +599,49 @@ function loadStores(categoryId) {
 
         // Добавляем обработчик клика на кнопку "Просмотреть отчет"
         storeCard.querySelector('.store-view-report').addEventListener('click', function () {
-            // Получаем текущий год
-            const currentYear = new Date().getFullYear();
+            // Используем константу currentYear (2025) вместо new Date().getFullYear()
+            // так как данные в базе инициализированы для 2025 года
+            
+            console.log('Клик по кнопке "Просмотреть отчет"');
+            console.log('Параметры для переадресации:', {
+                categoryId: categoryId,
+                storeId: store.id,
+                currentYear: currentYear
+            });
+            
+            // Проверяем, что все параметры корректны
+            if (!categoryId || !store.id || !currentYear) {
+                console.error('Ошибка: один из параметров отсутствует', {
+                    categoryId: categoryId,
+                    storeId: store.id,
+                    currentYear: currentYear
+                });
+                showNotification('Ошибка: не удалось определить параметры для переадресации', 'error');
+                return;
+            }
+            
+            // Формируем URL для переадресации
+            const redirectUrl = `/pages/finance-details.html?category=${encodeURIComponent(categoryId)}&store=${encodeURIComponent(store.id)}&year=${encodeURIComponent(currentYear)}`;
+            console.log('Переадресация на:', redirectUrl);
+            
+            // Проверяем, что URL сформирован корректно
+            try {
+                const testUrl = new URL(redirectUrl, window.location.origin);
+                console.log('Проверка URL:');
+                console.log('  Full URL:', testUrl.href);
+                console.log('  Search params:', testUrl.searchParams.toString());
+                console.log('  Category param:', testUrl.searchParams.get('category'));
+                console.log('  Store param:', testUrl.searchParams.get('store'));
+                console.log('  Year param:', testUrl.searchParams.get('year'));
+            } catch (urlError) {
+                console.error('Ошибка при формировании URL:', urlError);
+                showNotification('Ошибка при формировании URL для переадресации', 'error');
+                return;
+            }
             
             // Перенаправляем на страницу с детальной информацией
-            window.location.href = `./pages/finance-details.html?category=${categoryId}&store=${store.id}&year=${currentYear}`;
+            console.log('Выполняю переадресацию...');
+            window.location.assign(redirectUrl);
 
             // Показываем третий шаг инструкции
             showInstructionStep(3);
@@ -614,6 +688,96 @@ function hideInstructionAfterSelection() {
     if (instruction) {
         instruction.classList.add('minimized');
     }
+}
+
+// Функция отображения уведомлений
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">${message}</div>
+        <button class="notification-close">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    `;
+    
+    // Добавляем стили для уведомлений, если их еще нет
+    if (!document.querySelector('#notification-styles')) {
+        const styleElement = document.createElement('style');
+        styleElement.id = 'notification-styles';
+        styleElement.textContent = `
+            .notification {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem;
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                z-index: 1001;
+                min-width: 300px;
+                max-width: 500px;
+                transition: transform 0.3s ease, opacity 0.3s ease;
+            }
+            
+            .notification.hide {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            
+            .notification-info {
+                border-left: 4px solid #2196F3;
+            }
+            
+            .notification-success {
+                border-left: 4px solid #4caf50;
+            }
+            
+            .notification-error {
+                border-left: 4px solid #f44336;
+            }
+            
+            .notification-warning {
+                border-left: 4px solid #ff9800;
+            }
+            
+            .notification-close {
+                background: none;
+                border: none;
+                cursor: pointer;
+                color: #666;
+                margin-left: 1rem;
+            }
+            
+            .notification-content {
+                flex: 1;
+            }
+        `;
+        document.head.appendChild(styleElement);
+    }
+    
+    document.body.appendChild(notification);
+    
+    // Автоматическое скрытие уведомления через 5 секунд
+    setTimeout(() => {
+        notification.classList.add('hide');
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 5000);
+    
+    // Обработка кнопки закрытия
+    notification.querySelector('.notification-close').addEventListener('click', function() {
+        notification.classList.add('hide');
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    });
 }
 
 // Инициализация при загрузке страницы
@@ -673,11 +837,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const now = new Date();
         const options = {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'};
         dateDisplay.textContent = now.toLocaleDateString('ru-RU', options);
-    }
-
-    // Функция для скрытия инструкции после того, как пользователь выбрал категорию
-    function hideInstructionAfterSelection() {
-        document.getElementById('instruction').style.display = 'none';
     }
 
     // Обработчик для кнопки выхода из системы

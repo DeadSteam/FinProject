@@ -1,9 +1,10 @@
 // Импортируем модуль для работы с графиками
 import { createChartSwitchButtons, setupCharts, renderChart, renderBarChart, fixChartContainerSize } from '../utils/charts.js';
+import { API_BASE_URL } from '../config.js';
 
 // Класс для работы с API
 class ApiClient {
-    constructor(baseUrl = 'http://localhost:8000/api/v1') {
+    constructor(baseUrl = API_BASE_URL) {
         this.baseUrl = baseUrl;
         this.headers = {
             'Content-Type': 'application/json'
@@ -145,12 +146,27 @@ class ApiClient {
 
     async postWithParams(endpoint, params) {
         try {
+            // Отладочная информация
+            console.log('postWithParams called with:', { endpoint, params });
+            console.log('this.baseUrl:', this.baseUrl);
+            
+            // Проверяем корректность baseUrl
+            if (!this.baseUrl) {
+                throw new Error('baseUrl is not defined');
+            }
+            
             // Создаем URL с параметрами запроса
-            const url = new URL(`${this.baseUrl}${endpoint}`);
+            const fullUrl = `${this.baseUrl}${endpoint}`;
+            console.log('Full URL before parsing:', fullUrl);
+            
+            // Для относительных URL используем window.location.origin
+            const url = new URL(fullUrl, window.location.origin);
             for (const key in params) {
                 // Добавляем параметры в строку запроса
                 url.searchParams.append(key, params[key].toString());
             }
+            
+            console.log('Final URL:', url.toString());
 
             const response = await fetch(url, {
                 method: 'POST',
@@ -188,7 +204,7 @@ class ApiClient {
     async putWithParams(endpoint, params) {
         try {
             // Создаем URL с параметрами запроса
-            const url = new URL(`${this.baseUrl}${endpoint}`);
+            const url = new URL(`${this.baseUrl}${endpoint}`, window.location.origin);
             for (const key in params) {
                 // Добавляем параметры в строку запроса
                 url.searchParams.append(key, params[key].toString());
@@ -316,16 +332,97 @@ class ApiClient {
 }
 
 // Создаем экземпляр ApiClient
-const apiClient = new ApiClient('http://localhost:8000/api/v1');
+const apiClient = new ApiClient();
 
 // Получение параметров из URL
 function getUrlParams() {
     const params = new URLSearchParams(window.location.search);
-    return {
+    const result = {
         categoryId: params.get('category') || '',
         storeId: params.get('store') || '',
         year: params.get('year') || ''
     };
+    
+    // Отладочная информация
+    console.log('URL:', window.location.href);
+    console.log('URL Search:', window.location.search);
+    console.log('URL pathname:', window.location.pathname);
+    console.log('URL hash:', window.location.hash);
+    console.log('Parsed params:', result);
+    console.log('All URL params:');
+    for (const [key, value] of params.entries()) {
+        console.log(`  ${key}: ${value}`);
+    }
+    
+    return result;
+}
+
+// Функция для проверки и обработки отсутствующих параметров
+function handleMissingParams() {
+    const { categoryId, storeId, year } = getUrlParams();
+    
+    // Если параметры отсутствуют, показываем специальное сообщение и кнопку возврата
+    if (!categoryId || !storeId) {
+        console.warn('Отсутствуют обязательные параметры. Показываем сообщение пользователю.');
+        
+        // Скрываем основной контент
+        const mainContent = document.querySelector('.salary-report');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        
+        if (mainContent) {
+            mainContent.style.display = 'none';
+        }
+        
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'none';
+        }
+        
+        // Создаем сообщение с кнопкой возврата
+        const errorContainer = document.createElement('div');
+        errorContainer.className = 'error-container';
+        errorContainer.style.cssText = `
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+            text-align: center;
+            padding: 2rem;
+        `;
+        
+        errorContainer.innerHTML = `
+            <div class="error-icon" style="margin-bottom: 1rem;">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--warning);">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+            </div>
+            <h2 style="margin-bottom: 1rem; color: var(--text-primary);">Необходимо выбрать категорию и магазин</h2>
+            <p style="margin-bottom: 2rem; color: var(--text-secondary); max-width: 400px;">
+                Для просмотра финансового отчета необходимо сначала выбрать категорию расходов и магазин на главной странице.
+            </p>
+            <button class="btn btn-primary" id="backToHomeBtn" style="padding: 0.75rem 1.5rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                    <path d="m12 19-7-7 7-7"></path>
+                    <path d="M19 12H5"></path>
+                </svg>
+                Вернуться на главную
+            </button>
+        `;
+        
+        // Добавляем контейнер в body
+        document.body.appendChild(errorContainer);
+        
+        // Обработчик кнопки возврата
+        document.getElementById('backToHomeBtn').addEventListener('click', () => {
+            window.location.href = '/';
+        });
+        
+        return false; // Возвращаем false, чтобы остановить дальнейшую инициализацию
+    }
+    
+    return true; // Возвращаем true, если все параметры есть
 }
 
 // Функция форматирования чисел
@@ -1763,14 +1860,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     styleElement.textContent = notificationStyles;
     document.head.appendChild(styleElement);
     
+    // Проверяем параметры URL и обрабатываем случай их отсутствия
+    if (!handleMissingParams()) {
+        // Если параметры отсутствуют, handleMissingParams уже показал пользователю сообщение
+        // и остановил дальнейшую инициализацию
+        return;
+    }
+    
     // Получаем параметры из URL
     const { categoryId, storeId, year } = getUrlParams();
     
-    // Если параметры отсутствуют, показываем сообщение об ошибке
-    if (!categoryId || !storeId) {
-        showNotification('Для просмотра отчета необходимо выбрать категорию и магазин', 'error');
-        return;
-    }
+    // Отладочная информация для диагностики
+    console.log('Получены параметры URL:', { categoryId, storeId, year });
     
     try {
         // Проверяем права пользователя

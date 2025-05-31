@@ -29,7 +29,7 @@ def clean_env_value(value: str) -> str:
 
 class Settings(BaseSettings):
     # Server
-    SERVER_HOST: str
+    HOST: str
     PORT: int
 
     # Database Connection Pool
@@ -109,6 +109,8 @@ class Settings(BaseSettings):
     # Rate Limiting Settings
     MAX_FAILED_ATTEMPTS: int
     LOGIN_LOCKOUT_TIME: int
+    AUTH_RATE_LIMIT_MINUTE: int
+    AUTH_RATE_LIMIT_HOUR: int
 
     # OAuth2 Settings
     OAUTH2_TOKEN_URL: str

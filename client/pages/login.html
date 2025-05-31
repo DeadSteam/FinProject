@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Вход в систему | RealTimeFinanceAnalytics</title>
-    <link rel="stylesheet" href="../styles/common.css">
-    <link rel="stylesheet" href="../styles/pages/login.css">
+    <link rel="stylesheet" href="/styles/common.css">
+    <link rel="stylesheet" href="/styles/pages/login.css">
 </head>
 <body>
     <div class="login-page">
@@ -19,7 +19,7 @@
         </div>
         <div class="particles-overlay"></div>
         
-        <a href="../index.html" class="back-link">
+        <a href="/index.html" class="back-link">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M19 12H5M12 19l-7-7 7-7"></path>
             </svg>
@@ -121,8 +121,8 @@
     <!-- Импортируем скрипт авторизации -->
     <script type="module">
         // Импортируем сервис авторизации и утилиты
-        import authService from '../scripts/auth/auth.js';
-        import { isValidEmail, isValidPhoneNumber, formatPhoneNumber } from '../scripts/utils/validation.js';
+        import authService from '/scripts/auth/auth.js';
+        import { isValidEmail, isValidPhoneNumber, formatPhoneNumber } from '/scripts/utils/validation.js';
         
         // Переключение видимости пароля
         document.getElementById('togglePassword').addEventListener('click', function() {
@@ -240,7 +240,7 @@
                     const authResult = await authService.login(identifier, password);
                     
                     // Если вход успешен, перенаправляем на главную страницу
-                    window.location.href = "../index.html";
+                    window.location.href = "/index.html";
                 } catch (error) {
                     console.error('Ошибка входа:', error);
                     // Показываем информативную ошибку

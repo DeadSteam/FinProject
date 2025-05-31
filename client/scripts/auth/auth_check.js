@@ -1,9 +1,9 @@
 /**
  * Скрипт для проверки авторизации и ролей
+ * Updated: 2025-05-31 19:50 - FIXED PROCESS DEPENDENCY
  */
 
-// Базовый URL API
-const API_BASE_URL = `http://${process.env.SERVER_HOST || 'localhost'}:8000/api/v1`;
+import { API_BASE_URL } from '../config.js';
 
 /**
  * Получаем токен авторизации

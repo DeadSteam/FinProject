@@ -1,7 +1,10 @@
 // Базовый API клиент для взаимодействия с сервером
+// Updated: 2025-05-31 19:50 - FIXED PROCESS DEPENDENCY
+import { API_BASE_URL } from '../../config.js';
+
 class ApiClient {
     constructor() {
-        this.baseUrl = `http://${process.env.SERVER_HOST || 'localhost'}:8000/api/v1`;
+        this.baseUrl = API_BASE_URL;
         this.headers = {
             'Content-Type': 'application/json'
         };

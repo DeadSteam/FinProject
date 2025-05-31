@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fresh Test - Без кэша</title>
+</head>
+<body>
+    <h1>Тест без кэша</h1>
+    <div id="result"></div>
+    
+    <script type="module">
+        const timestamp = Date.now();
+        const resultDiv = document.getElementById('result');
+        
+        try {
+            resultDiv.innerHTML += '<p>Загружаем config.js...</p>';
+            const config = await import(`/scripts/config.js?t=${timestamp}`);
+            resultDiv.innerHTML += `<p>✅ Config загружен: ${config.API_BASE_URL}</p>`;
+            
+            resultDiv.innerHTML += '<p>Загружаем auth.js...</p>';
+            const auth = await import(`/scripts/auth/auth.js?t=${timestamp}`);
+            resultDiv.innerHTML += '<p>✅ Auth загружен</p>';
+            
+            resultDiv.innerHTML += '<p>Загружаем index.js...</p>';
+            const index = await import(`/scripts/pages/index.js?t=${timestamp}`);
+            resultDiv.innerHTML += '<p>✅ Index загружен</p>';
+            
+            resultDiv.innerHTML += '<h2 style="color: green;">🎉 Все модули загружены успешно!</h2>';
+            
+        } catch (error) {
+            resultDiv.innerHTML += `<h2 style="color: red;">❌ Ошибка: ${error.message}</h2>`;
+            console.error('Ошибка:', error);
+        }
+    </script>
+</body>
+</html> 
