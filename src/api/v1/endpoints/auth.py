@@ -11,13 +11,14 @@ from src.scheme.users import (
     Token, TokenPair, RefreshToken, LoginRequest, 
     User, RegistrationRequest, PasswordResetRequest
 )
+from src.core.config import settings
 
 router = APIRouter()
 
 # Инициализация сервисов
 user_service = UserService()
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=settings.OAUTH2_TOKEN_URL)
 
 # Вспомогательные функции
 async def get_current_user(
@@ -139,10 +140,10 @@ async def login(
         key="refresh_token",
         value=tokens.refresh_token,
         httponly=True,
-        secure=True,  # Требуется HTTPS
-        samesite="strict",  # Дополнительная защита от CSRF
-        max_age=60*60*24*30,  # 30 дней
-        path="/api/v1/auth/refresh"  # Доступно только для пути /refresh
+        secure=settings.AUTH_COOKIE_SECURE,
+        samesite=settings.AUTH_COOKIE_SAME_SITE,
+        max_age=settings.COOKIE_MAX_AGE,
+        path=settings.AUTH_COOKIE_PATH
     )
     
     return tokens
@@ -160,7 +161,7 @@ async def login_for_access_token(
     """
     # Используем username из формы OAuth2 как email
     user = await user_service.authenticate(
-        email=form_data.username,  # В стандартной форме OAuth2 используется поле username
+        email=form_data.username,
         password=form_data.password,
         session=session
     )
@@ -187,10 +188,10 @@ async def login_for_access_token(
             key="refresh_token",
             value=tokens.refresh_token,
             httponly=True,
-            secure=True,
-            samesite="strict",
-            max_age=60*60*24*30,
-            path="/api/v1/auth/refresh"
+            secure=settings.AUTH_COOKIE_SECURE,
+            samesite=settings.AUTH_COOKIE_SAME_SITE,
+            max_age=settings.COOKIE_MAX_AGE,
+            path=settings.AUTH_COOKIE_PATH
         )
     
     return tokens
@@ -246,7 +247,7 @@ async def logout(response: Response):
     """
     response.delete_cookie(
         key="refresh_token",
-        path="/api/v1/auth/refresh"
+        path=settings.AUTH_COOKIE_PATH
     )
     
     return {"message": "Успешный выход из системы"}

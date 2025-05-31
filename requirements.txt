@@ -1,25 +1,26 @@
 # Основные зависимости
-fastapi==0.103.1
-uvicorn==0.23.2
-starlette==0.27.0
+fastapi==0.109.2
+uvicorn==0.27.1
+starlette==0.36.3
 
 # Базы данных и ORM
-sqlalchemy==2.0.20
+sqlalchemy==2.0.27
 asyncpg==0.28.0
-psycopg2-binary==2.9.7
-alembic==1.12.0
+psycopg2-binary==2.9.9
+alembic==1.13.1
 
 # Pydantic и валидация
-pydantic==2.3.0
-pydantic-settings==2.0.3
-pydantic-core==2.6.3
+pydantic==2.6.1
+pydantic-settings==2.1.0
+pydantic-core==2.16.2
+pydantic[email]==2.6.1
 email-validator==2.2.0
 annotated-types==0.7.0
 
 # Аутентификация и безопасность
 python-jose==3.3.0
 passlib==1.7.4
-bcrypt==4.3.0
+bcrypt==4.1.2
 python-multipart==0.0.6
 itsdangerous==2.2.0
 
@@ -33,5 +34,5 @@ redis==5.0.1
 aioredis==2.0.1
 
 # Утилиты
-python-dotenv==1.1.0
+python-dotenv==1.0.1
 typing-extensions==4.13.2 

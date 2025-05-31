@@ -1514,7 +1514,7 @@ async function loadMetrics(selectedYear = null) {
             `;
             document.head.appendChild(styleElement);
             
-            return;
+                return;
         }
         
         // Преобразуем данные в формат, понятный для существующих функций
@@ -1905,8 +1905,8 @@ function setupFilters() {
     async function updateDataByFilters(selectedYear, selectedShop) {
         try {
             if (selectedYear && selectedShop) {
-                showLoading();
-                
+            showLoading();
+            
                 // Получаем текущие параметры URL
                 const { categoryId } = getUrlParams();
                 
@@ -1919,7 +1919,7 @@ function setupFilters() {
                     
                     // Загружаем метрики с новыми параметрами
                     await loadMetrics(selectedYear);
-                    
+                
                     // Обновляем модальное окно годового плана, если оно открыто
                     const yearlyPlanModal = document.getElementById('yearly-plan-modal');
                     if (yearlyPlanModal && yearlyPlanModal.classList.contains('active')) {

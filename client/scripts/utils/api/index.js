@@ -1,7 +1,7 @@
 // Базовый API клиент для взаимодействия с сервером
 class ApiClient {
     constructor() {
-        this.baseUrl = 'http://localhost:8000/api/v1';
+        this.baseUrl = `http://${process.env.SERVER_HOST || 'localhost'}:8000/api/v1`;
         this.headers = {
             'Content-Type': 'application/json'
         };

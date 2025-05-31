@@ -56,16 +56,14 @@ class DBHelper:
         self,
         url: str,
         echo: bool = False,
-        echo_pool: bool = False,
-        pool_size: int = 5,
-        max_overflow: int = 10,
+        echo_pool: bool = False
     ):
         self.engine: AsyncEngine = create_async_engine(
             url,
             echo=echo,
             echo_pool=echo_pool,
-            pool_size=pool_size,
-            max_overflow=max_overflow,
+            pool_size=settings.DB_POOL_SIZE,
+            max_overflow=settings.DB_MAX_OVERFLOW,
         )
         self.session_factory: async_sessionmaker[AsyncSession] = async_sessionmaker(
             bind=self.engine,
@@ -94,9 +92,10 @@ class RedisHelper:
             encoding=encoding,
             decode_responses=decode_responses,
         )
+        self.default_timeout = settings.REDIS_DEFAULT_TIMEOUT
         print(f"Инициализирован Redis-клиент с URL: {url}")
     
-    async def set(self, key: str, value: Any, expire: int = settings.REDIS.DEFAULT_TIMEOUT) -> bool:
+    async def set(self, key: str, value: Any, expire: int = None) -> bool:
         """Сохранение данных в Redis с временем истечения."""
         try:
             if not isinstance(value, (str, int, float, bool)):
@@ -105,6 +104,10 @@ class RedisHelper:
                 serialized_value = json.dumps(value, cls=CustomJSONEncoder)
             else:
                 serialized_value = value
+            
+            # Используем значение по умолчанию из настроек, если expire не указан
+            if expire is None:
+                expire = self.default_timeout
             
             result = await self.client.set(key, serialized_value, ex=expire)
             print(f"Результат сохранения в Redis для ключа '{key}': {result}")
@@ -163,24 +166,22 @@ class RedisHelper:
             return False
 
 
+# Создаем хелперы для баз данных
 users_db_helper = DBHelper(
-    url=settings.USERS_DATABASE.URL,
-    echo=settings.USERS_DATABASE.ECHO,
-    echo_pool=settings.USERS_DATABASE.ECHO_POOL,
-    pool_size=settings.USERS_DATABASE.POOL_SIZE,
-    max_overflow=settings.USERS_DATABASE.MAX_OVERFLOW,
+    url=settings.USERS_DATABASE_URL,
+    echo=False,
+    echo_pool=False,
 )
+
 finances_db_helper = DBHelper(
-    url=settings.FINANCE_DATABASE.URL,
-    echo=settings.FINANCE_DATABASE.ECHO,
-    echo_pool=settings.FINANCE_DATABASE.ECHO_POOL,
-    pool_size=settings.FINANCE_DATABASE.POOL_SIZE,
-    max_overflow=settings.FINANCE_DATABASE.MAX_OVERFLOW,
+    url=settings.DATABASE_URL,
+    echo=False,
+    echo_pool=False,
 )
 
 # Создаем Redis-хелпер
 redis_helper = RedisHelper(
-    url=settings.REDIS.URL,
-    encoding=settings.REDIS.ENCODING,
-    decode_responses=settings.REDIS.DECODE_RESPONSES,
+    url=settings.REDIS_URL,
+    encoding="utf-8",
+    decode_responses=True,
 ) 

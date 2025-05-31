@@ -25,16 +25,12 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Настройки для JWT токенов
 SECRET_KEY = settings.SECRET_KEY
-ALGORITHM = "HS256"
+ALGORITHM = settings.JWT_ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
-REFRESH_TOKEN_EXPIRE_DAYS = 30
+REFRESH_TOKEN_EXPIRE_DAYS = settings.REFRESH_TOKEN_EXPIRE_DAYS
 
 # Временный кэш для отслеживания неудачных попыток входа
 failed_login_attempts = {}
-# Лимит неудачных попыток входа
-MAX_FAILED_ATTEMPTS = 5
-# Время блокировки в секундах (10 минут)
-LOCKOUT_TIME = 600
 
 
 class RoleService(BaseService[Role, RoleSchema, RoleCreate, RoleUpdate]):
@@ -275,8 +271,8 @@ class UserService(BaseService[User, UserSchema, UserCreate, UserUpdate]):
             attempts["count"] += 1
             
             # Если счетчик достиг предела, блокируем пользователя
-            if attempts["count"] >= MAX_FAILED_ATTEMPTS:
-                attempts["locked_until"] = current_time + LOCKOUT_TIME
+            if attempts["count"] >= settings.MAX_FAILED_ATTEMPTS:
+                attempts["locked_until"] = current_time + settings.LOGIN_LOCKOUT_TIME
     
     def _reset_failed_attempts(self, identifier: str):
         """Сброс счетчика неудачных попыток входа."""

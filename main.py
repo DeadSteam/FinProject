@@ -1,46 +1,49 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
+import logging
 from src.core.config import settings
 from src.core.middleware import setup_middlewares
 from src.api.v1.router import api_router
+from src.api.tags import API_TAGS
+from src.core.init_admin import init_admin
 
-# Определяем порядок тегов для документации
-tags_metadata = [
-    {"name": "Магазины", "description": "Операции с магазинами"},
-    {"name": "Категории", "description": "Операции с категориями расходов"},
-    {"name": "Метрики", "description": "Операции с метриками"},
-    {"name": "Периоды", "description": "Операции с временными периодами"},
-    {"name": "Плановые значения", "description": "Операции с плановыми значениями метрик"},
-    {"name": "Фактические значения", "description": "Операции с фактическими значениями метрик"},
-    {"name": "Изображения", "description": "Операции с изображениями"},
-    {"name": "Аналитика", "description": "Аналитические отчеты"},
-    {"name": "Пользователи", "description": "Управление пользователями"},
-    {"name": "Авторизация", "description": "Авторизация и аутентификация"}
-]
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title=settings.PROJECT_NAME,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    openapi_tags=tags_metadata
-)
-
-# Настраиваем CORS напрямую в основном приложении
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Временно разрешаем все источники для отладки
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"],
+    title=settings.DOCS_TITLE,
+    description=settings.DOCS_DESCRIPTION,
+    version=settings.DOCS_VERSION,
+    openapi_url=f"{settings.API_PREFIX}/openapi.json",
+    openapi_tags=API_TAGS,
+    contact={
+        "name": settings.DOCS_CONTACT_NAME,
+        "email": settings.DOCS_CONTACT_EMAIL
+    },
+    license_info={
+        "name": settings.DOCS_LICENSE_NAME,
+        "url": settings.DOCS_LICENSE_URL
+    }
 )
 
 # Настройка middleware
 setup_middlewares(app)
 
 # Подключение API роутера
-app.include_router(api_router, prefix=settings.API_V1_STR)
+app.include_router(api_router, prefix=settings.API_PREFIX)
 
 @app.get("/")
 async def root():
-    return {"message": "Добро пожаловать в Finance API"}
+    return {"message": settings.ROOT_MESSAGE}
+
+@app.on_event("startup")
+async def startup_event():
+    """Выполняется при запуске приложения."""
+    logger.info("Starting application initialization...")
+    try:
+        logger.info("Initializing admin user...")
+        await init_admin()
+        logger.info("Admin user initialization completed")
+    except Exception as e:
+        logger.error(f"Error during startup: {str(e)}")
+        raise

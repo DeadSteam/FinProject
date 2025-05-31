@@ -3,7 +3,7 @@
  */
 
 // Базовый URL API
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+const API_BASE_URL = `http://${process.env.SERVER_HOST || 'localhost'}:8000/api/v1`;
 
 /**
  * Получаем токен авторизации

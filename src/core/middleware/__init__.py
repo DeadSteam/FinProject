@@ -5,7 +5,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from src.core.config import get_settings
-
+from src.core.middleware.rate_limit import AuthRateLimitMiddleware
 
 def setup_middlewares(app: FastAPI) -> None:
     """
@@ -40,4 +40,7 @@ def setup_middlewares(app: FastAPI) -> None:
         max_age=settings.SESSION_MAX_AGE,
         https_only=settings.SESSION_HTTPS_ONLY,
         same_site=settings.SESSION_SAME_SITE
-    ) 
+    )
+
+    # Добавляем rate limiting для auth эндпоинтов
+    app.add_middleware(AuthRateLimitMiddleware) 

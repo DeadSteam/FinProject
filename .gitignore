@@ -46,4 +46,8 @@ logs/
 .coverage
 htmlcov/
 .pytest_cache/
-.tox/ 
+.tox/
+
+.cursorignore
+.cursor
+TASKS.md
