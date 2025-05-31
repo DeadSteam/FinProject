@@ -21,6 +21,7 @@ FROM python:3.11-slim
 RUN apt-get update && apt-get install -y --no-install-recommends \
     netcat-traditional \
     postgresql-client \
+    dos2unix \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -32,8 +33,8 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Копируем код приложения
 COPY . .
 
-# Настройка прав для entrypoint скрипта
-RUN chmod +x entrypoint.sh
+# Исправляем переносы строк и устанавливаем права для entrypoint скрипта
+RUN dos2unix entrypoint.sh && chmod +x entrypoint.sh
 
 # Определяем порт
 EXPOSE 8000
