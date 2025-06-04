@@ -286,10 +286,12 @@
 }
 
 .logo-text {
-    font-size: 1.1rem;
+    font-size: 2.4rem;
     font-weight: 700;
     color: var(--primary);
-    letter-spacing: -0.5px;
+    letter-spacing: 0.05em;
+    font-family: 'Rimma Sans', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    text-transform: uppercase;
 }
 
 .login-header {

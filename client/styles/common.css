@@ -1,3 +1,12 @@
+/* Подключение шрифта Rimma Sans */
+@font-face {
+    font-family: 'Rimma Sans';
+    src: url('/fonts/rimma-sans/RIMMA_SANS-BOLD.TTF') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
 :root {
     /* Цветовая схема */
     --primary: #4f46e5;
@@ -225,9 +234,12 @@ body {
 .header-logo {
     display: flex;
     align-items: center;
-    font-weight: 600;
-    font-size: 1.2rem;
+    font-weight: 700;
+    font-size: 1.8rem;
     color: var(--primary);
+    font-family: 'Rimma Sans', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
 }
 
 .header-logo svg {

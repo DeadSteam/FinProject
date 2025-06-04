@@ -1,1 +1,118 @@
- 
+ # Finance API Project Intelligence
+
+## Ключевые паттерны и решения
+
+### 1. Архитектурные принципы
+- **Microservices в Docker**: Каждый компонент изолирован в контейнере
+- **Database separation**: finance_db (бизнес) + users_db (авторизация)  
+- **Stateless backend**: JWT токены + Redis сессии для масштабирования
+- **API-first**: Единая точка входа через FastAPI с OpenAPI документацией
+
+### 2. Frontend паттерны  
+- **Vanilla JS + ES6 modules**: Нет фреймворков для простоты деплоя
+- **Adaptive API URL**: Автоматическое определение окружения
+```javascript
+function getApiBaseUrl() {
+    if (localhost:3000) return 'http://localhost:8000/api/v1';
+    return '/api/v1';  // Relative path для продакшна
+}
+```
+- **URL constructor fix**: `new URL(relative, window.location.origin)` для поддержки относительных путей
+
+### 3. Конфигурационные паттерны
+- **Environment-driven**: Все настройки через .env переменные
+- **HOST параметrizация**: Единственная переменная для смены окружения
+- **Docker-compose inheritance**: ${HOST} во всех сервисах
+- **CORS flexibility**: `CORS_ORIGINS=http://${HOST}` для автоадаптации
+
+### 4. Критические исправления
+- ❌ `serve` SPA mode → ✅ `http-server` для сохранения URL параметров
+- ❌ `process.env` в браузере → ✅ Client-side config.js  
+- ❌ Hardcoded localhost → ✅ Переменная HOST
+- ❌ `new URL(relative)` → ✅ `new URL(relative, origin)`
+
+### 5. Backend паттерны
+- **Repository pattern**: Абстракция доступа к данным
+- **Service layer**: Бизнес-логика отделена от контроллеров
+- **Dependency injection**: FastAPI встроенная DI система
+- **Pydantic settings**: Автоматическое чтение .env конфигурации
+
+### 6. Безопасность
+- **JWT + Refresh tokens**: Авторизация с продлением сессий
+- **bcrypt passwords**: Современное хеширование
+- **Rate limiting**: slowapi защита от атак
+- **CORS headers**: Контролируемые origins
+
+### 7. Производительность  
+- **Async SQLAlchemy**: Неблокирующие запросы к БД
+- **Connection pooling**: DB_POOL_SIZE=5, DB_MAX_OVERFLOW=10
+- **Redis caching**: Быстрые сессии и кэширование
+- **Health checks**: Мониторинг состояния всех сервисов
+
+## Workflow паттерны
+
+### Деплой готовность
+```bash
+# Единственное изменение для продакшна:
+HOST=your-domain.com  # в .env
+docker-compose up -d  # и готово!
+```
+
+### Отладка проблем
+1. **URL параметры не передаются**: Проверить serve vs http-server
+2. **API не доступен**: Проверить CORS_ORIGINS в .env
+3. **Invalid URL error**: Использовать new URL(path, origin)
+4. **404 на статике**: Проверить nginx MIME types
+
+### Структура проекта
+```
+src/           # Backend FastAPI
+client/        # Frontend Vanilla JS  
+memory-bank/   # Проектная документация
+nginx/         # Reverse proxy config
+sql/init/      # Database initialization
+docker-compose.yml  # Orchestration
+.env           # Configuration
+```
+
+### Критические файлы
+- `client/scripts/config.js`: Frontend API configuration
+- `src/core/config.py`: Backend settings с .env reading
+- `nginx/nginx.conf`: Reverse proxy с ${HOST} substitution
+- `docker-compose.yml`: Service orchestration
+- `entrypoint.sh`: Graceful startup sequence
+
+## Пользовательские предпочтения
+
+### Стиль кода
+- **Explicit over implicit**: Явные импорты и типы
+- **Russian comments**: Комментарии на русском для бизнес-логики
+- **Structured logging**: JSON логи с уровнями важности
+- **Error handling**: Graceful degradation везде
+
+### Инструменты
+- **Docker-first**: Все через контейнеры
+- **No build tools**: Нативные ES6 модули
+- **PostgreSQL**: Единственная поддерживаемая БД
+- **FastAPI**: Async-first backend framework
+
+### Решения проблем
+1. **Всегда проверяй**: Переменные окружения в .env
+2. **Предпочитай**: Relative paths over absolute
+3. **Используй**: async/await для всех I/O операций
+4. **Логируй**: Все критические операции
+
+## Эволюция проекта
+
+### Изначальные проблемы → Решения:
+- SPA routing issues → Static file server
+- Environment coupling → Variable parameterization  
+- Frontend framework complexity → Vanilla JS simplicity
+- Monolithic database → Separated concerns (2 DBs)
+
+### Текущее состояние: PRODUCTION READY 🚀
+- Все функции работают стабильно
+- Деплой автоматизирован через Docker
+- Конфигурация параметризована
+- Безопасность настроена
+- Производительность оптимизирована
