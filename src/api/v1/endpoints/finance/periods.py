@@ -24,18 +24,28 @@ async def get_periods(
 
 @router.get("/grouped", response_model=Dict[str, List[PeriodSchema]])
 async def get_periods_grouped_by_type(
-    year: int = None,
+    year: Optional[int] = None,
     session: AsyncSession = Depends(finances_db.get_session)
 ):
     """Получение периодов, сгруппированных по типу (годы, кварталы, месяцы)."""
     return await period_service.get_periods_grouped_by_type(session=session, year=year)
 
-@router.get("/years", response_model=List[int])
+@router.get("/years", response_model=List[dict])
 async def get_available_years(
     session: AsyncSession = Depends(finances_db.get_session)
 ):
     """Получение списка всех доступных годов."""
-    return await period_service.get_available_years(session=session)
+    years_data = await period_service.get_available_years(session=session)
+    
+    years = []
+    for year in years_data:
+        years.append({
+            'id': f"year-{year}",  # Создаем ID для года
+            'year': year,
+            'is_active': True
+        })
+    
+    return years
 
 @router.post("/years/{year}/init", response_model=Dict[str, List[PeriodSchema]])
 async def initialize_year_periods(

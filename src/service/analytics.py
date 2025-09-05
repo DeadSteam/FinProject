@@ -8,14 +8,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.model.finance import Period, Shop, Metric, Category
 from src.scheme.finance import Period as PeriodSchema
 from src.service.finance import (
-    period_service, shop_service, metric_service, category_service,
-    actual_value_service, plan_value_service, image_service
+    PeriodService, ShopService, MetricService, CategoryService,
+    ActualValueService, PlanValueService, ImageService, DocumentService
 )
 from src.repository import redis_helper
 
 
 class AnalyticsService:
     """Сервис для аналитики и бизнес-логики."""
+    
+    def __init__(self):
+        self.period_service = PeriodService()
+        self.shop_service = ShopService()
+        self.metric_service = MetricService()
+        self.category_service = CategoryService()
+        self.actual_value_service = ActualValueService()
+        self.plan_value_service = PlanValueService()
+        self.image_service = ImageService()
+        self.document_service = DocumentService()
     
     async def get_actual_vs_plan(
         self, 
@@ -36,10 +46,10 @@ class AnalyticsService:
             Словарь с данными сравнения фактических и плановых значений
         """
         # Получаем фактические значения
-        actual_values = await actual_value_service.get_by_period(period_id, session)
+        actual_values = await self.actual_value_service.get_by_period(period_id, session)
         
         # Получаем плановые значения
-        plan_values = await plan_value_service.get_by_period(period_id, session)
+        plan_values = await self.plan_value_service.get_by_period(period_id, session)
         
         # Фильтруем по магазину, если необходимо
         if shop_id:
@@ -49,7 +59,7 @@ class AnalyticsService:
         # Фильтруем по категории, если необходимо
         if category_id:
             # Сначала получаем метрики для данной категории
-            metrics = await metric_service.get_by_category(category_id, session)
+            metrics = await self.metric_service.get_by_category(category_id, session)
             metric_ids = [m.id for m in metrics]
             
             actual_values = [av for av in actual_values if av.metric_id in metric_ids]
@@ -87,10 +97,10 @@ class AnalyticsService:
         }
         
         # Загружаем связанные данные для названий и информации
-        period = await period_service.get_by_id(period_id, session)
+        period = await self.period_service.get_by_id(period_id, session)
         
         for metric_id, shops_data in result_data.items():
-            metric = await metric_service.get_with_category(metric_id, session)
+            metric = await self.metric_service.get_with_category(metric_id, session)
             if not metric:
                 continue
                 
@@ -103,7 +113,7 @@ class AnalyticsService:
             }
             
             for shop_id, (actual, plan) in shops_data.items():
-                shop = await shop_service.get_by_id(shop_id, session)
+                shop = await self.shop_service.get_by_id(shop_id, session)
                 if not shop:
                     continue
                     
@@ -149,7 +159,7 @@ class AnalyticsService:
             Словарь с итоговыми метриками по магазинам
         """
         # Получаем фактические значения
-        actual_values = await actual_value_service.get_by_period(period_id, session)
+        actual_values = await self.actual_value_service.get_by_period(period_id, session)
         
         # Создаем словарь магазин -> метрика -> значение
         shop_metrics: Dict[uuid.UUID, Dict[uuid.UUID, Decimal]] = {}
@@ -168,10 +178,10 @@ class AnalyticsService:
         }
         
         # Загружаем связанные данные
-        period = await period_service.get_by_id(period_id, session)
+        period = await self.period_service.get_by_id(period_id, session)
         
         for shop_id, metrics_data in shop_metrics.items():
-            shop = await shop_service.get_by_id(shop_id, session)
+            shop = await self.shop_service.get_by_id(shop_id, session)
             if not shop:
                 continue
                 
@@ -184,7 +194,7 @@ class AnalyticsService:
             total_value = Decimal('0')
             
             for metric_id, value in metrics_data.items():
-                metric = await metric_service.get_with_category(metric_id, session)
+                metric = await self.metric_service.get_with_category(metric_id, session)
                 if not metric:
                     continue
                     
@@ -246,10 +256,10 @@ class AnalyticsService:
         # Если данных в кэше нет, продолжаем их получать из БД
         
         # Получаем текущий период (можно настроить логику)
-        current_period = await period_service.get_current_period(session)
+        current_period = await self.period_service.get_current_period(session)
         if not current_period:
             # Если текущий период не найден, возьмем последний
-            all_periods = await period_service.get_all(session)
+            all_periods = await self.period_service.get_all(session)
             if not all_periods:
                 # Если периодов нет, вернем пустые данные
                 empty_data = self._get_empty_aggregated_data()
@@ -316,8 +326,8 @@ class AnalyticsService:
             Словарь с месячными значениями
         """
         # Получаем фактические и плановые значения за период
-        actual_values = await actual_value_service.get_by_period(period.id, session)
-        plan_values = await plan_value_service.get_by_period(period.id, session)
+        actual_values = await self.actual_value_service.get_by_period(period.id, session)
+        plan_values = await self.plan_value_service.get_by_period(period.id, session)
         
         # Суммируем значения
         total_actual = sum(av.value for av in actual_values)
@@ -343,15 +353,15 @@ class AnalyticsService:
             Словарь с метриками для дашборда
         """
         # Получаем количество категорий
-        categories = await category_service.get_all(session)
+        categories = await self.category_service.get_all(session)
         count_category = len(categories)
         
         # Получаем количество магазинов
-        shops = await shop_service.get_all(session)
+        shops = await self.shop_service.get_all(session)
         count_shops = len(shops)
         
         # Получаем все периоды за год
-        all_periods = await period_service.get_by_year(period.year, session)
+        all_periods = await self.period_service.get_by_year(period.year, session)
         if not all_periods:
             return {
                 "count_category": count_category,
@@ -368,11 +378,11 @@ class AnalyticsService:
         
         # Получаем все плановые значения из годового периода
         if yearly_period:
-            plan_values = await plan_value_service.get_by_period(yearly_period.id, session)
+            plan_values = await self.plan_value_service.get_by_period(yearly_period.id, session)
         
         # Получаем все фактические значения из всех периодов
         for p in all_periods:
-            period_actuals = await actual_value_service.get_by_period(p.id, session)
+            period_actuals = await self.actual_value_service.get_by_period(p.id, session)
             actual_values.extend(period_actuals)
         
         total_actual = sum(av.value for av in actual_values)
@@ -396,11 +406,11 @@ class AnalyticsService:
         Returns:
             Список с данными по категориям
         """
-        categories = await category_service.get_all(session)
+        categories = await self.category_service.get_all(session)
         result = []
         
         # Получаем все периоды за год
-        all_periods = await period_service.get_by_year(period.year, session)
+        all_periods = await self.period_service.get_by_year(period.year, session)
         if not all_periods:
             # Если периоды не найдены, возвращаем пустой список
             return result
@@ -412,18 +422,18 @@ class AnalyticsService:
             return result
         
         # Получаем все плановые значения для годового периода
-        all_plan_values = await plan_value_service.get_by_period(yearly_period.id, session)
+        all_plan_values = await self.plan_value_service.get_by_period(yearly_period.id, session)
         
         # Получаем все фактические значения для всех периодов года
         all_actual_values = []
         for p in all_periods:
             # Добавляем фактические значения из каждого периода
-            period_actuals = await actual_value_service.get_by_period(p.id, session)
+            period_actuals = await self.actual_value_service.get_by_period(p.id, session)
             all_actual_values.extend(period_actuals)
         
         for category in categories:
             # Получаем метрики для категории
-            metrics = await metric_service.get_by_category(category.id, session)
+            metrics = await self.metric_service.get_by_category(category.id, session)
             metric_ids = [m.id for m in metrics]
             
             # Фильтруем значения по метрикам данной категории, если они есть
@@ -440,7 +450,7 @@ class AnalyticsService:
             # Получаем SVG данные для изображения категории, если они есть
             svg_data = ""
             if category.image_id:
-                image = await image_service.get(id=category.image_id, session=session)
+                image = await self.image_service.get(id=category.image_id, session=session)
                 if image and hasattr(image, 'svg_data'):
                     svg_data = image.svg_data
             
@@ -466,11 +476,11 @@ class AnalyticsService:
         Returns:
             Список с данными по магазинам
         """
-        shops = await shop_service.get_all(session)
+        shops = await self.shop_service.get_all(session)
         result = []
         
         # Получаем все периоды за год
-        all_periods = await period_service.get_by_year(period.year, session)
+        all_periods = await self.period_service.get_by_year(period.year, session)
         if not all_periods:
             # Если периоды не найдены, возвращаем пустой список
             return result
@@ -479,7 +489,7 @@ class AnalyticsService:
         all_actual_values = []
         for p in all_periods:
             # Добавляем фактические значения из каждого периода
-            period_actuals = await actual_value_service.get_by_period(p.id, session)
+            period_actuals = await self.actual_value_service.get_by_period(p.id, session)
             all_actual_values.extend(period_actuals)
         
         for shop in shops:
@@ -495,6 +505,7 @@ class AnalyticsService:
                 "name": shop.name,
                 "description": shop.description or "",
                 "address": shop.address or "",
+                "number_of_staff": shop.number_of_staff,
                 "yearly_actual": float(yearly_actual)
             })
         
@@ -541,16 +552,16 @@ class AnalyticsService:
             Структура с детальными метриками
         """
         # Проверяем существование категории и магазина
-        category = await category_service.get(id=category_id, session=session)
+        category = await self.category_service.get(id=category_id, session=session)
         if not category:
             raise ValueError(f"Категория с ID {category_id} не найдена")
         
-        shop = await shop_service.get(id=shop_id, session=session)
+        shop = await self.shop_service.get(id=shop_id, session=session)
         if not shop:
             raise ValueError(f"Магазин с ID {shop_id} не найден")
         
         # Получаем все периоды для указанного года
-        periods = await period_service.get_by_year(year, session)
+        periods = await self.period_service.get_by_year(year, session)
         if not periods:
             # Если периоды не найдены, возвращаем пустую структуру
             return {
@@ -561,7 +572,7 @@ class AnalyticsService:
             }
         
         # Получаем метрики для данной категории
-        metrics = await metric_service.get_by_category(category_id, session)
+        metrics = await self.metric_service.get_by_category(category_id, session)
         if not metrics:
             # Если метрики не найдены, возвращаем пустую структуру
             return {
@@ -608,6 +619,22 @@ class AnalyticsService:
                 }
             }
             
+            # Сначала получаем месячные значения
+            month_data = {}
+            for month_name, month_period in month_periods.items():
+                month_metric_data = await self._get_period_values(
+                    month_period.id, metric.id, shop_id, session
+                )
+                metric_data["periods_value"]["months"][month_name] = month_metric_data
+                month_data[month_period.month] = month_metric_data
+            
+            # Теперь получаем квартальные значения с расчетом фактов из месячных данных
+            for quarter_name, quarter_period in quarter_periods.items():
+                quarter_metric_data = await self._get_quarter_values_with_monthly_actuals(
+                    quarter_period.id, metric.id, shop_id, quarter_period.quarter, month_data, session
+                )
+                metric_data["periods_value"]["quarters"][quarter_name] = quarter_metric_data
+            
             # Получаем годовые значения
             if year_period:
                 year_metric_data = await self._get_period_values(
@@ -615,23 +642,74 @@ class AnalyticsService:
                 )
                 metric_data["periods_value"]["year"] = year_metric_data
             
-            # Получаем квартальные значения
-            for quarter_name, quarter_period in quarter_periods.items():
-                quarter_metric_data = await self._get_period_values(
-                    quarter_period.id, metric.id, shop_id, session
-                )
-                metric_data["periods_value"]["quarters"][quarter_name] = quarter_metric_data
-            
-            # Получаем месячные значения
-            for month_name, month_period in month_periods.items():
-                month_metric_data = await self._get_period_values(
-                    month_period.id, metric.id, shop_id, session
-                )
-                metric_data["periods_value"]["months"][month_name] = month_metric_data
-            
             result["metrics"].append(metric_data)
         
         return result
+    
+    async def _get_quarter_values_with_monthly_actuals(
+        self,
+        period_id: uuid.UUID,
+        metric_id: uuid.UUID,
+        shop_id: uuid.UUID,
+        quarter: int,
+        month_data: Dict[int, Dict[str, float]],
+        session: AsyncSession
+    ) -> Dict[str, float]:
+        """
+        Получение квартальных значений с расчетом фактов из суммы месячных фактов.
+        
+        Args:
+            period_id: ID квартального периода
+            metric_id: ID метрики
+            shop_id: ID магазина
+            quarter: Номер квартала (1-4)
+            month_data: Данные по месяцам {месяц: {plan, actual, variance, procent}}
+            session: Сессия SQLAlchemy
+            
+        Returns:
+            Структура с данными по кварталу
+        """
+        # Получаем плановое значение квартала (берем сохраненное)
+        plan_value = await self.plan_value_service.get_by_params(
+            metric_id=metric_id, 
+            shop_id=shop_id, 
+            period_id=period_id, 
+            session=session
+        )
+        
+        # Определяем месяцы для квартала
+        quarter_months = {
+            1: [1, 2, 3],     # I квартал: январь, февраль, март
+            2: [4, 5, 6],     # II квартал: апрель, май, июнь
+            3: [7, 8, 9],     # III квартал: июль, август, сентябрь
+            4: [10, 11, 12]   # IV квартал: октябрь, ноябрь, декабрь
+        }
+        
+        months_in_quarter = quarter_months.get(quarter, [])
+        
+        # Суммируем фактические значения из месячных данных
+        total_actual = Decimal('0')
+        for month in months_in_quarter:
+            if month in month_data:
+                total_actual += Decimal(str(month_data[month]['actual']))
+        
+        # Устанавливаем плановое значение
+        plan = Decimal('0')
+        if plan_value:
+            plan = plan_value.value
+        
+        # Вычисляем отклонение (variance) как план-факт на основе суммированного факта
+        variance = plan - total_actual
+        
+        # Вычисляем процент выполнения на основе суммированного факта
+        procent = (float(total_actual) / float(plan) * 100) if plan != 0 else 0.0
+        
+        return {
+            "plan": float(plan),
+            "actual": float(total_actual),
+            "variance": float(variance),
+            "procent": round(procent, 2)
+        }
     
     async def _get_period_values(
         self, 
@@ -653,7 +731,7 @@ class AnalyticsService:
             Структура с данными по периоду
         """
         # Получаем плановое значение
-        plan_value = await plan_value_service.get_by_params(
+        plan_value = await self.plan_value_service.get_by_params(
             metric_id=metric_id, 
             shop_id=shop_id, 
             period_id=period_id, 
@@ -661,7 +739,7 @@ class AnalyticsService:
         )
         
         # Получаем фактическое значение
-        actual_value = await actual_value_service.get_by_params(
+        actual_value = await self.actual_value_service.get_by_params(
             metric_id=metric_id, 
             shop_id=shop_id, 
             period_id=period_id, 

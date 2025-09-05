@@ -34,6 +34,7 @@ class ShopStats(BaseSchema):
     name: str
     description: str
     address: str
+    number_of_staff: int
     yearly_actual: float
 
 

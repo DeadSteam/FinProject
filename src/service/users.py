@@ -65,89 +65,91 @@ class UserService(BaseService[User, UserSchema, UserCreate, UserUpdate]):
     
     async def get_by_username(self, username: str, session: AsyncSession) -> Optional[UserSchema]:
         """Получение пользователя по имени пользователя."""
-        # Создаем запрос с загрузкой связанной роли 
         query = select(self.model).options(
-            selectinload(self.model.role)
+            selectinload(self.model.role),
+            selectinload(self.model.avatars)
         ).where(self.model.username == username)
-        
         result = await session.execute(query)
         db_obj = result.scalar_one_or_none()
-        
         if not db_obj:
             return None
-
-        # Преобразуем объект SQLAlchemy в словарь
-        user_dict = db_obj.__dict__
-        
-        # Создаем корректную схему пользователя с ролью, если она присутствует
-        user_data = TypeAdapter(self.schema).validate_python(user_dict)
-        
-        # Отладочная информация
-        if hasattr(db_obj, 'role') and db_obj.role:
-            print(f"Пользователь {username} имеет роль: {db_obj.role.name}")
+        user_data = TypeAdapter(self.schema).validate_python(db_obj)
+        # Добавляем avatar_url
+        if hasattr(db_obj, "avatars") and db_obj.avatars:
+            active_avatar = next((a for a in db_obj.avatars if a.is_active), None)
+            if active_avatar:
+                user_data.avatar_url = f"/api/v1/avatars/{active_avatar.id}"
+            else:
+                user_data.avatar_url = None
         else:
-            print(f"Пользователь {username} не имеет роли")
-        
+            user_data.avatar_url = None
         return user_data
     
     async def get_by_email(self, email: str, session: AsyncSession) -> Optional[UserSchema]:
         """Получение пользователя по email."""
-        # Запрос с загрузкой связанной роли
         query = select(self.model).options(
-            selectinload(self.model.role)
+            selectinload(self.model.role),
+            selectinload(self.model.avatars)
         ).where(self.model.email == email)
-        
         result = await session.execute(query)
         db_obj = result.scalar_one_or_none()
-        
         if not db_obj:
             return None
-        
-        # Отладочная информация о роли
-        if hasattr(db_obj, 'role') and db_obj.role:
-            print(f"Пользователь с email {email} имеет роль: {db_obj.role.name}")
+        user_data = TypeAdapter(self.schema).validate_python(db_obj)
+        if hasattr(db_obj, "avatars") and db_obj.avatars:
+            active_avatar = next((a for a in db_obj.avatars if a.is_active), None)
+            if active_avatar:
+                user_data.avatar_url = f"/api/v1/avatars/{active_avatar.id}"
+            else:
+                user_data.avatar_url = None
         else:
-            print(f"Пользователь с email {email} не имеет роли")
-        
-        return TypeAdapter(self.schema).validate_python(db_obj.__dict__)
+            user_data.avatar_url = None
+        return user_data
     
     async def get_by_phone_number(self, phone_number: str, session: AsyncSession) -> Optional[UserSchema]:
         """Получение пользователя по номеру телефона."""
-        # Запрос с загрузкой связанной роли
         query = select(self.model).options(
-            selectinload(self.model.role)
+            selectinload(self.model.role),
+            selectinload(self.model.avatars)
         ).where(self.model.phone_number == phone_number)
-        
         result = await session.execute(query)
         db_obj = result.scalar_one_or_none()
-        
         if not db_obj:
             return None
-        
-        # Отладочная информация о роли
-        if hasattr(db_obj, 'role') and db_obj.role:
-            print(f"Пользователь с номером телефона {phone_number} имеет роль: {db_obj.role.name}")
+        user_data = TypeAdapter(self.schema).validate_python(db_obj)
+        if hasattr(db_obj, "avatars") and db_obj.avatars:
+            active_avatar = next((a for a in db_obj.avatars if a.is_active), None)
+            if active_avatar:
+                user_data.avatar_url = f"/api/v1/avatars/{active_avatar.id}"
+            else:
+                user_data.avatar_url = None
         else:
-            print(f"Пользователь с номером телефона {phone_number} не имеет роли")
-        
-        return TypeAdapter(self.schema).validate_python(db_obj.__dict__)
+            user_data.avatar_url = None
+        return user_data
     
     async def get_multi(self, session: AsyncSession, skip: int = 0, limit: int = 100) -> List[UserSchema]:
         """Получение списка пользователей с пагинацией и загрузкой связанных объектов."""
-        # Создаем запрос с загрузкой связанных объектов
         query = (
             select(self.model)
-            .options(selectinload(self.model.role))
+            .options(selectinload(self.model.role), selectinload(self.model.avatars))
             .offset(skip)
             .limit(limit)
         )
-        
-        # Выполняем запрос
         result = await session.execute(query)
         db_objs = result.scalars().all()
-        
-        # Преобразуем объекты в схемы
-        return [TypeAdapter(self.schema).validate_python(obj.__dict__) for obj in db_objs]
+        users = []
+        for db_obj in db_objs:
+            user_data = TypeAdapter(self.schema).validate_python(db_obj)
+            if hasattr(db_obj, "avatars") and db_obj.avatars:
+                active_avatar = next((a for a in db_obj.avatars if a.is_active), None)
+                if active_avatar:
+                    user_data.avatar_url = f"/api/v1/avatars/{active_avatar.id}"
+                else:
+                    user_data.avatar_url = None
+            else:
+                user_data.avatar_url = None
+            users.append(user_data)
+        return users
     
     async def search_users(
         self,
@@ -212,7 +214,7 @@ class UserService(BaseService[User, UserSchema, UserCreate, UserUpdate]):
         db_objs = result.scalars().all()
         
         # Конвертируем результаты в схемы Pydantic
-        return [TypeAdapter(self.schema).validate_python(obj.__dict__) for obj in db_objs]
+        return [TypeAdapter(self.schema).validate_python(obj) for obj in db_objs]
     
     async def create(self, obj_in: UserCreate, session: AsyncSession) -> UserSchema:
         """Создание нового пользователя."""

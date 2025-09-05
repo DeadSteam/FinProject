@@ -40,4 +40,4 @@ RUN dos2unix entrypoint.sh && chmod +x entrypoint.sh
 EXPOSE 8000
 
 # Команда для запуска приложения
-CMD ["./entrypoint.sh"] 
+CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"] 

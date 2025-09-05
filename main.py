@@ -1,4 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 import logging
 from src.core.config import settings
 from src.core.middleware import setup_middlewares
@@ -26,6 +28,30 @@ app = FastAPI(
     }
 )
 
+# Exception handler для ошибок валидации
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    body = await request.body()
+    body_str = body.decode('utf-8') if body else ""
+    
+    # Логируем ошибку валидации
+    logger.warning(f"Validation error on {request.method} {request.url}: {exc.errors()}")
+    
+    # Конвертируем ошибки в сериализуемый формат
+    error_details = []
+    for error in exc.errors():
+        error_details.append({
+            "type": error.get("type", ""),
+            "loc": list(error.get("loc", [])),
+            "msg": error.get("msg", ""),
+            "input": str(error.get("input", ""))  # Конвертируем в строку
+        })
+    
+    return JSONResponse(
+        status_code=422,
+        content={"detail": error_details, "body": body_str}
+    )
+
 # Настройка middleware
 setup_middlewares(app)
 
@@ -47,3 +73,5 @@ async def startup_event():
     except Exception as e:
         logger.error(f"Error during startup: {str(e)}")
         raise
+
+

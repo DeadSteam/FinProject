@@ -5,16 +5,9 @@ from src.service.finance.shop import ShopService
 from src.service.finance.metric import MetricService
 from src.service.finance.actual_value import ActualValueService
 from src.service.finance.plan_value import PlanValueService
+from src.service.finance.document import DocumentService
 
-# Создание объектов сервисов для использования в API
-period_service = PeriodService()
-image_service = ImageService()
-category_service = CategoryService()
-shop_service = ShopService()
-metric_service = MetricService()
-actual_value_service = ActualValueService()
-plan_value_service = PlanValueService()
-
+# Импортируем классы сервисов для использования в зависимостях API
 __all__ = [
     # Сервисы
     "PeriodService",
@@ -24,13 +17,5 @@ __all__ = [
     "MetricService",
     "ActualValueService",
     "PlanValueService",
-    
-    # Объекты сервисов
-    "period_service",
-    "image_service",
-    "category_service",
-    "shop_service",
-    "metric_service",
-    "actual_value_service",
-    "plan_value_service",
+    "DocumentService",
 ] 

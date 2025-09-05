@@ -1,0 +1,215 @@
+/* Специальные стили для графиков в отчетах */
+.report-chart-wrapper {
+    height: 100%;
+    width: 100%;
+    min-width: 100%; /* Адаптивная минимальная ширина */
+    max-width: 100%; /* Ограничиваем максимальную ширину */
+}
+
+/* Переопределяем стили Chart компонента */
+.report-chart-wrapper .chartContainer {
+    height: 420px !important;
+    max-height: 420px !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    min-width: 0 !important; /* Позволяет flex-элементам сжиматься */
+}
+
+.report-chart-wrapper .chart {
+    height: 300px !important;
+    padding-bottom: 3rem !important;
+    min-width: 0 !important; /* Позволяет flex-элементам сжиматься */
+}
+
+.report-chart-wrapper .chartBarContainer {
+    height: 250px !important;
+    gap: 2rem !important;
+    min-width: 100%;
+    max-width: 100%;
+    justify-content: space-around;
+    min-width: 0 !important; /* Позволяет flex-элементам сжиматься */
+}
+
+.report-chart-wrapper .chartGroup {
+    height: 250px !important;
+    min-width: 0 !important; /* Позволяет flex-элементам сжиматься */
+}
+
+.report-chart-wrapper .chartLabel {
+    font-size: 0.9rem !important;
+    bottom: -2.5rem !important;
+    color: #6b7280 !important;
+    font-weight: 500 !important;
+}
+
+.report-chart-wrapper .chartTitle {
+    font-size: 1.2rem !important;
+    margin-bottom: 1rem !important;
+    display: block !important;
+    visibility: visible !important;
+}
+
+.report-chart-wrapper .chartHeader {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    visibility: visible !important;
+}
+
+.report-chart-wrapper .legendColor {
+    width: 12px !important;
+    height: 12px !important;
+    border-radius: 3px !important;
+    display: block !important;
+    visibility: visible !important;
+}
+
+.report-chart-wrapper .chartLegend {
+    gap: 1.5rem !important;
+    display: flex !important;
+    visibility: visible !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-end !important;
+    margin-bottom: 1rem !important;
+}
+
+.report-chart-wrapper .legendItem {
+    font-size: 0.9rem !important;
+    display: flex !important;
+    visibility: visible !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    margin-right: 1rem !important;
+}
+
+/* Увеличиваем столбцы */
+.report-chart-wrapper .chartBar {
+    max-width: 60px !important;
+    min-width: 40px !important;
+}
+
+/* Медиа-запросы для адаптивности */
+@media (max-width: 1200px) {
+    .report-chart-wrapper .chartContainer {
+        min-width: 100% !important;
+    }
+    
+    .report-chart-wrapper .chartBarContainer {
+        gap: 1.5rem !important;
+    }
+    
+    .report-chart-wrapper .chartGroup {
+        min-width: 100px !important;
+        flex: 1 1 100px !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .report-chart-wrapper .chartContainer {
+        height: 350px !important;
+        max-height: 350px !important;
+    }
+    
+    .report-chart-wrapper .chart {
+        height: 300px !important;
+    }
+    
+    .report-chart-wrapper .chartBarContainer {
+        gap: 1rem !important;
+    }
+    
+    .report-chart-wrapper .chartGroup {
+        min-width: 80px !important;
+        flex: 1 1 80px !important;
+    }
+    
+    .report-chart-wrapper .chartBar {
+        max-width: 50px !important;
+        min-width: 30px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .report-chart-wrapper .chartContainer {
+        height: 300px !important;
+        max-height: 300px !important;
+    }
+    
+    .report-chart-wrapper .chart {
+        height: 250px !important;
+    }
+    
+    .report-chart-wrapper .chartBarContainer {
+        gap: 0.75rem !important;
+    }
+    
+    .report-chart-wrapper .chartGroup {
+        min-width: 60px !important;
+        flex: 1 1 60px !important;
+    }
+    
+    .report-chart-wrapper .chartBar {
+        max-width: 40px !important;
+        min-width: 25px !important;
+    }
+}
+
+.report-chart-wrapper .chartGroup {
+    min-width: 120px !important;
+    max-width: 200px !important;
+    flex: 1 1 120px !important;
+}
+
+.report-chart-wrapper .chartContainer {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* Специальные стили для квартальных подписей */
+.report-chart-wrapper .chartLabel[data-period*="квартал"],
+.report-chart-wrapper .chartLabel[data-period*="Q"] {
+    font-size: 0.8rem !important;
+    bottom: -3.2rem !important;
+    font-weight: 600 !important;
+    color: var(--text-primary, #374151) !important;
+}
+
+/* Стили для SVG подписей в линейных графиках */
+.report-chart-wrapper svg text[data-period*="квартал"],
+.report-chart-wrapper svg text[data-period*="Q"] {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    fill: var(--text-primary, #374151) !important;
+}
+
+.report-chart-wrapper svg text[data-period*="Январь"],
+.report-chart-wrapper svg text[data-period*="Февраль"],
+.report-chart-wrapper svg text[data-period*="Март"],
+.report-chart-wrapper svg text[data-period*="Апрель"],
+.report-chart-wrapper svg text[data-period*="Май"],
+.report-chart-wrapper svg text[data-period*="Июнь"],
+.report-chart-wrapper svg text[data-period*="Июль"],
+.report-chart-wrapper svg text[data-period*="Август"],
+.report-chart-wrapper svg text[data-period*="Сентябрь"],
+.report-chart-wrapper svg text[data-period*="Октябрь"],
+.report-chart-wrapper svg text[data-period*="Ноябрь"],
+.report-chart-wrapper svg text[data-period*="Декабрь"] {
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    fill: var(--text-primary, #374151) !important;
+}
+
+/* Стили для отображения единиц измерения */
+.chart-unit-info {
+    text-align: right;
+    margin-top: 0.5rem;
+    padding-right: 1rem;
+}
+
+.chart-unit-info small {
+    font-size: 0.8rem;
+    color: #6b7280;
+    font-style: italic;
+}

@@ -17,8 +17,8 @@ services:
 
   app:
     build: .
-    expose:
-      - "8000"
+    ports:
+      - "8000:8000"
     volumes:
       - .:/app
     depends_on:
@@ -50,22 +50,43 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=${REDIS_DB}
-      - CORS_ORIGINS=${CORS_ORIGINS}
+      - CORS_ORIGINS=http://${HOST:-localhost}:3000,http://${HOST:-localhost}:3001,http://${HOST:-localhost}:8080
     networks:
       - app-network
 
+  # React Frontend - Production режим (по умолчанию)
   frontend:
     build: 
-      context: ./client
+      context: ./frontend
       dockerfile: Dockerfile
+      target: production  # Production сборка с nginx
     expose:
-      - "3000"
+      - "80"
     environment:
       - HOST=${HOST}
     depends_on:
       - app
     networks:
       - app-network
+
+  # React Frontend - Development режим (раскомментировать для разработки)
+  # frontend-dev:
+  #   build: 
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #     target: development  # Development режим с hot reload
+  #   ports:
+  #     - "3001:3000"  # Используем порт 3001 чтобы не конфликтовать
+  #   volumes:
+  #     - ./frontend/src:/app/src  # Live reload для исходников
+  #     - ./frontend/public:/app/public
+  #   environment:
+  #     - HOST=${HOST}
+  #     - CHOKIDAR_USEPOLLING=true  # Для Windows/WSL
+  #   depends_on:
+  #     - app
+  #   networks:
+  #     - app-network
 
   finance_db:
     image: postgres:15

@@ -1,0 +1,403 @@
+/* Основная структура */
+.contentWrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.dashboard {
+  padding: 2rem;
+  flex: 1;
+  background: var(--background);
+}
+
+.salaryReport {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  animation: fadeIn 0.6s ease;
+  max-width: 1400px;
+  margin: 4rem auto;
+  position: relative;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+/* Заголовок и фильтры */
+.salaryHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.salaryReportTitle {
+  font-size: 1.6rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+  font-weight: 700;
+  line-height: 1.2;
+  position: relative;
+  font-family: 'Rimma Sans', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+}
+
+.salaryReportTitle::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background: var(--primary);
+  border-radius: 5px;
+}
+
+.salaryReportSubtitle {
+  color: var(--secondary);
+  font-size: 1.2rem;
+  margin-top: 1rem;
+  margin-bottom: 0;
+  font-weight: 500;
+}
+
+.salaryFilters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0;
+  align-items: center;
+}
+
+.filterSelect {
+  padding: 0.6rem 1.8rem 0.6rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-primary);
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  font-weight: 500;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+  cursor: pointer;
+}
+
+.filterSelect:focus {
+  outline: none;
+  border-color:var(--primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.exportBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  background: var(--primary);
+  color: var(--text-white);
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.exportBtn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.exportBtn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Элементы управления графиком */
+.chartControls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.chartTabs {
+  display: flex;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--background);
+}
+
+.chartTab {
+  padding: 0.6rem 1.2rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.chartTab.active {
+  background: var(--primary);
+  color: var(--text-white);
+}
+
+.chartTab:not(.active):hover {
+  background: rgba(79, 70, 229, 0.05);
+  color: var(--primary);
+}
+
+.chartViewToggle {
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--background);
+}
+
+.chartViewBtn {
+  padding: 0.5rem 0.8rem;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.chartViewBtn.active {
+  background: rgba(79, 70, 229, 0.1);
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.chartViewBtn:not(.active):hover {
+  background: rgba(79, 70, 229, 0.05);
+}
+
+.chartViewBtn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Кнопки управления */
+.actionButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.actionButtons .btn {
+  display: flex;
+  align-items: center;
+}
+
+.actionButtons .btn svg {
+  margin-right: 0.5rem !important;
+  width: 18px !important;
+  height: 18px !important;
+  flex-shrink: 0;
+}
+
+.actionButtons .btn svg:last-child {
+  margin-right: 0 !important;
+}
+
+.actionButtons .btn svg:only-child {
+  margin-right: 0 !important;
+}
+
+/* Таблица */
+.salaryTableContainer {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-top: 2rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border-radius: 12px;
+  background: var(--bg-primary);
+}
+
+/* Загрузка */
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 1rem;
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loadingContainer p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* Адаптивность */
+@media (max-width: 992px) {
+  .chartControls {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  
+  .chartTabs, .chartViewToggle {
+    justify-content: center;
+  }
+  
+  .chartTab, .chartViewBtn {
+    flex: 1;
+    text-align: center;
+  }
+  
+  .chartHeader {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+  
+  .chartLegend {
+    align-self: flex-end;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard {
+    padding: 1rem;
+  }
+  
+  .salaryReport {
+    padding: 1.5rem;
+  }
+  
+  .salaryHeader {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  
+  .salaryFilters {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .filterSelect {
+    flex: 1;
+    min-width: 120px;
+  }
+  
+  .breadcrumbsContainer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .chartContainer {
+    padding: 1rem;
+  }
+  
+  .chartHeader {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+  
+  .chartLegend {
+    align-self: flex-start;
+  }
+  
+  .actionButtons {
+    flex-wrap: wrap;
+  }
+  
+  .actionButtons .btn {
+    margin-top: 8px;
+  }
+}
+
+@media (max-width: 576px) {
+  .breadcrumbsContainer {
+    margin-bottom: 1rem;
+  }
+  
+  .salaryReportTitle {
+    font-size: 1.5rem;
+  }
+  
+  .salaryReportSubtitle {
+    font-size: 1rem;
+  }
+}
+
+/* Стили для плавной фильтрации */
+.chartWrapper {
+  position: relative;
+}
+
+.salaryTableContainer {
+  position: relative;
+  transition: opacity 0.4s ease;
+}
+
+.salaryTableContainer.filtering {
+  opacity: 0.6;
+}
+
+.filteringOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 8px;
+}
+
+.filteringSpinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 50%;
+  animation: filterSpin 1s linear infinite;
+}
+
+@keyframes filterSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+} 

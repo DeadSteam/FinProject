@@ -1,0 +1,149 @@
+/* ConfirmDialog стили */
+
+/* Content layout */
+:global(.confirm-dialog-content) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 1rem 0;
+    gap: 1rem;
+}
+
+/* Icons */
+:global(.confirm-dialog-icon) {
+    stroke-width: 2;
+    margin-bottom: 0.5rem;
+}
+
+:global(.confirm-dialog-icon-danger) {
+    color: var(--error);
+}
+
+:global(.confirm-dialog-icon-warning) {
+    color: var(--warning);
+}
+
+:global(.confirm-dialog-icon-info) {
+    color: var(--info);
+}
+
+:global(.confirm-dialog-icon-question) {
+    color: var(--primary);
+}
+
+/* Message */
+:global(.confirm-dialog-message) {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--text-primary);
+}
+
+:global(.confirm-dialog-message p) {
+    margin: 0;
+}
+
+/* Actions */
+:global(.confirm-dialog-actions) {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    width: 100%;
+}
+
+/* Варианты диалога */
+:global(.confirm-dialog-danger .modal-title) {
+    color: var(--error);
+}
+
+:global(.confirm-dialog-warning .modal-title) {
+    color: var(--warning);
+}
+
+:global(.confirm-dialog-info .modal-title) {
+    color: var(--info);
+}
+
+/* Responsive поведение */
+@media (max-width: 576px) {
+    :global(.confirm-dialog-actions) {
+        flex-direction: column-reverse;
+        gap: 0.5rem;
+    }
+    
+    :global(.confirm-dialog-actions .btn) {
+        width: 100%;
+    }
+    
+    :global(.confirm-dialog-content) {
+        padding: 0.5rem 0;
+    }
+    
+    :global(.confirm-dialog-icon) {
+        width: 32px;
+        height: 32px;
+    }
+}
+
+/* Анимация иконок */
+:global(.confirm-dialog-icon) {
+    animation: iconPulse 0.5s ease-out;
+}
+
+@keyframes iconPulse {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.7;
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Hover эффекты для danger состояний */
+:global(.confirm-dialog-danger .btn-danger:hover) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Loading состояние */
+:global(.confirm-dialog .btn[disabled]) {
+    opacity: 0.7;
+}
+
+/* Focus trap improvements */
+:global(.confirm-dialog .modal-content) {
+    min-height: auto;
+}
+
+:global(.confirm-dialog .modal-body) {
+    padding: 1.5rem 1.5rem 0.5rem;
+}
+
+:global(.confirm-dialog .modal-footer) {
+    padding: 0.5rem 1.5rem 1.5rem;
+    border-top: none;
+}
+
+/* Compact варианты для small size */
+:global(.confirm-dialog .modal-sm .confirm-dialog-content) {
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+}
+
+:global(.confirm-dialog .modal-sm .confirm-dialog-icon) {
+    width: 32px;
+    height: 32px;
+}
+
+:global(.confirm-dialog .modal-sm .modal-body) {
+    padding: 1rem 1rem 0.25rem;
+}
+
+:global(.confirm-dialog .modal-sm .modal-footer) {
+    padding: 0.25rem 1rem 1rem;
+} 

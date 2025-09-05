@@ -1,0 +1,165 @@
+/* Дополнительные стили для расширенного Button компонента */
+/* Основные стили остаются в globals.css */
+
+/* Новые варианты кнопок используют существующие CSS переменные */
+.btn-danger {
+    background: var(--error);
+    color: var(--text-white);
+    border: 2px solid var(--error);
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: #dc2626;
+    border-color: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: var(--box-shadow-hover);
+}
+
+.btn-warning {
+    background: var(--warning);
+    color: var(--text-white);
+    border: 2px solid var(--warning);
+}
+
+.btn-warning:hover:not(:disabled) {
+    background: #d97706;
+    border-color: #d97706;
+    transform: translateY(-1px);
+    box-shadow: var(--box-shadow-hover);
+}
+
+.btn-success {
+    background: var(--success);
+    color: var(--text-white);
+    border: 2px solid var(--success);
+}
+
+.btn-success:hover:not(:disabled) {
+    background: #059669;
+    border-color: #059669;
+    transform: translateY(-1px);
+    box-shadow: var(--box-shadow-hover);
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--primary);
+    border: 2px solid var(--primary);
+}
+
+.btn-ghost:hover:not(:disabled) {
+    background: var(--primary);
+    color: var(--text-white);
+    transform: translateY(-1px);
+    box-shadow: var(--box-shadow-hover);
+}
+
+.btn-link {
+    background: transparent;
+    color: var(--primary);
+    border: none;
+    text-decoration: underline;
+    padding: var(--spacing-sm);
+}
+
+.btn-link:hover:not(:disabled) {
+    color: var(--primary-dark);
+    background: transparent;
+    text-decoration: none;
+}
+
+/* Outline варианты */
+:global(.btn-outline.btn-primary) {
+    background: transparent !important;
+    color: var(--primary) !important;
+    border: 2px solid var(--primary) !important;
+}
+
+:global(.btn-outline.btn-primary:hover:not(:disabled)) {
+    background: var(--primary) !important;
+    color: var(--text-white) !important;
+}
+
+:global(.btn-outline.btn-secondary) {
+    background: transparent !important;
+    color: var(--secondary) !important;
+    border: 2px solid var(--secondary) !important;
+}
+
+:global(.btn-outline.btn-secondary:hover:not(:disabled)) {
+    background: var(--secondary) !important;
+    color: var(--text-white) !important;
+}
+
+/* Дополнительные размеры */
+:global(.btn-xs) {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    line-height: 1;
+    border-radius: var(--border-radius-sm);
+}
+
+:global(.btn-xl) {
+    padding: 1rem 2rem;
+    font-size: 1.25rem;
+    line-height: 1.5;
+    border-radius: var(--border-radius-lg);
+}
+
+/* Модификаторы */
+:global(.btn-full-width) {
+    width: 100%;
+    display: block;
+}
+
+:global(.btn-rounded) {
+    border-radius: 50px;
+}
+
+:global(.btn-loading) {
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+/* Спиннер */
+:global(.btn-spinner) {
+    margin-right: 0.5rem;
+}
+
+:global(.btn-icon-wrapper + .btn-content) {
+    margin-left: 0.5rem;
+}
+
+:global(.btn-content + .btn-icon-wrapper) {
+    margin-left: 0.5rem;
+}
+
+/* Улучшенные анимации, дополняющие globals.css */
+:global(.btn) {
+    position: relative;
+    overflow: hidden;
+}
+
+:global(.btn:active) {
+    transform: scale(0.98);
+}
+
+/* Ripple эффект */
+:global(.btn::before) {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease, height 0.3s ease;
+    pointer-events: none;
+}
+
+:global(.btn:active::before) {
+    width: 300px;
+    height: 300px;
+} 

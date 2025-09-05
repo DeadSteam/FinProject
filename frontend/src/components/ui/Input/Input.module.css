@@ -1,0 +1,192 @@
+/* Дополнительные стили для расширенного Input компонента */
+/* Основные стили остаются в globals.css */
+
+/* Размеры */
+:global(.input-sm) {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    border-radius: var(--border-radius-sm);
+}
+
+:global(.input-lg) {
+    padding: 0.75rem 1rem;
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+    border-radius: var(--border-radius-lg);
+}
+
+/* Варианты */
+:global(.input-filled) {
+    background-color: var(--bg-secondary);
+    border: 2px solid transparent;
+}
+
+:global(.input-filled:focus) {
+    background-color: var(--bg-primary);
+    border-color: var(--primary);
+}
+
+:global(.input-borderless) {
+    border: none;
+    border-bottom: 2px solid var(--border);
+    border-radius: 0;
+    background: transparent;
+}
+
+:global(.input-borderless:focus) {
+    border-bottom-color: var(--primary);
+    box-shadow: none;
+}
+
+/* Состояния */
+:global(.input-focused) {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+:global(.input-disabled) {
+    background-color: var(--bg-tertiary);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+:global(.input-loading) {
+    position: relative;
+}
+
+:global(.input-error) {
+    border-color: var(--error);
+}
+
+:global(.input-error:focus) {
+    border-color: var(--error);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Wrapper стили */
+:global(.input-wrapper) {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+:global(.input-wrapper .input) {
+    flex: 1;
+}
+
+/* Иконки */
+:global(.input-icon) {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    color: var(--text-secondary);
+    pointer-events: none;
+}
+
+:global(.input-wrapper .input-icon:first-child) {
+    left: 0.75rem;
+}
+
+:global(.input-wrapper .input-icon:first-child + .input) {
+    padding-left: 2.5rem;
+}
+
+:global(.input-icon-loading) {
+    right: 2.5rem;
+}
+
+/* Actions (clear, password toggle) */
+:global(.input-actions) {
+    position: absolute;
+    right: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+:global(.input-clear),
+:global(.input-password-toggle) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition-fast);
+}
+
+:global(.input-clear:hover),
+:global(.input-password-toggle:hover) {
+    color: var(--text-primary);
+    background-color: var(--bg-secondary);
+}
+
+:global(.input-actions) + :global(.input) {
+    padding-right: 3rem;
+}
+
+/* Helper text */
+:global(.helper-text) {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* Улучшенные анимации */
+:global(.input) {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:global(.input:focus) {
+    transform: translateY(-1px);
+}
+
+/* Плавное появление/исчезновение ошибок */
+:global(.error-message),
+:global(.helper-text) {
+    animation: fadeInUp 0.2s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(0.5rem);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Floating labels (будущее расширение) */
+:global(.input-group.has-floating-label) {
+    position: relative;
+}
+
+:global(.input-group.has-floating-label .input-label) {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    transition: all 0.2s ease-out;
+    background: var(--bg-primary);
+    padding: 0 0.25rem;
+    z-index: 1;
+}
+
+:global(.input-group.has-floating-label .input:focus + .input-label),
+:global(.input-group.has-floating-label .input:not(:placeholder-shown) + .input-label) {
+    top: 0;
+    font-size: 0.75rem;
+    color: var(--primary);
+} 

@@ -1,5 +1,5 @@
 import uuid
-from typing import Optional
+from typing import Optional, List
 
 from sqlalchemy import ForeignKey, String, UniqueConstraint, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -32,3 +32,7 @@ class User(UUIDTimestampedBase):
     
     # Связь с таблицей roles (отношение многие-к-одному)
     role: Mapped[Optional["Role"]] = relationship(back_populates="users")
+    
+    # Связь с таблицей аватаров (отношение один-ко-многим)
+    avatars: Mapped[List["UserAvatar"]] = relationship("UserAvatar", back_populates="user")
+    

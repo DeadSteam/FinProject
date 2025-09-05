@@ -1,0 +1,68 @@
+.documentUploader {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 8px;
+    position: relative;
+}
+
+.documentUploader.dragActive {
+    outline: 2px dashed #4a90e2;
+    background-color: rgba(74, 144, 226, 0.1);
+    border-radius: 4px;
+}
+
+.documentUploader button {
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    height: auto;
+    min-height: auto;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.documentUploader label {
+    cursor: pointer;
+    display: inline-block;
+}
+
+.documentList {
+    margin-top: 8px;
+    font-size: 0.8rem;
+}
+
+.documentItem {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.documentItem a {
+    color: #4a90e2;
+    text-decoration: none;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.documentItem a:hover {
+    text-decoration: underline;
+}
+
+.deleteButton {
+    background: none;
+    border: none;
+    color: #e74c3c;
+    cursor: pointer;
+    font-size: 0.8rem;
+    margin-left: 4px;
+    padding: 0;
+}
+
+.deleteButton:hover {
+    color: #c0392b;
+}
+
+.fileIcon {
+    margin-right: 4px;
+} 

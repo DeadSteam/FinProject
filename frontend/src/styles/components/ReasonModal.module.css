@@ -1,0 +1,56 @@
+.reasonModal {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 300px;
+}
+
+.reasonTextarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 10px;
+    margin-bottom: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    resize: vertical;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+.reasonTextarea:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+.modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.reasonBtn {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    border-radius: 4px;
+    margin-left: 4px;
+}
+
+.reasonBtn:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.reasonBtn.hasReason {
+    color: #4a90e2;
+}
+
+.reasonBtn svg {
+    width: 16px;
+    height: 16px;
+} 

@@ -1,0 +1,385 @@
+/* ReportConstructor.css */
+
+.report-constructor {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: var(--spacing-md);
+}
+
+.constructor-header {
+    flex-shrink: 0;
+}
+
+.constructor-layout {
+    display: flex;
+    gap: var(--spacing-md);
+    flex: 1;
+    min-height: 0;
+    /* Ненавязчивое увеличение рабочей области без изменения базовых стилей */
+    min-block-size: 70vh;
+}
+
+/* Панель слайдов (левая сторона) */
+.slides-panel {
+    width: 350px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.slides-panel .card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.slides-panel .card-body {
+    flex: 1;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+
+
+/* Список слайдов */
+.slides-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-sm);
+}
+
+.slide-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    background: var(--bg-primary);
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.slide-item:hover {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+}
+
+.slide-item.active {
+    border-color: var(--primary);
+    background: rgba(79, 70, 229, 0.05);
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+}
+
+.slide-item-content {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+}
+
+.slide-number {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-right: var(--spacing-sm);
+    flex-shrink: 0;
+}
+
+.slide-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.slide-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.slide-type {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Действия со слайдами */
+.slide-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    flex-shrink: 0;
+}
+
+.slide-actions .btn {
+    padding: 4px 6px;
+    font-size: 0.75rem;
+    min-width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.slide-actions .btn-group-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.slide-actions .btn-group-vertical .btn {
+    padding: 2px 4px;
+    font-size: 0.7rem;
+    min-width: 24px;
+    height: 20px;
+}
+
+/* Панель редактора (правая сторона) */
+.editor-panel {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.editor-panel .card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.editor-panel .card-body {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Адаптивность */
+@media (max-width: 992px) {
+    .constructor-layout {
+        flex-direction: column;
+    }
+    
+    .slides-panel {
+        width: 100%;
+        max-height: 300px;
+    }
+    
+    .slides-list {
+        max-height: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    .slide-item {
+        padding: var(--spacing-xs);
+    }
+    
+    .slide-actions {
+        gap: 2px;
+    }
+    
+    .slide-actions .btn {
+        min-width: 24px;
+        height: 24px;
+        padding: 2px 4px;
+    }
+    
+    .slide-actions .btn-group-vertical .btn {
+        min-width: 20px;
+        height: 18px;
+        padding: 1px 2px;
+    }
+}
+
+/* Пустое состояние */
+.slides-list .text-center {
+    padding: var(--spacing-xl);
+    color: var(--text-muted);
+}
+
+.slides-list .text-center i {
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-md);
+}
+
+.slides-list .text-center p {
+    margin-bottom: var(--spacing-sm);
+    font-weight: 500;
+}
+
+.slides-list .text-center small {
+    font-size: 0.8rem;
+}
+
+/* Редактор слайдов */
+.slide-editor {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.slide-editor-header {
+    flex-shrink: 0;
+    margin-bottom: var(--spacing-md);
+}
+
+.slide-editor .card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.slide-editor .card-body {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Вкладки */
+.nav-tabs {
+    border-bottom: 1px solid var(--border);
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    font-weight: 500;
+    padding: var(--spacing-sm) var(--spacing-md);
+    transition: var(--transition);
+}
+
+.nav-tabs .nav-link:hover {
+    border-bottom-color: var(--primary);
+    color: var(--primary);
+}
+
+.nav-tabs .nav-link.active {
+    border-bottom-color: var(--primary);
+    color: var(--primary);
+    background: none;
+}
+
+/* Типы слайдов */
+.slide-types-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-sm);
+}
+
+.slide-type-card {
+    padding: var(--spacing-md);
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    background: var(--bg-primary);
+    transition: var(--transition);
+    cursor: pointer;
+    text-align: left;
+}
+
+.slide-type-card:hover {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+}
+
+.slide-type-card.selected {
+    border-color: var(--primary);
+    background: rgba(79, 70, 229, 0.05);
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+}
+
+.slide-type-icon {
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-xs);
+}
+
+.slide-type-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.slide-type-description {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.3;
+}
+
+/* Анимации */
+@keyframes slideInFromLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInFromRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.slide-item {
+    animation: slideInFromLeft 0.3s ease-out;
+}
+
+.editor-panel .card {
+    animation: slideInFromRight 0.3s ease-out;
+}
+
+/* Drag and drop стили */
+.slide-item.dragging {
+    opacity: 0.5;
+    transform: rotate(5deg);
+}
+
+.slide-item.drag-over {
+    border-color: var(--success);
+    background: rgba(16, 185, 129, 0.05);
+}
+
+/* Скроллбар */
+.slides-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.slides-list::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 3px;
+}
+
+.slides-list::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+}
+
+.slides-list::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}

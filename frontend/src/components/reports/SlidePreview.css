@@ -1,0 +1,830 @@
+/* SlidePreview.css */
+
+.slide-preview {
+    width: 100%;
+    min-height: 400px;
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+/* Загрузка */
+.slide-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    background: var(--bg-primary);
+}
+
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+    color: var(--primary);
+}
+
+.loading-text {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* Титульный слайд */
+.title-slide-preview {
+    padding: var(--spacing-xl);
+    text-align: center;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.title-slide-preview .slide-title {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: var(--spacing-lg);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.title-slide-preview .slide-description {
+    font-size: 1.2rem;
+    margin-bottom: var(--spacing-xl);
+    opacity: 0.9;
+    max-width: 600px;
+}
+
+.slide-meta {
+    display: flex;
+    gap: var(--spacing-lg);
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+}
+
+/* Общие стили для слайдов */
+.slide-header {
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-secondary);
+}
+
+.slide-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.slide-description {
+    color: var(--text-secondary);
+    margin-bottom: 0;
+}
+
+/* График */
+.chart-slide-preview {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.chart-container {
+    flex: 1;
+    padding: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    justify-content: stretch;
+    width: 100%;
+}
+
+.chart-full-width {
+    width: 100%;
+    min-width: 0; /* Позволяет элементу сжиматься */
+}
+
+.chart-full-width .chartContainer {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+.chart-full-width .chartBarContainer {
+    width: 100% !important;
+    justify-content: space-between !important;
+}
+
+.chart-placeholder {
+    text-align: center;
+    padding: var(--spacing-xl);
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    border: 2px dashed var(--border);
+}
+
+.chart-icon {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-md);
+}
+
+.chart-placeholder h3 {
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.chart-placeholder p {
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-lg);
+}
+
+.chart-data-preview {
+    display: flex;
+    gap: var(--spacing-lg);
+    justify-content: center;
+}
+
+.data-point {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--spacing-md);
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border);
+}
+
+.data-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.data-value {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+/* Таблица */
+.table-slide-preview {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.table-container {
+    flex: 1;
+    padding: var(--spacing-lg);
+    overflow: auto;
+}
+
+.table {
+    width: 100%;
+    margin-bottom: 0;
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.table thead th {
+    background: var(--bg-secondary);
+    border-bottom: 2px solid var(--border);
+    font-weight: 600;
+    color: var(--text-primary);
+    padding: var(--spacing-md);
+}
+
+.table tbody td {
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background: var(--bg-secondary);
+}
+
+/* Сравнение */
+.comparison-slide-preview {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.comparison-container {
+    flex: 1;
+    padding: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    justify-content: stretch;
+    width: 100%;
+}
+
+.comparison-full-width {
+    width: 100%;
+    min-width: 0;
+}
+
+.comparison-full-width .p-3 {
+    padding: 0 !important;
+}
+
+.comparison-full-width .card {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+.comparison-full-width .card-body {
+    width: 100% !important;
+}
+
+.comparison-full-width .chartContainer {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+.comparison-full-width .chartBarContainer {
+    width: 100% !important;
+    justify-content: space-between !important;
+}
+
+/* Дополнительные стили для растягивания графиков сравнения */
+.comparison-full-width .card-body {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 1rem !important;
+}
+
+.comparison-full-width .card-body .chartContainer {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+}
+
+.comparison-full-width .card-body .chartBarContainer {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    justify-content: space-between !important;
+}
+
+.comparison-full-width .card-body .chartGroup {
+    flex: 1 !important;
+    min-width: 0 !important;
+    max-width: none !important;
+}
+
+.comparison-full-width .card-body .chartBar {
+    max-width: 60px !important;
+    min-width: 20px !important;
+    flex: 1 !important;
+}
+
+/* Принудительное растягивание для всех вложенных элементов */
+.comparison-full-width * {
+    box-sizing: border-box !important;
+}
+
+.comparison-full-width .row {
+    margin: 0 !important;
+    width: 100% !important;
+}
+
+.comparison-full-width .col {
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    flex: 1 1 100% !important;
+}
+
+/* Специальные стили для контейнера графика */
+.comparison-full-width .chartContainer,
+.comparison-full-width .chartBarContainer,
+.comparison-full-width .chartGroup {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    flex: 1 !important;
+}
+
+/* Принудительное растягивание canvas для Chart.js */
+.comparison-full-width canvas {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+}
+
+/* Стили для Chart.js контейнера */
+.comparison-full-width .chartjs-render-monitor {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Дополнительные стили для Chart.js с maintainAspectRatio: false */
+.comparison-full-width .chartjs-size-monitor {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.comparison-full-width .chartjs-size-monitor-shrink {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.comparison-full-width .chartjs-size-monitor-expand {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+    width: 100%;
+    max-width: 800px;
+}
+
+.comparison-item {
+    text-align: center;
+    padding: var(--spacing-lg);
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border);
+}
+
+.comparison-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.comparison-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.comparison-change {
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+}
+
+.comparison-change.positive {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+}
+
+.comparison-change.negative {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--error);
+}
+
+/* Тренды */
+.trends-slide-preview {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.trends-container {
+    flex: 1;
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.trend-chart {
+    flex: 1;
+    position: relative;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    min-height: 200px;
+}
+
+.trend-line {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.trend-point {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: var(--primary);
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.trend-point::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 4px;
+    height: 4px;
+    background: white;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.trend-stats {
+    display: flex;
+    gap: var(--spacing-lg);
+    justify-content: center;
+}
+
+.trend-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--spacing-md);
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border);
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.stat-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.stat-value.positive {
+    color: var(--success);
+}
+
+/* План vs Факт */
+.plan-vs-actual-slide-preview {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.plan-vs-actual-container {
+    flex: 1;
+    padding: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.plan-vs-actual-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+    width: 100%;
+    max-width: 800px;
+}
+
+.plan-vs-actual-item {
+    padding: var(--spacing-lg);
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border);
+}
+
+.item-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.item-value {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-md);
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+/* Слайд по умолчанию */
+.default-slide-preview {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.default-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl);
+    color: var(--text-secondary);
+}
+
+/* Нет данных */
+.no-data {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl);
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.no-data i {
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-md);
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .title-slide-preview .slide-title {
+        font-size: 2rem;
+    }
+    
+    .title-slide-preview .slide-description {
+        font-size: 1rem;
+    }
+    
+    .slide-meta {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+    
+    .comparison-grid,
+    .plan-vs-actual-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .chart-data-preview {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+    
+    .trend-stats {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+}
+
+/* Темная тема */
+[data-theme="dark"] .slide-preview {
+    background: var(--bg-primary);
+}
+
+[data-theme="dark"] .slide-header {
+    background: var(--bg-secondary);
+    border-color: var(--border);
+}
+
+[data-theme="dark"] .chart-placeholder,
+[data-theme="dark"] .comparison-item,
+[data-theme="dark"] .trend-stat,
+[data-theme="dark"] .plan-vs-actual-item {
+    background: var(--bg-secondary);
+    border-color: var(--border);
+}
+
+[data-theme="dark"] .table {
+    background: var(--bg-primary);
+}
+
+[data-theme="dark"] .table thead th {
+    background: var(--bg-secondary);
+    border-color: var(--border);
+}
+
+[data-theme="dark"] .table-striped tbody tr:nth-of-type(odd) {
+    background: var(--bg-secondary);
+}
+
+/* Специальные стили для конкретного селектора графика сравнения */
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div.card.mb-3 > div > div > div {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Принудительное растягивание для всех вложенных элементов этого контейнера */
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div.card.mb-3 > div > div > div .card {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    flex: 1 !important;
+}
+
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div.card.mb-3 > div > div > div .card-body {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 1rem !important;
+    flex: 1 !important;
+}
+
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div.card.mb-3 > div > div > div .chartContainer {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    flex: 1 !important;
+}
+
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div.card.mb-3 > div > div > div .chartBarContainer {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    justify-content: space-between !important;
+    flex: 1 !important;
+}
+
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div.card.mb-3 > div > div > div .chartGroup {
+    flex: 1 !important;
+    min-width: 0 !important;
+    max-width: none !important;
+}
+
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div.card.mb-3 > div > div > div .chartBar {
+    max-width: 60px !important;
+    min-width: 20px !important;
+    flex: 1 !important;
+}
+
+/* Специальные стили для Chart.js элементов */
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div.card.mb-3 > div > div > div canvas {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 400px !important;
+}
+
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div.card.mb-3 > div > div > div .chartjs-render-monitor {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div.card.mb-3 > div > div > div .chartjs-size-monitor {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div.card.mb-3 > div > div > div .chartjs-size-monitor-shrink {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div.card.mb-3 > div > div > div .chartjs-size-monitor-expand {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Дополнительные стили для Bootstrap элементов */
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div.card.mb-3 > div > div > div .row {
+    margin: 0 !important;
+    width: 100% !important;
+}
+
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div.card.mb-3 > div > div > div .col {
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    flex: 1 1 100% !important;
+}
+
+/* Принудительное растягивание для всех контейнеров графиков */
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div.card.mb-3 > div > div > div .chartContainer,
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div.card.mb-3 > div > div > div .chartBarContainer,
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div.card.mb-3 > div > div > div .chartGroup {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    flex: 1 !important;
+}
+
+/* Стиль заголовка как у нижнего контейнера */
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div > div.card-header.d-flex.justify-content-between.align-items-center {
+    background: var(--bg-primary) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--card-border-radius) !important;
+    padding: 1.5rem !important;
+    box-shadow: var(--box-shadow) !important;
+    position: relative !important;
+    transition: var(--transition) !important;
+    margin-bottom: var(--spacing-md) !important;
+}
+
+/* Ховер эффект для заголовка */
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div > div.card-header.d-flex.justify-content-between.align-items-center:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Стили для заголовка в карточке */
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div > div.card-header.d-flex.justify-content-between.align-items-center h5 {
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+    font-size: 1.25rem !important;
+    margin: 0 !important;
+    text-shadow: none !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* Стили для подзаголовка */
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div > div.card-header.d-flex.justify-content-between.align-items-center .text-muted {
+    color: var(--text-secondary) !important;
+    font-size: 0.9rem !important;
+    font-weight: 400 !important;
+    text-shadow: none !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* Стили для кнопок в заголовке */
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div > div.card-header.d-flex.justify-content-between.align-items-center .btn {
+    border: 1px solid var(--border) !important;
+    background: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+    font-weight: 500 !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: var(--border-radius) !important;
+    transition: all 0.2s ease !important;
+    position: relative !important;
+    z-index: 1 !important;
+    box-shadow: none !important;
+}
+
+/* Активная кнопка */
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div > div.card-header.d-flex.justify-content-between.align-items-center .btn-primary {
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: white !important;
+    box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2) !important;
+}
+
+/* Ховер эффект для кнопок */
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div > div.card-header.d-flex.justify-content-between.align-items-center .btn:hover {
+    background: var(--bg-secondary) !important;
+    border-color: var(--primary) !important;
+    color: var(--primary) !important;
+    transform: none !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div > div.card-header.d-flex.justify-content-between.align-items-center .btn-primary:hover {
+    background: var(--primary-dark) !important;
+    border-color: var(--primary-dark) !important;
+    color: white !important;
+}
+
+/* Иконки в кнопках */
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div > div.card-header.d-flex.justify-content-between.align-items-center .btn span {
+    filter: none !important;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    #root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div > div.card-header.d-flex.justify-content-between.align-items-center {
+        padding: var(--spacing-md) !important;
+        flex-direction: column !important;
+        gap: var(--spacing-sm) !important;
+        text-align: center !important;
+    }
+    
+    #root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div > div.card-header.d-flex.justify-content-between.align-items-center h5 {
+        font-size: 1.1rem !important;
+    }
+    
+    #root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div > div.card-header.d-flex.justify-content-between.align-items-center .btn {
+        padding: 0.4rem 0.8rem !important;
+        font-size: 0.85rem !important;
+    }
+}
+

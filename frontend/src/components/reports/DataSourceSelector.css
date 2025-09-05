@@ -1,0 +1,196 @@
+/* Селектор источников данных */
+.data-source-selector {
+    padding: 0;
+}
+
+.categories-nav {
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 1rem;
+}
+
+/* Сетка типов слайдов */
+.slide-types-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    padding: 1rem 0;
+}
+
+.slide-type-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--border-radius);
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+}
+
+.slide-type-card:hover {
+    background: var(--bg-secondary);
+    border-color: var(--primary-light);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.slide-type-card:active {
+    transform: translateY(0);
+}
+
+.slide-type-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.slide-type-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.slide-type-description {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.slide-type-arrow {
+    flex-shrink: 0;
+    color: var(--text-muted);
+    width: 20px;
+    height: 20px;
+    transition: var(--transition);
+}
+
+.slide-type-card:hover .slide-type-arrow {
+    color: var(--primary);
+    transform: translateX(4px);
+}
+
+/* Информация о доступных данных */
+.available-data-info {
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    border-top: 1px solid var(--border-light);
+}
+
+.available-data-info h6 {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.data-info-item {
+    padding: 0.5rem;
+    background: var(--bg-primary);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-light);
+}
+
+.data-info-item strong {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.data-info-item small {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .slide-types-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .slide-type-card {
+        padding: 0.75rem;
+    }
+    
+    .slide-type-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.5rem;
+    }
+    
+    .slide-type-name {
+        font-size: 0.9rem;
+    }
+    
+    .slide-type-description {
+        font-size: 0.8rem;
+    }
+    
+    .categories-nav .btn {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+    }
+    
+    .available-data-info {
+        padding: 0.75rem;
+    }
+    
+    .data-info-item {
+        padding: 0.4rem;
+    }
+    
+    .data-info-item strong {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .slide-type-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.75rem;
+        padding: 1rem 0.75rem;
+    }
+    
+    .slide-type-arrow {
+        display: none;
+    }
+    
+    .categories-nav .d-flex {
+        justify-content: center;
+    }
+    
+    .categories-nav .btn {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+    }
+}
+
+/* Темная тема */
+[data-theme="dark"] .slide-type-card {
+    background: var(--bg-primary);
+    border-color: var(--border);
+}
+
+[data-theme="dark"] .slide-type-card:hover {
+    background: var(--bg-secondary);
+    border-color: var(--primary);
+}
+
+[data-theme="dark"] .slide-type-icon {
+    background: rgba(96, 165, 250, 0.1);
+    color: var(--primary);
+}
+
+[data-theme="dark"] .available-data-info {
+    background: var(--bg-secondary);
+    border-color: var(--border);
+}
+
+[data-theme="dark"] .data-info-item {
+    background: var(--bg-primary);
+    border-color: var(--border);
+}

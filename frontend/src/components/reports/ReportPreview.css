@@ -1,0 +1,584 @@
+/* Предпросмотр отчета */
+.report-preview {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-primary);
+}
+
+.report-preview.presentation-mode {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    background: var(--bg-dark, #1a1a1a);
+}
+
+/* Заголовок предпросмотра */
+.preview-header {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-light);
+    padding: 1rem 1.5rem;
+    flex-shrink: 0;
+}
+
+.preview-header h5 {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Макет предпросмотра */
+.preview-layout {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+}
+
+/* Миниатюры слайдов */
+.slides-thumbnails {
+    width: 200px;
+    flex-shrink: 0;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border-light);
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.slides-thumbnails h6 {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.thumbnails-scroll {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Информационные бейджи для слайдов */
+.chart-info-badge {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    justify-content: center;
+}
+
+.info-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark, #4f46e5));
+    color: white;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.info-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.info-item i {
+    font-size: 0.75rem;
+    opacity: 0.9;
+}
+
+/* Информация о фильтрах */
+.preview-filters-info {
+    padding: 0.5rem 1rem;
+    background: var(--bg-light);
+    border-radius: var(--border-radius);
+    border-left: 3px solid var(--primary);
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.preview-filters-info strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* Стили для месячных и квартальных графиков */
+.monthly-metrics-charts {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.metric-chart-container {
+    position: relative;
+    background: var(--bg-light);
+    border: 1px solid var(--border-light);
+    border-radius: var(--border-radius);
+    padding: 0.75rem;
+    overflow: visible; /* Чтобы легенда не обрезалась */
+}
+
+.metric-chart-title {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin: 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-light);
+}
+
+/* Легенда сверху справа */
+.monthly-legend-top-right {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: white;
+    border: 1px solid var(--border-light);
+    border-radius: var(--border-radius);
+    padding: 0.75rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    min-width: 200px;
+    max-width: 300px;
+}
+
+.monthly-legend-top-right small {
+    display: block;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.monthly-legend-top-right .d-flex {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.monthly-legend-top-right .d-flex > div {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    background: var(--bg-light);
+    border-radius: 4px;
+    border: 1px solid var(--border-light);
+    min-width: fit-content;
+}
+
+/* Старая легенда снизу (для совместимости) */
+.monthly-legend {
+    background: var(--bg-light);
+    border: 1px solid var(--border-light);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.monthly-legend small {
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+/* Контент слайдов */
+.slide-content {
+    padding: 2rem;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.slide-title {
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.8rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.chart-slide-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.chart-container {
+    flex: 1;
+    position: relative;
+    background: var(--bg-light);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    min-height: 300px;
+}
+
+/* Элемент миниатюры */
+.thumbnail-item {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--border-radius);
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+}
+
+.thumbnail-item:hover {
+    background: var(--bg-hover);
+    border-color: var(--primary-light);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.thumbnail-item.active {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-alpha);
+}
+
+.thumbnail-number {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.thumbnail-preview {
+    height: 80px;
+    background: var(--bg-light);
+    border-radius: var(--border-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.thumbnail-title {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-align: center;
+    font-weight: 500;
+    line-height: 1.2;
+    max-height: 2.4em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Основная область слайда */
+.main-slide-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.slide-container {
+    flex: 1;
+    background: white;
+    margin: 1rem;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    position: relative;
+    min-height: 500px;
+}
+
+.presentation-mode .slide-container {
+    margin: 2rem auto;
+    max-width: 90vw;
+    max-height: 80vh;
+    background: white;
+}
+
+/* Содержимое слайдов */
+.slide-content {
+    padding: 2rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.slide-title {
+    color: var(--text-primary);
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.title-slide-content .slide-title {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: var(--primary);
+}
+
+.chart-slide-content .slide-title {
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+}
+
+.table-slide-content .slide-title {
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+}
+
+.slide-description {
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+}
+
+.report-info h3 {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.report-info p {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+/* Контейнеры для контента */
+.chart-container {
+    flex: 1;
+    position: relative;
+    min-height: 300px;
+    background: var(--bg-light);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    overflow: hidden; /* Убираем прокрутку */
+}
+
+/* Синхронизация стилей с предпросмотром слайда */
+.slide-content .chart-container {
+    margin-top: 1.5rem;
+    height: 500px;
+    min-height: 500px;
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    background: white;
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Новый дизайн информационных бэджей */
+.chart-info-badge {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    justify-content: center;
+}
+
+.info-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark, #4f46e5));
+    color: white;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.info-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.info-item i {
+    font-size: 0.75rem;
+    opacity: 0.9;
+}
+
+.table-container {
+    flex: 1;
+    background: var(--bg-light);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    overflow: hidden; /* Убираем прокрутку */
+}
+
+/* Навигация по слайдам */
+.slide-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-light);
+    flex-shrink: 0;
+}
+
+.presentation-mode .slide-navigation {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.8);
+    border-radius: var(--border-radius-lg);
+    padding: 0.75rem 1.5rem;
+    border: none;
+    backdrop-filter: blur(10px);
+}
+
+.slide-counter {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.presentation-mode .slide-counter {
+    color: white;
+}
+
+.slide-navigation .btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 80px;
+}
+
+.slide-navigation .btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Управление презентацией */
+.presentation-controls {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 10000;
+}
+
+.presentation-controls .btn {
+    background: rgba(0,0,0,0.6);
+    border-color: rgba(255,255,255,0.3);
+    backdrop-filter: blur(10px);
+}
+
+.presentation-controls .btn:hover {
+    background: rgba(0,0,0,0.8);
+    border-color: rgba(255,255,255,0.5);
+}
+
+.presentation-controls .btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Пустое состояние */
+.empty-preview {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-light);
+    border-radius: var(--border-radius-lg);
+    margin: 1rem;
+}
+
+.empty-preview svg {
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.empty-preview h4 {
+    color: var(--text-secondary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.empty-preview p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* Placeholder для неизвестных типов слайдов */
+.slide-placeholder {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-light);
+    border-radius: var(--border-radius);
+    margin: 1rem;
+}
+
+.slide-placeholder h4 {
+    color: var(--text-secondary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.slide-placeholder p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .preview-layout {
+        flex-direction: column;
+    }
+    
+    .slides-thumbnails {
+        width: 100%;
+        height: 120px;
+        border-right: none;
+        border-bottom: 1px solid var(--border-light);
+    }
+    
+    .thumbnails-scroll {
+        flex-direction: row;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+    }
+    
+    .thumbnail-item {
+        flex-shrink: 0;
+        width: 120px;
+    }
+    
+    .slide-container {
+        margin: 0.5rem;
+        min-height: 400px;
+    }
+    
+    .slide-navigation {
+        padding: 0.75rem 1rem;
+    }
+    
+    .slide-navigation .btn {
+        min-width: 60px;
+        font-size: 0.8rem;
+    }
+}

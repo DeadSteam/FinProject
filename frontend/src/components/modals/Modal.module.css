@@ -1,0 +1,288 @@
+/* Основные стили модального окна */
+.modal {
+  display: flex;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(2px);
+  transition: backdrop-filter 0.3s ease-in-out;
+}
+
+.modal.modalOpen {
+  backdrop-filter: blur(4px);
+}
+
+.modalContent {
+  background-color: var(--bg-primary);
+  border-radius: var(--card-border-radius);
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  outline: none;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--text-primary);
+}
+
+.modalClose {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s ease-in-out;
+  border-radius: 50%;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalClose:hover {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.modalClose:active {
+  transform: scale(0.95);
+}
+
+.modalBody {
+  padding: 1rem;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+.modalFooter {
+  padding: 1rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+/* Размеры модальных окон */
+.modalSm {
+  max-width: 300px;
+}
+
+.modalLg {
+  max-width: 800px;
+}
+
+.modalXl {
+  max-width: 1140px;
+}
+
+.modalFull {
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  margin: 0;
+  border-radius: 0;
+}
+
+/* Центрирование */
+.modalCentered {
+  display: flex;
+  align-items: center;
+  min-height: calc(100vh - 3.5rem);
+}
+
+.modalCentered .modalContent {
+  margin: 0 auto;
+}
+
+/* Анимации */
+.modalFade {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.modalFade.modalOpen {
+  opacity: 1;
+}
+
+.modalFade .modalContent {
+  transform: translateY(-50px);
+  transition: transform 0.3s ease-in-out;
+}
+
+.modalFade.modalOpen .modalContent {
+  transform: translateY(0);
+}
+
+.modalSlide {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.modalSlide.modalOpen {
+  opacity: 1;
+}
+
+.modalSlide .modalContent {
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.modalSlide.modalOpen .modalContent {
+  transform: translateX(0);
+}
+
+.modalZoom {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.modalZoom.modalOpen {
+  opacity: 1;
+}
+
+.modalZoom .modalContent {
+  transform: scale(0.7);
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.modalZoom.modalOpen .modalContent {
+  transform: scale(1);
+}
+
+/* Loading состояние */
+.modalLoading .modalBody {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.modalLoadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.8);
+  z-index: 10;
+}
+
+.modalSpinner {
+  color: var(--primary);
+}
+
+/* Дополнительные стили для форм */
+.formGroup {
+  margin-bottom: 1rem;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.formControl {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--input-border-radius);
+  font-size: 1rem;
+}
+
+.required {
+  color: var(--error);
+}
+
+.infoMessage {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.75rem;
+  color: var(--info);
+  font-size: 0.9rem;
+}
+
+/* Responsive поведение */
+@media (max-width: 768px) {
+  .modalLg,
+  .modalXl {
+    max-width: 95vw;
+    margin: 1rem auto;
+  }
+  
+  .modalCentered {
+    min-height: calc(100vh - 2rem);
+    padding: 1rem;
+  }
+  
+  .modalFull {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+}
+
+@media (max-width: 576px) {
+  .modalContent {
+    margin: 0.5rem;
+    width: calc(100% - 1rem);
+  }
+  
+  .modalCentered {
+    min-height: calc(100vh - 1rem);
+    padding: 0.5rem;
+  }
+  
+  /* На мобильных устройствах модалки становятся fullscreen */
+  .modalSm,
+  .modalContent,
+  .modalLg,
+  .modalXl {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    margin: 0;
+    border-radius: 0;
+  }
+}
+
+/* Скроллбар для модального контента */
+.modalBody::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modalBody::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+.modalBody::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.modalBody::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+} 

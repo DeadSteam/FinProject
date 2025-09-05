@@ -1,28 +1,32 @@
 from src.service.users import user_service, role_service
 from src.service.finance import (
-    period_service, 
-    image_service, 
-    category_service, 
-    shop_service, 
-    metric_service, 
-    actual_value_service, 
-    plan_value_service
+    PeriodService,
+    ImageService,
+    CategoryService,
+    ShopService,
+    MetricService,
+    ActualValueService,
+    PlanValueService,
+    DocumentService
 )
 from src.service.analytics import analytics_service
+from src.service.user_avatar import UserAvatarService
 
 __all__ = [
     # User services
     "user_service",
     "role_service",
+    "UserAvatarService",
     
     # Finance services
-    "period_service",
-    "image_service",
-    "category_service",
-    "shop_service",
-    "metric_service",
-    "actual_value_service",
-    "plan_value_service",
+    "PeriodService",
+    "ImageService",
+    "CategoryService",
+    "ShopService",
+    "MetricService",
+    "ActualValueService",
+    "PlanValueService",
+    "DocumentService",
     
     # Analytics services
     "analytics_service"

@@ -5,6 +5,7 @@ from src.model.finance.shop import Shop
 from src.model.finance.metric import Metric
 from src.model.finance.actual_value import ActualValue
 from src.model.finance.plan_value import PlanValue
+from src.model.finance.document import Document
 
 __all__ = [
     "Period",
@@ -14,4 +15,5 @@ __all__ = [
     "Metric",
     "ActualValue",
     "PlanValue",
+    "Document",
 ] 

@@ -35,4 +35,7 @@ aioredis==2.0.1
 
 # Утилиты
 python-dotenv==1.0.1
-typing-extensions==4.13.2 
+typing-extensions==4.13.2
+
+# Генерация презентаций
+python-pptx==0.6.23 

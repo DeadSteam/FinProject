@@ -1,12 +1,13 @@
 from typing import List, Optional, Callable
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.security import OAuth2PasswordBearer
+import json
 
 from src.repository.db import users_db
-from src.scheme.users import User, UserCreate, UserUpdate, Role, RoleCreate, RoleUpdate, UserRoleResponse
+from src.scheme.users import User, UserCreate, UserUpdate, Role, RoleCreate, RoleUpdate, UserRoleResponse, ChangePasswordRequest
 from src.service.users import UserService, RoleService
 
 router = APIRouter()
@@ -128,20 +129,24 @@ async def create_user(
 
 @router.get("/me", response_model=User)
 async def get_current_user_info(
+    request: Request,
     current_user: User = Depends(get_active_user),
     session: AsyncSession = Depends(users_db.get_session)
 ):
     """Получение данных текущего пользователя."""
     # Получаем полные данные пользователя с ролью
     user = await user_service.get_by_username(current_user.username, session)
+    if user:
+        # Добавляем avatar_url если есть активный аватар
+        from src.service.user_avatar import UserAvatarService
+        avatar_service = UserAvatarService()
+        avatar = await avatar_service.get_active_avatar(user.id, session)
+        if avatar:
+            user.avatar_url = f"/api/v1/avatars/{avatar.id}/download"
+        return user
     
-    # Отладка
-    if hasattr(user, 'role') and user.role:
-        print(f"GET /me: Пользователь {user.username} имеет роль: {user.role.name}")
-    else:
-        print(f"GET /me: Пользователь {user.username} не имеет роли")
-    
-    return user
+    # Если не удалось получить пользователя с ролью, возвращаем текущего пользователя
+    return current_user
 
 @router.get("/me/role", response_model=UserRoleResponse)
 async def get_current_user_role(
@@ -153,54 +158,114 @@ async def get_current_user_role(
     user = await user_service.get_by_username(current_user.username, session)
     
     role_name = None
-    if hasattr(user, 'role') and user.role:
+    if user and hasattr(user, 'role') and user.role:
         role_name = user.role.name
     
     # Выводим отладочную информацию
-    print(f"GET /me/role: Пользователь: {user.username}, Роль: {role_name}")
+    username = user.username if user else current_user.username
+    print(f"GET /me/role: Пользователь: {username}, Роль: {role_name}")
     
     return {
         "role": role_name, 
-        "username": user.username,
+        "username": username,
         "has_role": role_name is not None
     }
 
 @router.put("/me", response_model=User)
 async def update_current_user(
-    user_in: UserUpdate,
+    request: Request,
     current_user: User = Depends(get_active_user),
     session: AsyncSession = Depends(users_db.get_session)
 ):
     """Обновление данных текущего пользователя."""
-    # Проверяем, что email не занят другим пользователем
-    if user_in.email and user_in.email != current_user.email:
-        existing_user = await user_service.get_by_email(email=user_in.email, session=session)
-        if existing_user:
+    try:
+        # Получаем сырые данные из request body
+        body = await request.body()
+        
+        # Парсим JSON вручную
+        try:
+            body_data = json.loads(body.decode('utf-8'))
+        except json.JSONDecodeError as e:
+            raise HTTPException(status_code=400, detail="Invalid JSON")
+        
+        # Создаем объект UserUpdate из распарсенных данных
+        try:
+            user_in = UserUpdate(**body_data)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Invalid data: {str(e)}")
+        
+        # Проверяем, что email не занят другим пользователем
+        if user_in.email and user_in.email != current_user.email:
+            existing_user = await user_service.get_by_email(email=user_in.email, session=session)
+            if existing_user:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Пользователь с таким email уже существует"
+                )
+        
+        # Проверяем, что номер телефона не занят другим пользователем
+        if user_in.phone_number and user_in.phone_number != current_user.phone_number:
+            existing_user = await user_service.get_by_phone_number(phone_number=user_in.phone_number, session=session)
+            if existing_user and existing_user.id != current_user.id:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Пользователь с таким номером телефона уже существует"
+                )
+        
+        # Запрещаем менять роль через этот эндпоинт - удаляем поле вместо установки None
+        if hasattr(user_in, "role_id") and user_in.role_id is not None:
+            delattr(user_in, "role_id")
+        
+        updated_user = await user_service.update(
+            id=current_user.id,
+            obj_in=user_in,
+            session=session
+        )
+        
+        return updated_user
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )
+
+@router.put("/me/change-password", status_code=200)
+async def change_current_user_password(
+    password_data: ChangePasswordRequest,
+    current_user: User = Depends(get_active_user),
+    session: AsyncSession = Depends(users_db.get_session)
+):
+    """Смена пароля текущего пользователя."""
+    try:
+        # Проверяем текущий пароль
+        if not current_user.password_hash or not user_service._verify_password(password_data.current_password, current_user.password_hash):
             raise HTTPException(
                 status_code=400,
-                detail="Пользователь с таким email уже существует"
+                detail="Неверный текущий пароль"
             )
-    
-    # Проверяем, что номер телефона не занят другим пользователем
-    if user_in.phone_number and user_in.phone_number != current_user.phone_number:
-        existing_user = await user_service.get_by_phone_number(phone_number=user_in.phone_number, session=session)
-        if existing_user and existing_user.id != current_user.id:
-            raise HTTPException(
-                status_code=400,
-                detail="Пользователь с таким номером телефона уже существует"
-            )
-    
-    # Запрещаем менять роль через этот эндпоинт
-    if hasattr(user_in, "role_id"):
-        delattr(user_in, "role_id")
-    
-    updated_user = await user_service.update(
-        id=current_user.id,
-        obj_in=user_in,
-        session=session
-    )
-    
-    return updated_user
+        
+        # Хешируем новый пароль
+        hashed_password = user_service._hash_password(password_data.new_password)
+        
+        # Обновляем пароль в базе данных
+        await user_service.update(
+            id=current_user.id,
+            obj_in={"password_hash": hashed_password},
+            session=session
+        )
+        
+        return {"message": "Пароль успешно изменен"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )
 
 # ------------ Эндпоинты для ролей ------------
 @router.get("/roles", response_model=List[Role])

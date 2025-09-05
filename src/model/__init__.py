@@ -7,8 +7,10 @@ from src.model.finance import (
     Shop,
     Metric,
     ActualValue,
-    PlanValue
+    PlanValue,
+    Document
 )
+from src.model.user_avatar import UserAvatar
 
 __all__ = [
     # Base models
@@ -20,6 +22,7 @@ __all__ = [
     # User models
     "User",
     "Role",
+    "UserAvatar",  # Новая модель для аватаров
     
     # Finance models
     "Period",
@@ -28,5 +31,6 @@ __all__ = [
     "Shop",
     "Metric",
     "ActualValue",
-    "PlanValue"
+    "PlanValue",
+    "Document"  # Новая модель для документов
 ]

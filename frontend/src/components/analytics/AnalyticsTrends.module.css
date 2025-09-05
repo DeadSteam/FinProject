@@ -1,0 +1,543 @@
+/* Стили для компонента AnalyticsTrends */
+
+.statCard {
+    background: linear-gradient(135deg, var(--bg-primary, #ffffff) 0%, var(--bg-secondary, #f8f9fa) 100%);
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: var(--card-border-radius, 8px);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm, 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075));
+    transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+    position: relative;
+    animation: scaleUp 0.5s cubic-bezier(0.39, 0.575, 0.565, 1) forwards;
+    min-height: 140px;
+    max-height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.statCard:nth-child(1) { animation-delay: 0.1s; }
+.statCard:nth-child(2) { animation-delay: 0.2s; }
+.statCard:nth-child(3) { animation-delay: 0.3s; }
+.statCard:nth-child(4) { animation-delay: 0.4s; }
+
+.statCard:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow-hover, 0 10px 15px -3px rgba(0, 0, 0, 0.1));
+    border-color: var(--primary, #4f46e5);
+}
+
+/* Значения в карточках - равномерные размеры */
+.statValue {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--primary, #4f46e5);
+    margin-bottom: 0.5rem;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.statLabel {
+    color: var(--text-secondary, #64748b);
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+    max-width: 100%;
+    word-wrap: break-word;
+}
+
+/* Единый стиль мини-карточек статистики - Ant Design принципы */
+.statGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 1rem;
+    align-items: stretch;
+}
+
+@media (max-width: 1200px) {
+    .statGrid { 
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+    }
+}
+@media (max-width: 768px) {
+    .statGrid { 
+        grid-template-columns: repeat(2, 1fr); 
+        gap: 0.5rem;
+    }
+}
+@media (max-width: 480px) {
+    .statGrid { 
+        grid-template-columns: 1fr; 
+        gap: 0.5rem;
+    }
+}
+
+.statMiniCard {
+    background: linear-gradient(135deg, var(--bg-primary, #ffffff) 0%, var(--bg-secondary, #f8f9fa) 100%);
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: var(--border-radius, 8px);
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+    position: relative;
+    box-shadow: var(--shadow-sm, 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075));
+    overflow: hidden;
+    height: 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.statMiniCard:hover { 
+    box-shadow: var(--box-shadow-hover, 0 10px 15px -3px rgba(0, 0, 0, 0.1)); 
+    transform: translateY(-2px);
+    border-color: var(--primary, #4f46e5);
+}
+
+.statMiniLabel { 
+    color: var(--text-secondary, #64748b); 
+    font-size: 0.75rem; 
+    font-weight: 500;
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+    order: 2;
+}
+
+.statMiniValue { 
+    font-weight: 700; 
+    font-size: 1.1rem;
+    color: var(--text-primary, #1e293b); 
+    line-height: 1.1;
+    order: 3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.statPrimary { color: var(--primary); }
+.statInfo { color: var(--info); }
+.statSuccess { color: var(--success); }
+.statWarning { color: var(--warning); }
+.statDanger { color: var(--error); }
+
+/* Индикаторы тренда - соответствуют новому размеру карточек */
+.trendIndicator {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.trendUp {
+    color: var(--success, #10b981);
+}
+
+.trendDown {
+    color: var(--error, #ef4444);
+}
+
+/* Индикатор волатильности - соответствует новому размеру карточек */
+.volatilityIndicator {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--warning, #f59e0b);
+    margin-bottom: 0.5rem;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Карточка прогнозирования - темно-фиолетовый фон с белым текстом */
+.forecastCard {
+    background: #7100CF;
+    color: #ffffff !important;
+    border: 1px solid #5b21b6;
+    border-radius: var(--card-border-radius);
+    box-shadow: 0 8px 25px rgba(76, 29, 149, 0.3);
+    animation: scaleUp 0.5s cubic-bezier(0.39, 0.575, 0.565, 1) forwards;
+    animation-delay: 0.5s;
+}
+
+/* Весь текст внутри прогноза - белый */
+.forecastCard *,
+.forecastCard .text-muted,
+.forecastCard .text-success,
+.forecastCard .text-danger,
+.forecastCard .text-warning,
+.forecastCard .text-info,
+.forecastCard strong,
+.forecastCard span,
+.forecastCard small {
+    color: #ffffff !important;
+}
+
+.forecastCard .card-title {
+    color: #ffffff;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.forecastCard .text-muted {
+    color: rgba(255, 255, 255, 0.95) !important;
+    font-weight: 500;
+}
+
+.forecastCard strong {
+    color: #ffffff !important;
+    font-weight: 700;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.forecastCard .text-success {
+    color: #10b981 !important;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.forecastCard .text-danger {
+    color: #f87171 !important;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.forecastCard .text-white {
+    color: #ffffff !important;
+    font-weight: 700;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* Прогресс-бар прогноза - стили сайта */
+.forecastProgress {
+    height: 12px;
+    border-radius: var(--border-radius, 6px);
+    background: rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+    margin: 0.75rem 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.forecastProgressBar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary, #4f46e5), var(--primary-light, #c7d2fe));
+    border-radius: var(--border-radius, 6px);
+    transition: width 1s cubic-bezier(0.65, 0, 0.35, 1);
+    box-shadow: var(--shadow-sm, 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075));
+}
+
+/* Индикатор уверенности - в стиле Ant Design */
+.confidenceIndicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.confidenceDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+.confidenceHigh .confidenceDot {
+    background: var(--success, #10b981);
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.confidenceMedium .confidenceDot {
+    background: var(--warning, #f59e0b);
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+}
+
+.confidenceLow .confidenceDot {
+    background: var(--error, #ef4444);
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+/* Custom Toggle Switches - стиль сайта */
+.customToggle {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-right: 1.5rem;
+}
+
+.toggleSwitch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.toggleInput {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggleSlider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--bg-tertiary, #e9ecef);
+    border: 1px solid var(--border, #e2e8f0);
+    transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+    border-radius: 24px;
+}
+
+.toggleSlider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 2px;
+    bottom: 2px;
+    background-color: var(--bg-primary, #ffffff);
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+.toggleInput:checked + .toggleSlider {
+    background-color: var(--primary, #4f46e5);
+    border-color: var(--primary, #4f46e5);
+}
+
+.toggleInput:focus + .toggleSlider {
+    box-shadow: 0 0 0 3px var(--primary-light, #c7d2fe);
+}
+
+.toggleInput:checked + .toggleSlider:before {
+    transform: translateX(20px);
+    background-color: var(--text-white, #ffffff);
+}
+
+.toggleLabel {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary, #1e293b);
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Анализ сезонности */
+.seasonalityChart {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--card-border-radius);
+    padding: 1.5rem;
+    box-shadow: var(--box-shadow);
+    margin-top: 2rem;
+}
+
+.seasonalityBar {
+    background: var(--primary);
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+    min-height: 20px;
+}
+
+.seasonalityBar:hover {
+    transform: scaleY(1.05);
+    box-shadow: var(--box-shadow);
+}
+
+/* Заголовки секций */
+.sectionTitle {
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.sectionTitle i {
+    color: var(--primary);
+    font-size: 1.1rem;
+}
+
+/* Контролы */
+.controlsSection {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--card-border-radius);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--box-shadow);
+}
+
+.controlGroup {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.controlItem {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Большой контейнер секции прогнозов */
+.forecastSectionCard {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--card-border-radius);
+    padding: 1.5rem;
+    box-shadow: var(--box-shadow);
+}
+
+/* Сетка 2 колонки для Факта и Плана внутри */
+.forecastInnerGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+@media (max-width: 992px) {
+    .forecastInnerGrid { grid-template-columns: 1fr; }
+}
+
+/* Единая строка для статистики и прогнозирования */
+.statsAndForecastRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+}
+
+@media (max-width: 1200px) {
+    .statsAndForecastRow { grid-template-columns: 1fr; }
+}
+
+/* Карточка-обёртка для блоков внутри строки */
+.sectionCard {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--card-border-radius);
+    padding: 1.25rem;
+    box-shadow: var(--box-shadow);
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .statCard {
+        padding: 1.25rem;
+    }
+    
+    .statValue {
+        font-size: 1.5rem;
+    }
+    
+    .controlGroup {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .controlItem {
+        justify-content: space-between;
+    }
+    
+    .forecastCard {
+        margin-top: 1rem;
+    }
+}
+
+/* Используем существующие анимации сайта */
+@keyframes scaleUp {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Стили для информационных иконок - SVG иконки без кружка, черного цвета */
+.infoIcon {
+    position: absolute;
+    cursor: help;
+    color: var(--text-secondary);
+    z-index: 10;
+}
+
+/* Основные метрики - SVG иконки в правом верхнем углу */
+.infoIconMain {
+    composes: infoIcon;
+    top: 8px;
+    right: 8px;
+    width: 14px;                /* Уменьшенный размер SVG иконки */
+    height: 14px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* Мини-метрики - SVG иконки в правом верхнем углу */
+.infoIconMini {
+    composes: infoIcon;
+    top: 4px;
+    right: 4px;
+    width: 12px;                /* Уменьшенный размер SVG иконки */
+    height: 12px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* Прогнозирование - SVG иконки только для наклона и уверенности */
+.infoIconForecast {
+    composes: infoIcon;
+    top: 8px;
+    right: 8px;
+    width: 14px;                /* Уменьшенный размер SVG иконки */
+    height: 14px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* Inline SVG иконки для прогнозирования - светлые для темного фона */
+.infoIconInline {
+    cursor: help;
+    color: rgba(255, 255, 255, 0.8);
+    margin-left: 0.5rem;
+    opacity: 0.9;
+    transition: opacity 0.2s ease;
+    width: 14px;
+    height: 14px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.infoIconInline:hover {
+    opacity: 1;
+    color: rgba(255, 255, 255, 1);
+}
+
+/* Улучшенная читаемость текста в блоке прогнозирования */
+.forecastCard .infoIconInline path {
+    stroke: rgba(255, 255, 255, 0.9);
+}
+
+.forecastCard .infoIconInline:hover path {
+    stroke: rgba(255, 255, 255, 1);
+} 

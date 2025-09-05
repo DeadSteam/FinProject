@@ -14,10 +14,13 @@ from src.scheme.finance.metric import (
     MetricBase, MetricCreate, MetricUpdate, Metric, MetricWithCategory
 )
 from src.scheme.finance.actual_value import (
-    ActualValueBase, ActualValueCreate, ActualValueUpdate, ActualValue, ActualValueWithRelations
+    ActualValueBase, ActualValueCreate, ActualValueUpdate, ActualValue, ActualValueWithRelations, ReasonUpdate
 )
 from src.scheme.finance.plan_value import (
     PlanValueBase, PlanValueCreate, PlanValueUpdate, PlanValue, PlanValueWithRelations
+)
+from src.scheme.finance.document import (
+    DocumentBase, DocumentCreate, DocumentUpdate, DocumentResponse
 )
 from src.scheme.finance.analytics import (
     MonthValues, DashboardMetrics, CategoryStats, ShopStats, AggregatedData,
@@ -41,10 +44,13 @@ __all__ = [
     "MetricBase", "MetricCreate", "MetricUpdate", "Metric", "MetricWithCategory",
     
     # ActualValue
-    "ActualValueBase", "ActualValueCreate", "ActualValueUpdate", "ActualValue", "ActualValueWithRelations",
+    "ActualValueBase", "ActualValueCreate", "ActualValueUpdate", "ActualValue", "ActualValueWithRelations", "ReasonUpdate",
     
     # PlanValue
     "PlanValueBase", "PlanValueCreate", "PlanValueUpdate", "PlanValue", "PlanValueWithRelations",
+    
+    # Document
+    "DocumentBase", "DocumentCreate", "DocumentUpdate", "DocumentResponse",
     
     # Analytics
     "MonthValues", "DashboardMetrics", "CategoryStats", "ShopStats", "AggregatedData",

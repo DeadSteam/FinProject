@@ -1,187 +1,100 @@
-# Системные паттерны и архитектура
+# Системные паттерны PriFin
 
-## Общая архитектура
-**Микросервисная архитектура в Docker-контейнерах:**
+## Архитектурные принципы
 
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│     Nginx       │    │    Frontend      │    │    Backend      │
-│   (Reverse      │────│   (Static JS)    │────│   (FastAPI)     │
-│    Proxy)       │    │   Port: 3000     │    │   Port: 8000    │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-         │                                               │
-         │              ┌──────────────────┐            │
-         └──────────────│      Redis       │────────────┘
-                        │   (Sessions)     │
-                        │   Port: 6379     │
-                        └──────────────────┘
-                                 │
-                   ┌─────────────┴─────────────┐
-                   │                           │
-         ┌─────────────────┐         ┌─────────────────┐
-         │  Finance DB     │         │   Users DB      │
-         │ (PostgreSQL)    │         │ (PostgreSQL)    │
-         │  Port: 5432     │         │  Port: 5432     │
-         └─────────────────┘         └─────────────────┘
-```
+### 1. Microservices в Docker
+- Каждый компонент изолирован в контейнере
+- Независимое масштабирование сервисов
+- Service discovery через Docker networks
 
-## Ключевые архитектурные решения
+### 2. Database Separation
+- `finance_db` - бизнес-данные (категории, операции, планы)
+- `users_db` - авторизация и пользователи
+- Разделение ответственности и безопасности
 
-### 1. Разделение баз данных
-- **finance_db** - бизнес-данные (метрики, планы, факты)
-- **users_db** - пользователи, роли, авторизация
-- **Причина**: разграничение ответственности и безопасности
-
-### 2. Stateless backend
-- Сессии хранятся в Redis
+### 3. Stateless Backend
 - JWT токены для авторизации
+- Redis для сессий и кэширования
 - Горизонтальное масштабирование
 
-### 3. API-first подход
-- REST API с OpenAPI документацией
-- Версионирование API (/api/v1/)
-- Единый точка входа для всех операций
+## Backend паттерны
 
-### 4. Frontend как SPA
-- Vanilla JavaScript (без фреймворков)
-- Модульная архитектура
-- Относительные пути для универсальности
-
-## Паттерны проектирования
-
-### Backend (Python/FastAPI)
-
-#### 1. Repository Pattern
+### Repository Pattern
 ```python
 # Абстракция доступа к данным
-class BaseRepository:
-    async def get(self, id: str)
-    async def create(self, data: dict)
-    async def update(self, id: str, data: dict)
-    async def delete(self, id: str)
+class CategoryRepository:
+    async def get_all(self) -> List[Category]
+    async def create(self, data: CategoryCreate) -> Category
 ```
 
-#### 2. Service Layer Pattern
+### Service Layer
 ```python
 # Бизнес-логика отделена от контроллеров
-class MetricService:
-    def __init__(self, repo: MetricRepository)
-    async def create_metric_with_periods(...)
-    async def calculate_deviations(...)
+class CategoryService:
+    def __init__(self, repo: CategoryRepository)
+    async def create_category(self, data, user_id)
 ```
 
-#### 3. Dependency Injection
-```python
-# FastAPI встроенная DI система
-@app.get("/metrics")
-async def get_metrics(
-    service: MetricService = Depends(get_metric_service)
-):
-```
+### Dependency Injection
+- FastAPI встроенная DI система
+- Автоматическое разрешение зависимостей
+- Легкое тестирование с mock объектами
 
-#### 4. Settings Pattern
-```python
-# Централизованная конфигурация через Pydantic
-class Settings(BaseSettings):
-    HOST: str
-    DATABASE_URL: str
-    # Автоматическое чтение из .env
-```
+## Frontend паттерны
 
-### Frontend (JavaScript)
+### Текущий (Vanilla JS)
+- ES6 modules без сборщиков
+- Adaptive API URL detection
+- Component-like структура файлов
 
-#### 1. Module Pattern
-```javascript
-// Модульная организация кода
-export class ApiClient { ... }
-export const config = { ... }
-```
+### Новый (React)
+- Component-based архитектура  
+- Context API для состояния
+- Custom hooks для логики
+- CSS Modules для стилей
 
-#### 2. Factory Pattern
-```javascript
-// Создание элементов UI
-function createMetricModal() { ... }
-function createEditValueModal() { ... }
-```
+## Конфигурационные паттерны
 
-#### 3. Observer Pattern
-```javascript
-// Event-driven обновления UI
-document.addEventListener('change', updateData)
-button.addEventListener('click', handleClick)
-```
+### Environment-driven
+- Все настройки через .env переменные
+- HOST параметризация для окружений
+- Docker-compose inheritance: `${HOST}`
 
-## Принципы организации кода
-
-### 1. Разделение по слоям
-```
-Backend:
-├── src/api/          # API endpoints
-├── src/core/         # Конфигурация, middleware
-├── src/models/       # Модели данных
-├── src/services/     # Бизнес-логика
-└── src/repositories/ # Доступ к данным
-
-Frontend:
-├── scripts/auth/     # Авторизация
-├── scripts/pages/    # Страницы
-├── scripts/utils/    # Утилиты
-└── scripts/config.js # Конфигурация
-```
-
-### 2. Конфигурация через переменные окружения
-- Все настройки в .env файле
-- Автоматическая адаптация к среде (dev/prod)
-- Нет жестко закодированных значений
-
-### 3. Error Handling
-- Централизованная обработка ошибок
-- Логирование всех операций
-- Graceful degradation
-
-### 4. Security Patterns
-- JWT токены с истечением срока
-- CORS настройки
-- Rate limiting
-- Хеширование паролей bcrypt
-
-## Интеграционные паттерны
-
-### 1. Database Connection Pooling
-```python
-# Пул соединений для производительности
-DB_POOL_SIZE=5
-DB_MAX_OVERFLOW=10
-```
-
-### 2. Health Checks
+### CORS flexibility
 ```yaml
-# Docker health checks для всех сервисов
-healthcheck:
-  test: ["CMD-SHELL", "pg_isready -U postgres"]
-  interval: 5s
+environment:
+  - CORS_ORIGINS=http://${HOST}:3000,http://${HOST}:3001
 ```
 
-### 3. Graceful Startup
-```bash
-# Ожидание готовности зависимых сервисов
-wait_for_postgres()
-wait_for_redis()
-```
+## Безопасность
 
-## Масштабирование
+### Авторизация
+- JWT access tokens (15 мин)
+- Refresh tokens (7 дней)
+- bcrypt для паролей
+- Rate limiting через slowapi
 
-### Горизонтальное:
-- Stateless backend - можно запускать N экземпляров
-- Load balancer через nginx
-- Shared Redis для сессий
+### API безопасность
+- CORS headers настроены
+- SQL injection защита через SQLAlchemy
+- Input validation через Pydantic
 
-### Вертикальное:
-- Database connection pooling
-- Redis кэширование
-- Async I/O в FastAPI
+## Производительность
 
-## Мониторинг и логирование
-- Структурированное логирование
-- Health check endpoints
-- Метрики производительности через FastAPI middleware 
+### База данных
+- Async SQLAlchemy для неблокирующих запросов
+- Connection pooling: DB_POOL_SIZE=5
+- Индексы на часто используемых полях
+
+### Кэширование
+- Redis для сессий
+- HTTP кэши для статики
+- Database query caching
+
+### Frontend оптимизации
+- Код сплиттинг в React версии  
+- Lazy loading компонентов
+- Минификация в production 
+ 
+ 
+ 

@@ -1,0 +1,312 @@
+/* Стили для SlideFilters - тумблеры и улучшенный дизайн */
+
+/* Тумблеры для метрик - используем те же стили, что и в ComparisonFilters */
+.metrics-toggles {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.toggle-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    padding: 0.375rem 0.5rem;
+    transition: all 0.2s ease;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.toggle-text {
+    font-weight: 500;
+    color: #262626;
+    font-size: 0.875rem;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 0.5rem;
+}
+
+.toggle-switch {
+    position: relative;
+    width: 52px;
+    height: 26px;
+    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+    border-radius: 26px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+    cursor: pointer;
+    min-width: 52px;
+    max-width: 52px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 26px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    top: 50%;
+    transform: translateY(-50%) translateZ(0);
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 50%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1);
+    backface-visibility: hidden;
+}
+
+.toggle-input:checked + .toggle-slider {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    box-shadow: inset 0 2px 4px rgba(79, 70, 229, 0.3);
+}
+
+.toggle-input:checked + .toggle-slider:before {
+    transform: translateX(26px) translateY(-50%);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4), 0 2px 6px rgba(79, 70, 229, 0.2);
+}
+
+.toggle-input:focus + .toggle-slider {
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.toggle-switch.active {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    box-shadow: inset 0 2px 4px rgba(79, 70, 229, 0.3);
+}
+
+/* Улучшенные стили для карточек фильтров */
+.slide-filters .card {
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: var(--card-border-radius, 12px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+
+.slide-filters .card:hover {
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    border-color: var(--primary, #4f46e5);
+    transform: translateY(-2px);
+}
+
+.slide-filters .card-header {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-bottom: 1px solid var(--border, #e2e8f0);
+    border-radius: 12px 12px 0 0;
+    padding: 1.25rem 1.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.slide-filters .card-header h6 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary, #1e293b);
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+
+.slide-filters .card-body {
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.8);
+    position: relative;
+    z-index: 1;
+}
+
+/* Улучшенные стили для форм */
+.slide-filters .form-label {
+    font-weight: 700;
+    color: var(--text-primary, #1e293b);
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.8rem;
+}
+
+.slide-filters .form-control,
+.slide-filters .form-select {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 2px solid var(--border, #e2e8f0);
+    color: var(--text-primary, #1e293b);
+    font-size: 0.9rem;
+    padding: 0.875rem 1.25rem;
+    border-radius: 10px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    font-weight: 500;
+}
+
+.slide-filters .form-control:focus,
+.slide-filters .form-select:focus {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-color: var(--primary, #4f46e5);
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1), 0 4px 12px rgba(79, 70, 229, 0.15);
+    color: var(--text-primary, #1e293b);
+    outline: none;
+    transform: translateY(-1px);
+}
+
+.slide-filters .form-control:hover,
+.slide-filters .form-select:hover {
+    border-color: var(--primary-light, #6366f1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+/* Стили для переключателя периодов */
+.period-selector {
+    padding: 0.5rem 0;
+}
+
+.period-selector .btn-group {
+    display: flex;
+    width: 100%;
+}
+
+.period-selector .btn {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-radius: 0;
+    transition: all 0.2s ease;
+    border: 2px solid var(--border, #e2e8f0);
+}
+
+.period-selector .btn:first-child {
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-right: 1px solid var(--border, #e2e8f0);
+}
+
+.period-selector .btn:last-child {
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    border-left: 1px solid var(--border, #e2e8f0);
+}
+
+.period-selector .btn:not(:first-child):not(:last-child) {
+    border-left: 1px solid var(--border, #e2e8f0);
+    border-right: 1px solid var(--border, #e2e8f0);
+}
+
+.period-selector .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.period-selector .btn-primary {
+    background: linear-gradient(135deg, var(--primary, #4f46e5), var(--primary-dark, #7c3aed));
+    border-color: var(--primary, #4f46e5);
+    box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
+    color: white;
+}
+
+.period-selector .btn-outline-primary {
+    color: var(--primary, #4f46e5);
+    border-color: var(--border, #e2e8f0);
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.period-selector .btn-outline-primary:hover {
+    background: linear-gradient(135deg, var(--primary, #4f46e5), var(--primary-dark, #7c3aed));
+    color: white;
+    border-color: var(--primary, #4f46e5);
+}
+
+.period-info {
+    margin-top: 0.5rem;
+    text-align: center;
+}
+
+.period-info small {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-muted, #6c757d);
+}
+
+/* Адаптивность для тумблеров */
+@media (max-width: 768px) {
+    .metrics-toggles {
+        grid-template-columns: 1fr !important;
+        gap: 0.5rem;
+    }
+    
+    .toggle-item {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .toggle-text {
+        font-size: 0.8rem;
+    }
+    
+    .toggle-switch {
+        width: 48px;
+        height: 24px;
+        min-width: 48px;
+        max-width: 48px;
+    }
+    
+    .toggle-slider:before {
+        height: 18px;
+        width: 18px;
+        left: 3px;
+    }
+    
+    .toggle-input:checked + .toggle-slider:before {
+        transform: translateX(24px) translateY(-50%);
+    }
+    
+    .period-selector .btn {
+        padding: 0.375rem 0.5rem;
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .slide-filters .card-body {
+        padding: 1rem;
+    }
+    
+    .toggle-item {
+        padding: 0.375rem 0.5rem;
+    }
+}

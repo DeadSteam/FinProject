@@ -1,0 +1,254 @@
+/* Экспортер отчетов */
+.report-exporter {
+    padding: 0;
+}
+
+/* Информация об отчете */
+.export-report-info {
+    background: var(--bg-light);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.export-report-info h6 {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.export-report-info p {
+    color: var(--text-secondary);
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* Выбор формата экспорта */
+.export-format-selection h6 {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.format-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.format-option {
+    background: var(--bg-primary);
+    border: 2px solid var(--border-light);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+}
+
+.format-option:hover {
+    background: var(--bg-hover);
+    border-color: var(--primary-light);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.format-option.active {
+    background: var(--primary-alpha);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-alpha);
+}
+
+.format-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.format-info {
+    flex: 1;
+}
+
+.format-name {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.format-description {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.format-check {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.format-check svg {
+    width: 20px;
+    height: 20px;
+    color: var(--primary);
+}
+
+/* Настройки экспорта */
+.export-options h6 {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.export-options .form-label {
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.export-options .form-control,
+.export-options .form-select {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.export-options .form-control:focus,
+.export-options .form-select:focus {
+    background: var(--bg-primary);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.2rem var(--primary-alpha);
+    color: var(--text-primary);
+}
+
+.export-options .form-check-input {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border);
+}
+
+.export-options .form-check-input:checked {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+
+.export-options .form-check-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.2rem var(--primary-alpha);
+}
+
+.export-options .form-check-label {
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Опции для PDF */
+.pdf-options {
+    background: var(--bg-light);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* Опции для PowerPoint */
+.pptx-options {
+    background: var(--bg-light);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* Общие опции */
+.common-options {
+    background: var(--bg-light);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+}
+
+/* Прогресс экспорта */
+.export-progress {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: var(--bg-light);
+    border-radius: var(--border-radius);
+}
+
+.export-progress .progress {
+    height: 8px;
+    background-color: var(--bg-secondary);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.export-progress .progress-bar {
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
+    transition: width 0.3s ease;
+}
+
+/* Действия экспорта */
+.export-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-light);
+}
+
+.export-actions .btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 120px;
+}
+
+.export-actions .btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.export-actions .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .format-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .format-option {
+        padding: 0.75rem;
+    }
+    
+    .format-icon {
+        font-size: 1.5rem;
+    }
+    
+    .format-name {
+        font-size: 0.9rem;
+    }
+    
+    .format-description {
+        font-size: 0.8rem;
+    }
+    
+    .export-actions {
+        flex-direction: column;
+    }
+    
+    .export-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

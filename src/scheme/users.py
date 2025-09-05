@@ -69,6 +69,7 @@ class User(UserInDB):
     """Полная схема пользователя с отношениями."""
     password_hash: Optional[str] = Field(None, exclude=True)
     role: Optional[Role] = None
+    avatar_url: Optional[str] = None
 
 
 # --- Auth схемы ---
@@ -100,9 +101,12 @@ class TokenData(BaseSchema):
 
 class LoginRequest(BaseSchema):
     """Запрос на вход в систему."""
+    identifier: str  # Email или номер телефона
+    password: str
+    
+    # Для обратной совместимости
     email: Optional[EmailStr] = None
     phone_number: Optional[str] = None
-    password: str
 
 
 class RegistrationRequest(UserCreate):
@@ -119,4 +123,10 @@ class UserRoleResponse(BaseSchema):
     """Ответ с информацией о роли пользователя."""
     role: Optional[str] = None
     username: str
-    has_role: bool 
+    has_role: bool
+
+
+class ChangePasswordRequest(BaseSchema):
+    """Запрос на смену пароля."""
+    current_password: str
+    new_password: str 

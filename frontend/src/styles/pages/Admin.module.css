@@ -1,0 +1,1589 @@
+/* CSS переменные */
+:root {
+    --primary-color: #4f46e5;
+    --primary-hover: #4338ca;
+    --primary-light: #e0e7ff;
+    --text-primary: #111827;
+    --text-secondary: #6b7280;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f9fafb;
+    --border-color: #e5e7eb;
+    --error-color: #dc2626;
+    --success-color: #059669;
+    --warning-color: #d97706;
+    --button-border-radius: 8px;
+    --transition: all 0.2s ease;
+}
+
+/* Основной контейнер админ панели */
+.adminLayout {
+    display: flex;
+    min-height: 100vh;
+    overflow-x: hidden;
+    flex-direction: column;
+}
+
+/* Боковое меню */
+.sidebar {
+    width: var(--sidebar-width);
+    background: var(--bg-primary);
+    height: calc(100vh - var(--header-height));
+    position: fixed;
+    left: 0;
+    top: var(--header-height);
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease;
+}
+
+.sidebarHeader {
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    color: var(--primary);
+    font-size: 1.2rem;
+}
+
+.logoLink {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+}
+
+.logo svg {
+    width: 24px;
+    height: 24px;
+    margin-right: 0.75rem;
+    fill: var(--primary);
+}
+
+.navMenu {
+    list-style: none;
+    padding: 1rem 0;
+    margin: 0;
+    flex: 1;
+}
+
+.navItem {
+    margin: 0.25rem 0;
+}
+
+.navLink {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    text-decoration: none;
+    transition: var(--transition);
+    border-left: 3px solid transparent;
+}
+
+.navLink:hover {
+    color: var(--primary);
+    background: rgba(79, 70, 229, 0.05);
+}
+
+.navLink.active {
+    color: var(--primary);
+    background: rgba(79, 70, 229, 0.1);
+    border-left-color: var(--primary);
+}
+
+.navLink :global(.nav-icon) {
+    width: 20px;
+    height: 20px;
+    margin-right: 0.75rem;
+}
+
+.userInfo {
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    border-top: 1px solid var(--border);
+    position: relative;
+    cursor: pointer;
+}
+
+.userAvatar {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-light);
+    color: var(--primary);
+    font-weight: 600;
+    border-radius: 50%;
+    margin-right: 0.75rem;
+}
+
+.avatarInner {
+    font-size: 0.9rem;
+}
+
+.userDetails {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.userName {
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.userRole {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.userDropdown {
+    position: absolute;
+    bottom: 100%;
+    left: 1rem;
+    right: 1rem;
+    background: var(--bg-primary);
+    border-radius: var(--button-border-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    z-index: 1001;
+}
+
+.userDropdown.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.userDropdownItem {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: var(--transition);
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+}
+
+.userDropdownItem:hover {
+    background: rgba(79, 70, 229, 0.05);
+    color: var(--primary);
+}
+
+.userDropdownItem i {
+    margin-right: 0.5rem;
+    width: 16px;
+}
+
+.userDropdownDivider {
+    height: 1px;
+    background: var(--border);
+    margin: 0.5rem 0;
+}
+
+.mobileToggle {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+/* Основной контент */
+.mainContent {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    margin-top: var(--header-height);
+    padding: 2rem;
+    max-width: 1600px;
+    transition: margin-left 0.3s ease;
+}
+
+/* Верхняя панель */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+
+}
+
+.pageTitle {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-family: 'Rimma Sans', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+}
+
+.topbarActions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.searchBar {
+    flex: 1;
+    max-width: 400px;
+    position: relative;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--button-border-radius);
+    padding-left: 2.8rem;
+    transition: var(--transition);
+    background: var(--bg-primary);
+}
+
+.searchInput:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-light);
+}
+
+.searchIcon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+}
+
+.mobileSidebarToggle {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+/* Контролы и фильтры */
+.controlsContainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.filterControls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.filterSelect {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--button-border-radius);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    min-width: 150px;
+    transition: var(--transition);
+}
+
+.filterSelect:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-light);
+}
+
+/* Контейнер таблицы */
+.tableContainer {
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
+.dataTable {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg-primary);
+}
+
+.dataTable th,
+.dataTable td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.dataTable th {
+    background: var(--background);
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.dataTable tbody tr:hover {
+    background: rgba(79, 70, 229, 0.02);
+}
+
+.dataTable tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Состояния загрузки и пустое состояние */
+.tableLoading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: var(--text-secondary);
+}
+
+.tableLoading .spinner {
+    width: 2rem;
+    height: 2rem;
+    border: 2px solid var(--border-color);
+    border-top: 2px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: var(--text-secondary);
+}
+
+.emptyIcon {
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.emptyMessage {
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+/* Улучшенные стили для ячеек пользователей */
+.userCell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.userCell .avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.userCell .details {
+    flex: 1;
+}
+
+.userCell .name {
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.userCell .email {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* Статус */
+.status {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.status::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+}
+
+.statusActive {
+    background: rgba(34, 197, 94, 0.1);
+    color: rgb(34, 197, 94);
+}
+
+.statusActive::before {
+    background: rgb(34, 197, 94);
+}
+
+.statusInactive {
+    background: rgba(239, 68, 68, 0.1);
+    color: rgb(239, 68, 68);
+}
+
+.statusInactive::before {
+    background: rgb(239, 68, 68);
+}
+
+/* Действия в строке */
+.actionsCell {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.rowAction {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: var(--button-border-radius);
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rowAction:hover {
+    background: rgba(79, 70, 229, 0.1);
+    color: var(--primary);
+}
+
+.rowAction svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Пагинация */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.5rem;
+}
+
+.paginationBtn {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--button-border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.paginationBtn:hover {
+    background: var(--primary);
+    color: var(--text-white);
+    border-color: var(--primary);
+}
+
+.paginationBtn.active {
+    background: var(--primary);
+    color: var(--text-white);
+    border-color: var(--primary);
+}
+
+.paginationBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Вкладки */
+.tabContent {
+    margin-top: 1rem;
+}
+
+.tabPane {
+    display: none;
+}
+
+.tabPane.active {
+    display: block;
+}
+
+/* Overlay для мобильного меню */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: none;
+}
+
+/* Мобильная адаптация */
+@media (max-width: 768px) {
+    .mobileToggle,
+    .mobileSidebarToggle {
+        display: block;
+    }
+
+    .mainContent {
+        margin-left: 0;
+        padding: 1rem 0.75rem;
+    }
+
+    .topbar {
+        padding: 1rem 0.75rem;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .sidebar {
+        transform: translateX(-100%);
+        width: 280px;
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    .overlay {
+        display: block;
+    }
+
+    /* Оригинальные стили карточек пользователей/магазинов */
+    .dataTable {
+        display: none; /* Скрываем таблицу на мобильных */
+    }
+
+    .mobileCardsList {
+        display: block !important; /* Показываем мобильные карточки */
+        width: 100%;
+    }
+
+    .mobileCard {
+        display: block;
+        width: 100%;
+        margin-bottom: 1rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.75rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        background: var(--bg-primary);
+        font-size: 0.85rem;
+        transition: var(--transition);
+        box-sizing: border-box;
+    }
+
+    .mobileCard:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .mobileCardHeader {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .mobileCardAvatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--primary-light);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        margin-right: 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    .mobileCardTitle {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    .mobileCardSubtitle {
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        margin: 0;
+    }
+
+    .mobileCardBody {
+        margin-bottom: 0.75rem;
+    }
+
+    .mobileCardField {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        font-size: 0.85rem;
+    }
+
+    .mobileCardField:last-child {
+        margin-bottom: 0;
+    }
+
+    .mobileCardLabel {
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .mobileCardValue {
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+
+    .mobileCardStatus {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .mobileCardStatus.active {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+    }
+
+    .mobileCardStatus.inactive {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--error);
+    }
+
+    .mobileCardActions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid var(--border-light);
+    }
+
+    .mobileActionBtn {
+        padding: 0.5rem;
+        border: none;
+        background: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        border-radius: 4px;
+        transition: var(--transition);
+        font-size: 0.85rem;
+    }
+
+    .mobileActionBtn:hover {
+        background: rgba(79, 70, 229, 0.05);
+        color: var(--primary);
+    }
+
+    .mobileActionBtn.danger:hover {
+        background: rgba(239, 68, 68, 0.05);
+        color: var(--error);
+    }
+
+    .mobileActionBtn svg {
+        width: 14px !important;
+        height: 14px !important;
+    }
+
+    .controlsContainer {
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        background: var(--bg-primary);
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .filterControls {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .filterSelect {
+        width: 100%;
+        padding: 0.5rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .dataTable {
+        font-size: 0.85rem;
+    }
+
+    .dataTable th, 
+    .dataTable td {
+        padding: 0.5rem;
+    }
+
+    .userCell .email {
+        display: none;
+    }
+}
+
+/* Дашборд */
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.statCard {
+    background: var(--bg-primary);
+    border-radius: var(--card-border-radius);
+    padding: 1.5rem;
+    box-shadow: var(--box-shadow);
+    transition: var(--transition);
+    border: 1px solid var(--border);
+}
+
+.statCard:hover {
+    box-shadow: var(--box-shadow-hover);
+    transform: translateY(-2px);
+}
+
+.statIcon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-white);
+    margin-bottom: 1rem;
+}
+
+.statContent h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.statContent p {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.statLink {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+.statLink:hover {
+    color: var(--primary-dark);
+}
+
+.quickActions, .recentActivity {
+    background: var(--bg-primary);
+    border-radius: var(--card-border-radius);
+    padding: 1.5rem;
+    box-shadow: var(--box-shadow);
+    margin-bottom: 2rem;
+    border: 1px solid var(--border);
+}
+
+.quickActions h2, .recentActivity h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+}
+
+.actionButtons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.actionButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--primary);
+    color: var(--text-white);
+    text-decoration: none;
+    border-radius: var(--button-border-radius);
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.actionButton:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+.activityList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.activityItem {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    transition: var(--transition);
+}
+
+.activityItem:hover {
+    background: var(--border-light);
+}
+
+.activityIcon {
+    width: 32px;
+    height: 32px;
+    background: var(--primary-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+}
+
+.activityContent p {
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.activityTime {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.loadingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: var(--text-secondary);
+}
+
+/* Стили для иконок категорий */
+.categoryIcon {
+    width: 1.5rem;
+    height: 1.5rem;
+    color: var(--primary-color);
+}
+
+.categoryIcon svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* Формы */
+.formGroup {
+    margin-bottom: 1.5rem;
+}
+
+.formRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.formRow .formGroup {
+    margin-bottom: 0;
+}
+
+.formControl {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--button-border-radius);
+    transition: var(--transition);
+    background: var(--bg-primary);
+}
+
+.formControl:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-light);
+}
+
+.formLabel {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.formText {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+.errorMessage {
+    font-size: 0.875rem;
+    color: #dc2626;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+}
+
+.errorMessage::before {
+    content: '⚠';
+    margin-right: 0.25rem;
+}
+
+.infoMessage {
+    background: var(--primary-light);
+    color: var(--primary);
+    padding: 0.75rem;
+    border-radius: var(--button-border-radius);
+    font-size: 0.875rem;
+    border: 1px solid var(--primary);
+    border-opacity: 0.2;
+}
+
+@media (max-width: 768px) {
+    .statsGrid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .actionButtons {
+        flex-direction: column;
+    }
+    
+    .actionButton {
+        justify-content: center;
+    }
+
+    .imageGalleryContainer {
+        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+        gap: 0.5rem;
+    }
+
+    .formRow {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .formRow .formGroup {
+        margin-bottom: 1.5rem;
+    }
+}
+
+/* Адаптивность для мобильных устройств */
+
+/* Планшеты */
+@media (max-width: 992px) {
+    .adminContainer {
+        padding: 1rem;
+    }
+
+    .adminHeader {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .adminNav {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .navItem {
+        flex: 1;
+        min-width: 120px;
+        max-width: 160px;
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .statsGrid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .dataTableContainer {
+        overflow-x: auto;
+        margin: 0 -1rem;
+        padding: 0 1rem;
+    }
+}
+
+/* Мобильные устройства */
+@media (max-width: 768px) {
+    .adminContainer {
+        padding: 0.75rem;
+    }
+
+    .adminHeader {
+        margin-bottom: 1rem;
+    }
+
+    .adminTitle {
+        font-size: 1.4rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .adminSubtitle {
+        font-size: 0.9rem;
+    }
+
+    .adminNav {
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .navItem {
+        width: 100%;
+        max-width: none;
+        text-align: center;
+        padding: 0.75rem;
+        font-size: 0.9rem;
+        border-radius: 8px;
+    }
+
+    .navItem.active {
+        background: var(--primary);
+        color: var(--text-white);
+    }
+
+    .statsGrid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .statCard {
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .statValue {
+        font-size: 1.5rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .statLabel {
+        font-size: 0.85rem;
+    }
+
+    .statIcon {
+        width: 40px;
+        height: 40px;
+        margin: 0 auto 0.75rem;
+    }
+
+    /* Таблицы */
+    .dataTableContainer {
+        overflow-x: auto;
+        margin: 0 -0.75rem;
+        padding: 0 0.75rem;
+        border-radius: 0;
+    }
+
+    .dataTable {
+        min-width: 600px;
+        font-size: 0.85rem;
+    }
+
+    .dataTable th,
+    .dataTable td {
+        padding: 0.5rem 0.375rem;
+        white-space: nowrap;
+    }
+
+    .dataTable th {
+        font-size: 0.8rem;
+        background: var(--bg-secondary);
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+
+    /* Кнопки действий */
+    .actionButtons {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        min-width: 80px;
+    }
+
+    .actionButton {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        border-radius: 4px;
+        min-height: 28px;
+    }
+
+    /* Формы */
+    .formContainer {
+        padding: 1rem;
+    }
+
+    .formGrid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .formGroup {
+        margin-bottom: 1rem;
+    }
+
+    .formGroup label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 0.375rem;
+        display: block;
+    }
+
+    .formInput,
+    .formSelect,
+    .formTextarea {
+        width: 100%;
+        padding: 0.75rem;
+        font-size: 0.9rem;
+        min-height: 44px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        box-sizing: border-box;
+    }
+
+    .formTextarea {
+        min-height: 80px;
+        resize: vertical;
+    }
+
+    .formActions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+    }
+
+    .formActions .btn {
+        width: 100%;
+        min-height: 44px;
+        font-size: 0.9rem;
+        padding: 0.75rem 1rem;
+    }
+
+    /* Модальные окна */
+    .modalContent {
+        margin: 0.75rem;
+        padding: 1.5rem;
+        max-width: calc(100% - 1.5rem);
+        max-height: calc(100vh - 1.5rem);
+        overflow-y: auto;
+        border-radius: 12px;
+    }
+
+    .modalHeader {
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .modalTitle {
+        font-size: 1.1rem;
+        margin: 0;
+    }
+
+    .modalClose {
+        top: 0.75rem;
+        right: 0.75rem;
+        width: 32px;
+        height: 32px;
+        font-size: 1.2rem;
+    }
+
+    /* Поиск и фильтры */
+    .searchFilters {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: var(--bg-secondary);
+        border-radius: 8px;
+    }
+
+    .searchInput {
+        width: 100%;
+        padding: 0.75rem;
+        font-size: 0.9rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        min-height: 44px;
+    }
+
+    .filterSelect {
+        width: 100%;
+        padding: 0.75rem;
+        font-size: 0.9rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        min-height: 44px;
+        background: var(--bg-primary);
+    }
+
+    /* Пагинация */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .paginationButton {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+        min-height: 36px;
+        min-width: 36px;
+        border-radius: 6px;
+    }
+
+    .paginationInfo {
+        font-size: 0.8rem;
+        text-align: center;
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+}
+
+/* Очень маленькие экраны */
+@media (max-width: 576px) {
+    .adminContainer {
+        padding: 0.5rem;
+    }
+
+    .adminTitle {
+        font-size: 1.2rem;
+    }
+
+    .adminSubtitle {
+        font-size: 0.85rem;
+    }
+
+    .navItem {
+        padding: 0.625rem;
+        font-size: 0.85rem;
+    }
+
+    .statsGrid {
+        gap: 0.5rem;
+    }
+
+    .statCard {
+        padding: 0.75rem;
+    }
+
+    .statValue {
+        font-size: 1.3rem;
+    }
+
+    .statLabel {
+        font-size: 0.8rem;
+    }
+
+    .dataTable {
+        font-size: 0.8rem;
+    }
+
+    .dataTable th,
+    .dataTable td {
+        padding: 0.375rem 0.25rem;
+    }
+
+    .formInput,
+    .formSelect,
+    .formTextarea {
+        padding: 0.625rem;
+        font-size: 0.85rem;
+        min-height: 40px;
+    }
+
+    .formActions .btn {
+        min-height: 40px;
+        font-size: 0.85rem;
+        padding: 0.625rem 0.875rem;
+    }
+
+    .modalContent {
+        margin: 0.5rem;
+        padding: 1rem;
+        max-width: calc(100% - 1rem);
+    }
+
+    .modalTitle {
+        font-size: 1rem;
+    }
+
+    .searchFilters {
+        padding: 0.75rem;
+    }
+
+    .searchInput,
+    .filterSelect {
+        padding: 0.625rem;
+        font-size: 0.85rem;
+        min-height: 40px;
+    }
+
+    .paginationButton {
+        padding: 0.375rem 0.625rem;
+        font-size: 0.8rem;
+        min-height: 32px;
+        min-width: 32px;
+    }
+}
+
+/* Альбомная ориентация на телефонах */
+@media (max-width: 768px) and (orientation: landscape) {
+    .adminContainer {
+        padding: 0.5rem;
+    }
+
+    .adminNav {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .navItem {
+        flex: 1;
+        min-width: 100px;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .statsGrid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+
+    .formActions {
+        flex-direction: row;
+        gap: 1rem;
+    }
+
+    .formActions .btn {
+        width: auto;
+        flex: 1;
+    }
+
+    .modalContent {
+        max-height: calc(100vh - 2rem);
+        overflow-y: auto;
+    }
+
+    .searchFilters {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .searchInput {
+        flex: 2;
+    }
+
+    .filterSelect {
+        flex: 1;
+    }
+}
+
+/* Скрываем мобильные карточки на десктопе */
+.mobileCardsList {
+    display: none;
+}
+
+/* Планшеты */
+@media (max-width: 992px) {
+    .dashboard {
+        padding: 1rem;
+        box-sizing: border-box;
+    }
+    
+    .statsGrid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .categoriesGrid {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1rem;
+    }
+    
+    .categoryCard {
+        padding: 1.25rem;
+    }
+}
+
+/* Стили для модальных действий */
+.modalActions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.btnPrimary {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--button-border-radius);
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btnPrimary:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+.btnSecondary {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--button-border-radius);
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btnSecondary:hover {
+    background: var(--bg-secondary);
+    border-color: var(--text-secondary);
+}
+
+.checkboxLabel {
+    margin-left: 0.5rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Стили для сообщений об ошибках */
+.error-message {
+    color: var(--error-color);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.required {
+    color: var(--error-color);
+}
+
+/* Стили для галереи изображений */
+.imageGalleryContainer {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 1rem;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--button-border-radius);
+}
+
+.imageItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.5rem;
+    border: 2px solid transparent;
+    border-radius: var(--button-border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+    background: var(--bg-primary);
+}
+
+.imageItem:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+}
+
+.imageItem.selected {
+    border-color: var(--primary-color);
+    background: var(--primary-light);
+}
+
+.imageItem .categoryIcon {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 0.5rem;
+    color: var(--primary-color);
+}
+
+.imageName {
+    font-size: 0.75rem;
+    text-align: center;
+    color: var(--text-secondary);
+    line-height: 1.2;
+}

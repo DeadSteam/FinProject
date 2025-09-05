@@ -4,7 +4,13 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.scheme.finance import ActualValue, ActualValueCreate, ActualValueUpdate, ActualValueWithRelations
+from src.scheme.finance import (
+    ActualValue, 
+    ActualValueCreate, 
+    ActualValueUpdate, 
+    ActualValueWithRelations,
+    ReasonUpdate
+)
 from src.api.v1.endpoints.finance.utils import finances_db, actual_value_service, period_service
 
 router = APIRouter()
@@ -250,3 +256,38 @@ async def delete_actual_value(
     if not result:
         raise HTTPException(status_code=500, detail="Ошибка при удалении фактического значения")
     return {"status": "success", "message": "Фактическое значение успешно удалено"} 
+
+@router.patch("/{actual_value_id}/reason", response_model=ActualValue)
+async def update_reason(
+    actual_value_id: UUID,
+    reason: ReasonUpdate,
+    session: AsyncSession = Depends(finances_db.get_session)
+):
+    """
+    Обновить причину отклонения для фактического значения.
+    
+    Args:
+        actual_value_id: ID фактического значения
+        reason: Новая причина отклонения
+    """
+    try:
+        # Проверяем существование фактического значения
+        actual_value = await actual_value_service.get(id=actual_value_id, session=session)
+        if not actual_value:
+            raise HTTPException(status_code=404, detail="Фактическое значение не найдено")
+            
+        # Обновляем причину
+        updated_actual_value = await actual_value_service.update_reason(
+            id=actual_value_id,
+            reason_update=reason,
+            session=session
+        )
+        
+        return updated_actual_value
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Ошибка при обновлении причины отклонения: {str(e)}"
+        ) 

@@ -1,0 +1,119 @@
+/* Стили для компонента SlideSettings */
+
+.setting-group {
+    margin-bottom: 1rem;
+}
+
+.setting-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    align-items: flex-start;
+}
+
+.setting-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Стили для переключателя периодов и типа графика - полностью идентичные */
+.period-selector,
+.chart-type-selector {
+    padding: 0.5rem 0;
+}
+
+.period-selector .btn-group,
+.chart-type-selector .btn-group {
+    width: 100% !important;
+    display: flex !important;
+    border-radius: var(--border-radius) !important;
+    overflow: hidden !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.period-selector .btn,
+.chart-type-selector .btn {
+    flex: 1 !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    padding: 0.5rem 0.75rem !important;
+    border-radius: 0 !important;
+    border: 1px solid var(--border) !important;
+    background-color: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.period-selector .btn:first-child,
+.chart-type-selector .btn:first-child {
+    border-top-left-radius: var(--border-radius) !important;
+    border-bottom-left-radius: var(--border-radius) !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-right: none !important;
+}
+
+.period-selector .btn:not(:first-child):not(:last-child),
+.chart-type-selector .btn:not(:first-child):not(:last-child) {
+    border-radius: 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+}
+
+.period-selector .btn:last-child,
+.chart-type-selector .btn:last-child {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-top-right-radius: var(--border-radius) !important;
+    border-bottom-right-radius: var(--border-radius) !important;
+    border-left: none !important;
+}
+
+.period-selector .btn-primary,
+.chart-type-selector .btn-primary {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: white !important;
+    z-index: 2;
+}
+
+.period-selector .btn-outline-primary,
+.chart-type-selector .btn-outline-primary {
+    background-color: var(--bg-primary) !important;
+    border-color: var(--border) !important;
+    color: var(--text-primary) !important;
+}
+
+.period-selector .btn-outline-primary:hover,
+.chart-type-selector .btn-outline-primary:hover {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: white !important;
+    transform: none;
+}
+
+.period-selector .btn:focus,
+.chart-type-selector .btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+}
+
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .setting-row {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .period-selector .btn,
+    .chart-type-selector .btn {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.6rem;
+    }
+}

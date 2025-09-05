@@ -11,14 +11,19 @@ from src.scheme.users import (
     Token, TokenData, LoginRequest
 )
 
+from src.scheme.user_avatar import (
+    UserAvatarBase, UserAvatarCreate, UserAvatarResponse
+)
+
 from src.scheme.finance import (
     PeriodBase, PeriodCreate, PeriodUpdate, Period,
     ImageBase, ImageCreate, ImageUpdate, Image,
     CategoryBase, CategoryCreate, CategoryUpdate, Category, CategoryWithRelations,
     ShopBase, ShopCreate, ShopUpdate, Shop,
     MetricBase, MetricCreate, MetricUpdate, Metric, MetricWithCategory,
-    ActualValueBase, ActualValueCreate, ActualValueUpdate, ActualValue, ActualValueWithRelations,
-    PlanValueBase, PlanValueCreate, PlanValueUpdate, PlanValue, PlanValueWithRelations
+    ActualValueBase, ActualValueCreate, ActualValueUpdate, ActualValue, ActualValueWithRelations, ReasonUpdate,
+    PlanValueBase, PlanValueCreate, PlanValueUpdate, PlanValue, PlanValueWithRelations,
+    DocumentBase, DocumentCreate, DocumentUpdate, DocumentResponse
 )
 
 from src.scheme.response import (
@@ -56,14 +61,18 @@ __all__ = [
     "UserBase", "UserCreate", "UserUpdate", "UserInDB", "User",
     "Token", "TokenData", "LoginRequest",
     
+    # User Avatar schemas
+    "UserAvatarBase", "UserAvatarCreate", "UserAvatarResponse",
+    
     # Finance schemas
     "PeriodBase", "PeriodCreate", "PeriodUpdate", "Period",
     "ImageBase", "ImageCreate", "ImageUpdate", "Image",
     "CategoryBase", "CategoryCreate", "CategoryUpdate", "Category", "CategoryWithRelations",
     "ShopBase", "ShopCreate", "ShopUpdate", "Shop",
     "MetricBase", "MetricCreate", "MetricUpdate", "Metric", "MetricWithCategory",
-    "ActualValueBase", "ActualValueCreate", "ActualValueUpdate", "ActualValue", "ActualValueWithRelations",
+    "ActualValueBase", "ActualValueCreate", "ActualValueUpdate", "ActualValue", "ActualValueWithRelations", "ReasonUpdate",
     "PlanValueBase", "PlanValueCreate", "PlanValueUpdate", "PlanValue", "PlanValueWithRelations",
+    "DocumentBase", "DocumentCreate", "DocumentUpdate", "DocumentResponse",
     
     # Response schemas
     "BaseResponse", "ItemResponse", "ListResponse", "ErrorResponse", "ValidationErrorResponse",

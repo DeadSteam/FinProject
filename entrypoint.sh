@@ -55,10 +55,6 @@ wait_for_finance_db_init() {
     echo "Finance database is initialized and ready"
 }
 
-# Установка PostgreSQL клиента
-echo "Installing PostgreSQL client..."
-apt-get update && apt-get install -y postgresql-client
-
 # Ожидаем доступность всех сервисов
 wait_for_postgres ${FINANCE_DB_HOST:-finance_db} ${FINANCE_PORT:-5432}
 wait_for_postgres ${USERS_DB_HOST:-users_db} ${USERS_PORT:-5432}

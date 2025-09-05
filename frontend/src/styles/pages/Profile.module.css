@@ -1,0 +1,681 @@
+/* Стили для страницы профиля */
+.profileContent {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 4rem auto;
+}
+
+.loading {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+/* Навигация профиля */
+.profileNavigation {
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.backButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: var(--button-border-radius);
+    transition: all 0.3s ease;
+}
+
+.backButton:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--primary);
+}
+
+.profileSection {
+    margin-bottom: 2rem;
+}
+
+.profileSection:last-child {
+    margin-bottom: 0;
+}
+
+.sectionTitle {
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+}
+
+.profileCard {
+    background: var(--bg-primary);
+    border-radius: var(--card-border-radius);
+    padding: 2rem !important;
+    box-shadow: var(--box-shadow);
+}
+
+/* Заголовок профиля */
+.profileHeader {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.profileAvatar {
+    position: relative;
+    width: 120px;
+    height: 120px;
+}
+
+.avatarPlaceholder {
+    width: 100%;
+    height: 100%;
+    background: var(--primary);
+    color: var(--text-white);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: 600;
+    overflow: hidden;
+}
+
+.avatarEdit {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 36px;
+    height: 36px;
+    background: var(--bg-primary);
+    border: 2px solid var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.avatarEdit:hover {
+    background: var(--primary);
+    color: var(--text-white);
+}
+
+.profileInfo {
+    flex: 1;
+}
+
+.profileName {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.profileRole {
+    font-size: 1.1rem;
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+}
+
+.profileEmail {
+    color: var(--text-secondary);
+}
+
+/* Форма профиля */
+.profileForm {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.formGroup label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.formControl {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--button-border-radius);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: var(--bg-primary);
+}
+
+.formControl:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+    outline: none;
+}
+
+.formControl.error {
+    border-color: var(--error);
+}
+
+.errorMessage {
+    color: var(--error);
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+
+.formText {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+.formActions {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+/* Модальное окно */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: var(--z-modal);
+    animation: modalFadeIn 0.3s ease;
+}
+
+.modalContent {
+    background: var(--bg-primary);
+    border-radius: var(--card-border-radius);
+    padding: 2rem;
+    max-width: 400px;
+    width: 90%;
+    position: relative;
+    animation: modalSlideIn 0.3s ease;
+}
+
+.modalClose {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.modalClose:hover {
+    color: var(--primary);
+}
+
+.avatarPreview {
+    width: 120px;
+    height: 120px;
+    background: var(--primary);
+    color: var(--text-white);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: 600;
+    margin: 1rem auto;
+    overflow: hidden;
+}
+
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+}
+
+.updateSuccess {
+    animation: update-success-animation 1.5s ease;
+}
+
+/* Анимации */
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+@keyframes update-success-animation {
+    0% { background-color: var(--bg-primary); }
+    50% { background-color: rgba(76, 175, 80, 0.1); }
+    100% { background-color: var(--bg-primary); }
+}
+
+/* Адаптивность */
+@media (max-width: 992px) {
+    .profileContent {
+        padding: 1rem;
+    }
+
+    .profileForm {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .formActions {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    .formActions button {
+        flex: 1;
+        max-width: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    .profileContent {
+        padding: 0.75rem;
+    }
+
+    .profileHeader {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .profileAvatar {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto;
+    }
+
+    .avatarEdit {
+        width: 28px;
+        height: 28px;
+        right: -2px;
+        bottom: -2px;
+    }
+
+    .avatarEdit svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .profileInfo {
+        text-align: center;
+    }
+
+    .profileName {
+        font-size: 1.2rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .profileRole {
+        font-size: 0.95rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .profileEmail {
+        font-size: 0.85rem;
+    }
+
+    .profileForm {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .formGroup label {
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .formControl {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+        min-height: 44px;
+        border-radius: 8px;
+    }
+
+    .formActions {
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .formActions button {
+        width: 100%;
+        min-height: 44px;
+        font-size: 0.9rem;
+        padding: 0.75rem 1rem;
+    }
+
+    .modalContent {
+        margin: 0.75rem;
+        padding: 1.5rem;
+        width: calc(100% - 1.5rem);
+        max-width: calc(100% - 1.5rem);
+        border-radius: 12px;
+    }
+
+    .modalClose {
+        top: 0.75rem;
+        right: 0.75rem;
+        width: 32px;
+        height: 32px;
+        font-size: 1.2rem;
+    }
+
+    .avatarPreview {
+        width: 100px;
+        height: 100px;
+        font-size: 2rem;
+        margin: 1rem auto 1.5rem;
+    }
+
+    .backButton {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+        gap: 0.375rem;
+    }
+
+    .backButton svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .profileSection {
+        margin-bottom: 1.5rem;
+    }
+
+    .sectionTitle {
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+    }
+
+    .profileCard {
+        padding: 1rem;
+        border-radius: 12px;
+    }
+}
+
+@media (max-width: 576px) {
+    .profileContent {
+        padding: 0.5rem;
+    }
+
+    .profileHeader {
+        padding: 0.75rem;
+        gap: 0.75rem;
+    }
+
+    .profileAvatar {
+        width: 64px;
+        height: 64px;
+    }
+
+    .avatarEdit {
+        width: 24px;
+        height: 24px;
+        right: -1px;
+        bottom: -1px;
+    }
+
+    .avatarEdit svg {
+        width: 12px;
+        height: 12px;
+    }
+
+    .profileName {
+        font-size: 1.1rem;
+    }
+
+    .profileRole {
+        font-size: 0.9rem;
+    }
+
+    .profileEmail {
+        font-size: 0.8rem;
+    }
+
+    .formControl {
+        padding: 0.625rem;
+        font-size: 0.85rem;
+        min-height: 40px;
+    }
+
+    .formActions button {
+        min-height: 40px;
+        font-size: 0.85rem;
+        padding: 0.625rem 0.875rem;
+    }
+
+    .modalContent {
+        margin: 0.5rem;
+        padding: 1rem;
+        width: calc(100% - 1rem);
+        max-width: calc(100% - 1rem);
+    }
+
+    .avatarPreview {
+        width: 80px;
+        height: 80px;
+        font-size: 1.8rem;
+        margin: 0.75rem auto 1rem;
+    }
+    
+    .profileCard {
+        padding: 0.75rem;
+    }
+
+    .sectionTitle {
+        font-size: 1rem;
+    }
+
+    .backButton {
+        padding: 0.375rem 0.625rem;
+        font-size: 0.8rem;
+    }
+
+    .backButton svg {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+@media (max-width: 768px) and (orientation: landscape) {
+    .profileContent {
+        padding: 0.5rem;
+    }
+
+    .profileHeader {
+        padding: 0.75rem;
+        flex-direction: row;
+        text-align: left;
+    }
+
+    .profileAvatar {
+        width: 48px;
+        height: 48px;
+    }
+
+    .profileInfo {
+        flex: 1;
+    }
+
+    .formActions {
+        flex-direction: row;
+    }
+
+    .formActions button {
+        flex: 1;
+    }
+
+    .modalContent {
+        max-height: calc(100vh - 2rem);
+        overflow-y: auto;
+    }
+}
+
+@media (max-width: 576px) {
+    .profileContent {
+        padding: 0.5rem;
+    }
+
+    .profileHeader {
+        padding: 0.75rem;
+        gap: 0.75rem;
+    }
+
+    .profileAvatar {
+        width: 64px;
+        height: 64px;
+    }
+
+    .avatarEdit {
+        width: 24px;
+        height: 24px;
+        right: -1px;
+        bottom: -1px;
+    }
+
+    .avatarEdit svg {
+        width: 12px;
+        height: 12px;
+    }
+
+    .profileName {
+        font-size: 1.1rem;
+    }
+
+    .profileRole {
+        font-size: 0.9rem;
+    }
+
+    .profileEmail {
+        font-size: 0.8rem;
+    }
+
+    .formControl {
+        padding: 0.625rem;
+        font-size: 0.85rem;
+        min-height: 40px;
+    }
+
+    .formActions button {
+        min-height: 40px;
+        font-size: 0.85rem;
+        padding: 0.625rem 0.875rem;
+    }
+
+    .modalContent {
+        margin: 0.5rem;
+        padding: 1rem;
+        width: calc(100% - 1rem);
+        max-width: calc(100% - 1rem);
+    }
+
+    .avatarPreview {
+        width: 80px;
+        height: 80px;
+        font-size: 1.8rem;
+        margin: 0.75rem auto 1rem;
+    }
+    
+    .profileCard {
+        padding: 0.75rem;
+    }
+
+    .sectionTitle {
+        font-size: 1rem;
+    }
+
+    .backButton {
+        padding: 0.375rem 0.625rem;
+        font-size: 0.8rem;
+    }
+
+    .backButton svg {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+@media (max-width: 768px) and (orientation: landscape) {
+    .profileContent {
+        padding: 0.5rem;
+    }
+
+    .profileHeader {
+        flex-direction: row;
+        text-align: left;
+        gap: 1rem;
+        padding: 0.75rem;
+    }
+
+    .profileAvatar {
+        margin: 0;
+    }
+
+    .profileInfo {
+        text-align: left;
+    }
+
+    .formActions {
+        flex-direction: row;
+        gap: 1rem;
+    }
+
+    .formActions button {
+        width: auto;
+        flex: 1;
+        max-width: 200px;
+    }
+
+    .modalContent {
+        max-height: calc(100vh - 2rem);
+        overflow-y: auto;
+        margin: 1rem;
+    }
+} 
+ 
+ 
+ 
+ 
+ 
+ 

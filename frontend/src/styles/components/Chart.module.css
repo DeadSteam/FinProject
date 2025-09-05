@@ -1,0 +1,441 @@
+/* Полная копия стилей графика из оригинала */
+.chartContainer {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  background: var(--bg-primary);
+  border-radius: var(--card-border-radius);
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  max-height: 400px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.chartHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.chartTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.chartLegend {
+  display: flex;
+  gap: 1rem;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.legendColor {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.legendColorPlan {
+  background-color: var(--primary-light) !important;
+}
+
+.legendColorFact {
+  background-color: var(--primary) !important;
+}
+
+.legendColorDeviation {
+  background-color: #dc3545 !important;
+}
+
+.legendColorPercentage {
+  background-color: #28a745 !important;
+}
+
+/* Стили для прогноза */
+.legendColorForecast {
+  background-color: #f59e0b !important;
+}
+
+.chartBarForecast {
+  background-color: #f59e0b !important;
+  border: 2px dashed #d97706 !important;
+  opacity: 0.8;
+}
+
+.chartLabelForecast {
+  color: #f59e0b !important;
+  font-weight: 600;
+  font-style: italic;
+}
+
+.chart {
+  height: 280px;
+  position: relative;
+  padding-bottom: 3rem;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Специальные стили для графиков в отчетах */
+.chartInReports {
+  height: 400px !important;
+  padding-bottom: 3rem;
+}
+
+.chartInReports .chartBarContainer {
+  height: 350px !important;
+}
+
+.chartBarContainer {
+  display: flex;
+  height: 240px; /* Фиксированная высота для столбцов */
+  align-items: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+  position: relative;
+  width: 100%;
+  justify-content: space-between;
+}
+
+/* Увеличенный контейнер для отчетов */
+.chartInReports .chartBarContainer {
+  height: 350px !important;
+  gap: 1.5rem;
+}
+
+.chartGroup {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  height: 100%; /* Занимаем всю высоту контейнера */
+  min-width: 0; /* Позволяет группе сжиматься */
+}
+
+.chartLabel {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  position: absolute;
+  bottom: -2.5rem;
+  text-align: center;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  left: 50%;
+  font-weight: 500;
+  overflow: visible;
+  text-overflow: unset;
+  max-width: none;
+  z-index: 10;
+}
+
+/* Специальные стили для квартальных и месячных подписей */
+.chartLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  bottom: -2.8rem;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: unset;
+  max-width: none;
+}
+
+.chartBarGroup {
+  display: flex;
+  gap: 4px;
+  height: 100%; /* Занимаем всю высоту группы */
+  width: 100%;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.chartBar {
+  flex: 1;
+  max-width: 50px;
+  min-width: 20px;
+  background-color: var(--primary);
+  border-radius: 4px 4px 0 0;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Убираем min-height, так как он конфликтует с процентной высотой */
+}
+
+.chartBarPlan {
+  background-color: var(--primary-light) !important;
+  opacity: 1;
+}
+
+.chartBarFact {
+  background-color: var(--primary) !important;
+  opacity: 1;
+}
+
+.chartBarDeviation {
+  background-color: #dc3545 !important; /* Красный для отклонений */
+  opacity: 1;
+}
+
+.chartBarPercentage {
+  background-color: #28a745 !important; /* Зеленый для процентов */
+  opacity: 1;
+}
+
+/* Стили для пользовательских столбцов (годы) */
+.chartBarCustom {
+  background-color: var(--primary);
+  border-radius: 4px 4px 0 0;
+  opacity: 1;
+}
+
+/* Цвета для годовых столбцов из globals.css */
+.chart-bar-year-0 {
+  background-color: var(--primary) !important;
+}
+
+.chart-bar-year-1 {
+  background-color: var(--success) !important;
+}
+
+.chart-bar-year-2 {
+  background-color: var(--warning) !important;
+}
+
+.chart-bar-year-3 {
+  background-color: var(--error) !important;
+}
+
+.chart-bar-year-4 {
+  background-color: var(--info) !important;
+}
+
+.chart-bar-year-5 {
+  background-color: var(--secondary) !important;
+}
+
+.chart-bar-year-6 {
+  background-color: var(--accent) !important;
+}
+
+/* Фоллбэк цвета на случай проблем с переменными */
+.chartBarPlan {
+  background-color: var(--primary-light) !important;
+}
+
+.chartBarFact {
+  background-color: var(--primary) !important;
+}
+
+/* Убрали .chartValue - теперь используем tooltip */
+
+/* Анимация для графиков */
+.animateBar {
+  animation: growUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Анимация исчезновения при смене данных */
+.fadeOut {
+  animation: fadeOut 0.2s ease-in forwards;
+}
+
+/* Анимация появления столбцов */
+@keyframes growUp {
+  from { 
+    height: 0px !important;
+    opacity: 0;
+    transform: scaleY(0);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+/* Анимация исчезновения столбцов */
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  to {
+    opacity: 0;
+    transform: scaleY(0);
+    height: 0px !important;
+  }
+}
+
+/* Улучшенные переходы для столбцов уже определены выше */
+
+/* Эффект при наведении */
+.chartBar:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+}
+
+/* Кастомный tooltip */
+.tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.9);
+  color: var(--text-white);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  pointer-events: none;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+  transition: opacity 0.2s ease;
+}
+
+.tooltipPeriod {
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: var(--text-white);
+}
+
+.tooltipValue {
+  font-weight: 500;
+}
+
+.tooltipValue {
+  color: var(--text-white);
+}
+
+/* Стили для линейных графиков */
+.chartLine {
+  transition: stroke-width 0.2s ease;
+}
+
+.chartLine:hover {
+  stroke-width: 5;
+}
+
+.chartPoint {
+  transition: r 0.2s ease;
+  cursor: pointer;
+}
+
+.chartPoint:hover {
+  r: 8;
+}
+
+/* Стили для круговых диаграмм */
+.chartPieContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 20px;
+  min-height: 300px;
+}
+
+.chartPieContainer svg {
+  width: 100%;
+  height: auto;
+  max-height: 300px;
+}
+
+.chartPieSlice {
+  transition: opacity 0.2s ease;
+  cursor: pointer;
+}
+
+.chartPieSlice:hover {
+  opacity: 0.8;
+}
+
+/* Сообщение об отсутствии данных */
+.noData {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 280px;
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+/* Адаптивные стили */
+@media (max-width: 992px) {
+  .chartContainer {
+    margin-top: 1.5rem;
+  }
+  
+  .chartHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .chartTitle {
+    margin-bottom: 0;
+  }
+  
+  .chartLegend {
+    margin-left: 0;
+  }
+  
+  .chart {
+    height: 250px;
+  }
+}
+
+@media (max-width: 768px) {
+  .chart {
+    height: 250px;
+  }
+}
+
+@media (max-width: 576px) {
+  .chart {
+    height: 220px;
+  }
+}
+
+/* Специальные стили для графиков в отчетах */
+.chartInReports {
+  height: 400px !important;
+  padding-bottom: 3rem;
+}
+
+.chartInReports .chartBarContainer {
+  height: 350px !important;
+}
+
+.chartInReports .chartLabel {
+  font-size: 0.85rem !important;
+  bottom: -3.5rem !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: unset !important;
+  max-width: none !important;
+  z-index: 10 !important;
+}
+
+/* Специальные стили для квартальных подписей в отчетах */
+.chartInReports .chartLabel[data-period*="квартал"],
+.chartInReports .chartLabel[data-period*="Q"] {
+  font-size: 0.8rem !important;
+  bottom: -3.2rem !important;
+  font-weight: 600 !important;
+  color: var(--text-primary) !important;
+} 
+ 
+ 
+ 
+ 
+ 

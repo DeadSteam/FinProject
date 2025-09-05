@@ -1,258 +1,134 @@
-# Технический контекст
+# Технический контекст PriFin
 
-## Технологический стек
+## Technology Stack
 
 ### Backend
-- **Язык**: Python 3.11+
-- **Фреймворк**: FastAPI 0.103+
-- **ORM**: SQLAlchemy 2.0 (async)
-- **База данных**: PostgreSQL 15
-- **Кэш**: Redis 7
-- **Миграции**: Alembic
-- **Валидация**: Pydantic v2
-- **Авторизация**: JWT + OAuth2
-- **Хеширование**: bcrypt
-- **Rate Limiting**: slowapi
+- **Python 3.11+** - основной язык
+- **FastAPI** - веб-фреймворк с async поддержкой
+- **SQLAlchemy 2.0** - ORM с async support
+- **Pydantic v2** - валидация данных и настройки
+- **Alembic** - миграции БД
+- **Redis** - кэширование и сессии
 
-### Frontend  
-- **Язык**: Vanilla JavaScript (ES6+)
-- **Модули**: ES6 modules
-- **Графики**: Chart.js
-- **Экспорт**: SheetJS (xlsx)
-- **Сборка**: Нет (нативные модули)
-- **HTTP**: Fetch API
-- **Стили**: CSS Variables + Flexbox/Grid
+### Database
+- **PostgreSQL 15** - основная БД
+- **Psycopg** - драйвер для async подключений
+- **Разделенные БД**: finance_db + users_db
 
-### Инфраструктура
-- **Контейнеризация**: Docker + Docker Compose
-- **Веб-сервер**: Nginx (reverse proxy)
-- **ASGI сервер**: Uvicorn
-- **Статические файлы**: http-server (Node.js)
-- **Оркестрация**: Docker Compose v3.8
+### Frontend (текущий)
+- **Vanilla JavaScript** - ES6+ modules
+- **HTTP-server** - статический сервер
+- **CSS3** - нативные стили без препроцессоров
 
-### DevOps
-- **CI/CD**: Готов к настройке GitHub Actions
-- **Мониторинг**: FastAPI встроенные метрики
-- **Логирование**: Python logging + structured logs
-- **Конфигурация**: .env файлы + Pydantic Settings
+### Frontend (новый)
+- **React 18** - компонентная библиотека
+- **React Router 6** - маршрутизация
+- **Webpack 5** - сборка и dev server
+- **Babel** - транспиляция ES6+
+- **CSS Modules** - изолированные стили
 
-## Архитектура развертывания
+### Infrastructure
+- **Docker + Docker Compose** - контейнеризация
+- **Nginx** - reverse proxy и статика
+- **Linux containers** - production окружение
 
-### Development (текущая)
-```bash
-# Локальная разработка
-HOST=localhost
-PORT=8000
-DEBUG=True
+## Development Environment
+
+### Зависимости Python
+```txt
+fastapi>=0.104.0
+sqlalchemy>=2.0.0
+pydantic>=2.4.0
+alembic>=1.12.0
+redis>=5.0.0
+psycopg[binary,pool]>=3.1.0
 ```
 
-### Production (готова к деплою)
-```bash
-# Изменить только HOST в .env
-HOST=your-domain.com
-DEBUG=False
-APP_ENV=production
+### Node.js зависимости (React)
+```json
+{
+  "react": "^18.2.0",
+  "react-dom": "^18.2.0", 
+  "react-router-dom": "^6.8.1",
+  "webpack": "^5.76.0"
+}
 ```
 
-## Структура проекта
+## Build & Deploy
 
-```
-FinProject/
-├── src/                      # Backend код
-│   ├── api/v1/              # API endpoints
-│   ├── core/                # Конфигурация, middleware
-│   ├── models/              # SQLAlchemy модели
-│   ├── services/            # Бизнес-логика
-│   └── repositories/        # Доступ к данным
-├── client/                  # Frontend код
-│   ├── scripts/             # JavaScript модули
-│   ├── styles/              # CSS стили
-│   ├── pages/               # HTML страницы
-│   └── Dockerfile           # Frontend контейнер
-├── sql/init/                # SQL инициализация
-├── nginx/                   # Nginx конфигурация
-├── memory-bank/             # Документация проекта
-├── .env                     # Переменные окружения
-├── docker-compose.yml       # Оркестрация
-├── requirements.txt         # Python зависимости
-├── Dockerfile              # Backend контейнер
-└── entrypoint.sh           # Startup скрипт
-```
-
-## Настройка разработки
-
-### Требования
-- Docker Desktop 4.0+
-- Git
-- Современный браузер (Chrome 90+, Firefox 88+)
-
-### Быстрый старт
-```bash
-git clone <repository>
-cd FinProject
-docker-compose up -d
-# Открыть http://localhost
-```
-
-### Локальная разработка без Docker
-```bash
-# Backend
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-
-# Frontend
-cd client
-npm install -g http-server
-http-server . -p 3000
-```
-
-## Конфигурация
-
-### Переменные окружения (.env)
-```bash
-# Основные
-HOST=localhost                    # ИЗМЕНИТЬ для продакшна
-PORT=8000
-DEBUG=True                       # False для продакшна
-
-# Безопасность
-SECRET_KEY=your_secure_key_here
-JWT_ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=11520
-
-# База данных
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=Akrawer1
-FINANCE_DB=finance_db
-USERS_DB=users_db
-
-# Redis
-REDIS_DB=0
-REDIS_DEFAULT_TIMEOUT=5
-
-# CORS (ВАЖНО для продакшна!)
-CORS_ORIGINS=http://${HOST}:3000,http://${HOST}:8080
-```
-
-### Docker конфигурация
+### Структура контейнеров
 ```yaml
-# docker-compose.yml
 services:
-  nginx:    # Порт 80 (единственный внешний)
-  app:      # Backend FastAPI
-  frontend: # Frontend статика  
+  app:        # FastAPI backend
+  frontend:   # Client (текущий vanilla JS)
+  nginx:      # Reverse proxy
   finance_db: # PostgreSQL финансы
   users_db:   # PostgreSQL пользователи
-  redis:      # Кэш и сессии
-  pgadmin:    # Админка БД (порт 5050)
+  redis:      # Кэширование
 ```
 
-## API Документация
+### Environment Variables
+- `HOST` - основной хост (localhost/domain)
+- `SECRET_KEY` - JWT подпись
+- `POSTGRES_*` - настройки БД
+- `REDIS_*` - настройки кэша
+- `CORS_ORIGINS` - разрешенные origins
 
-### Доступ к документации
-- **Swagger UI**: `http://localhost/api/v1/docs`
-- **ReDoc**: `http://localhost/api/v1/redoc`
-- **OpenAPI JSON**: `http://localhost/api/v1/openapi.json`
+### Порты и сервисы
+- **80** - Nginx (главный вход)
+- **8000** - FastAPI backend
+- **3000** - Frontend dev server
+- **5432** - PostgreSQL (internal)
+- **6379** - Redis (internal)
+- **5050** - PgAdmin (опционально)
 
-### Основные эндпоинты
-```
-Authentication:
-POST /api/v1/auth/login
-POST /api/v1/auth/refresh
-POST /api/v1/auth/logout
+## Development Workflow
 
-Finance API:
-GET  /api/v1/finance/metrics
-POST /api/v1/finance/metrics
-GET  /api/v1/finance/analytics/metrics/details/{category}/{store}/{year}
-POST /api/v1/finance/plan-values/distribute-yearly
-POST /api/v1/finance/actual-values/with-period
-
-Admin:
-GET  /api/v1/finance/periods/years
-POST /api/v1/finance/periods/years/{year}/init
-```
-
-## База данных
-
-### Схема finance_db
-```sql
--- Основные таблицы
-categories          # Категории расходов
-shops              # Магазины
-metrics            # Метрики
-periods            # Временные периоды
-plan_values        # Плановые значения
-actual_values      # Фактические значения
-icons              # SVG иконки
-```
-
-### Схема users_db
-```sql
--- Пользователи и авторизация
-users              # Пользователи
-roles              # Роли (admin, manager, user)
-user_sessions      # Сессии
-```
-
-## Производительность
-
-### Backend оптимизации
-- Async SQLAlchemy для неблокирующих запросов
-- Connection pooling для БД
-- Redis кэширование сессий
-- Lazy loading для связанных данных
-
-### Frontend оптимизации
-- ES6 модули (нативная поддержка)
-- Минимальные HTTP запросы
-- Кэширование отключено для dev (включается в prod)
-- Относительные пути для CDN готовности
-
-### Database оптимизации
-- Индексы на часто используемых полях
-- Разделение БД по функциональности
-- Health checks для мониторинга
-
-## Безопасность
-
-### Аутентификация
-- JWT токены с истечением срока
-- Refresh токены для продления сессий
-- bcrypt хеширование паролей
-- Rate limiting на авторизацию
-
-### CORS и headers
-- Настраиваемые CORS origins
-- Security headers через middleware
-- HTTPS ready (изменить AUTH_COOKIE_SECURE=true)
-
-### Развертывание
-- Секреты через переменные окружения
-- Изолированная Docker сеть
-- Минимальные права контейнеров
-- Health checks для всех сервисов
-
-## Мониторинг и отладка
-
-### Логирование
-```python
-# Структурированные логи
-logger.info("Starting application...")
-logger.error(f"Database error: {error}")
-```
-
-### Health Checks
+### Локальная разработка
 ```bash
-# Проверка состояния сервисов
-docker-compose ps
-curl http://localhost/api/v1/
+# Backend разработка
+python main.py  # dev сервер на 8000
+
+# Frontend разработка (старый)
+cd client && npm start  # http-server на 3000
+
+# Frontend разработка (новый React)
+cd frontend && npm start  # webpack-dev-server на 3001
 ```
 
-### Отладка
-- FastAPI автоматический reload в dev
-- Подробные трейсбеки при DEBUG=True
-- pgAdmin для работы с БД
-- Browser DevTools для frontend 
+### Production деплой
+```bash
+# Единая команда для деплоя
+docker-compose up -d
+```
+
+## Конфигурационные файлы
+
+### Ключевые файлы
+- `docker-compose.yml` - оркестрация сервисов
+- `.env` - переменные окружения
+- `requirements.txt` - Python зависимости
+- `nginx/nginx.conf` - прокси конфигурация
+- `entrypoint.sh` - startup script
+
+### Frontend конфигурации
+- `client/package.json` - vanilla JS версия
+- `frontend/package.json` - React версия
+- `frontend/webpack.config.js` - сборка React
+- `frontend/babel.config.js` - транспиляция
+
+## Constraints и ограничения
+
+### Технические ограничения
+- PostgreSQL только (не MySQL/SQLite)
+- Redis обязателен для сессий
+- Docker требуется для production
+
+### Архитектурные решения
+- Stateless backend для масштабирования
+- JWT вместо server-side сессий
+- Separated databases для безопасности
+- API-first подход для расширяемости 
+ 
+ 
+ 

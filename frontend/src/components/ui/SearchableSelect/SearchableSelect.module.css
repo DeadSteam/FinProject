@@ -1,0 +1,280 @@
+/* SearchableSelect стили */
+:global(.searchable-select) {
+    position: relative !important;
+    width: 100%;
+}
+
+/* Dropdown через Portal - прикреплен к input как в react-select */
+:global(.searchable-select-dropdown) {
+    background: var(--bg-primary, #ffffff) !important;
+    border: 1px solid var(--primary, #007bff) !important;
+    border-top: none !important;
+    border-radius: 0 0 var(--border-radius, 0.375rem) var(--border-radius, 0.375rem) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+    animation: slideDown 0.15s ease-out !important;
+    overflow: hidden !important;
+    margin-top: -1px !important;
+    z-index: 9999 !important;
+    max-height: 200px !important;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Options container */
+:global(.searchable-select-options) {
+    max-height: 300px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border, #e2e8f0) transparent;
+}
+
+:global(.searchable-select-options::-webkit-scrollbar) {
+    width: 6px;
+}
+
+:global(.searchable-select-options::-webkit-scrollbar-track) {
+    background: transparent;
+}
+
+:global(.searchable-select-options::-webkit-scrollbar-thumb) {
+    background-color: var(--border, #e2e8f0);
+    border-radius: 3px;
+}
+
+/* Option styling */
+:global(.searchable-select-option) {
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+:global(.searchable-select-option:hover),
+:global(.searchable-select-option.highlighted) {
+    background-color: var(--bg-secondary);
+}
+
+:global(.searchable-select-option.selected) {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+:global(.searchable-select-option:last-child) {
+    border-bottom: none;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+}
+
+/* Option content */
+:global(.searchable-select-option-content) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+:global(.searchable-select-option-label) {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+:global(.searchable-select-option-description) {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* Checkbox для multiple select */
+:global(.searchable-select-checkbox) {
+    margin: 0;
+    accent-color: var(--primary);
+}
+
+/* Группы */
+:global(.searchable-select-group) {
+    border-bottom: 1px solid var(--border);
+}
+
+:global(.searchable-select-group:last-child) {
+    border-bottom: none;
+}
+
+:global(.searchable-select-group-label) {
+    padding: 0.5rem 0.75rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    background-color: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Состояния */
+:global(.searchable-select-loading) {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+}
+
+:global(.searchable-select-no-options) {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Размеры */
+:global(.searchable-select-sm .searchable-select-option) {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+}
+
+:global(.searchable-select-lg .searchable-select-option) {
+    padding: 1rem;
+    font-size: 1.125rem;
+}
+
+/* States */
+:global(.searchable-select-disabled) {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+:global(.searchable-select-error .searchable-select-dropdown) {
+    border-color: var(--error);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    :global(.searchable-select-dropdown) {
+        position: fixed !important;
+        top: auto !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        border-radius: var(--border-radius) var(--border-radius) 0 0;
+        max-height: 50vh;
+    }
+    
+    :global(.searchable-select-options) {
+        max-height: calc(50vh - 4rem);
+    }
+    
+    :global(.searchable-select-option) {
+        padding: 1rem 0.75rem;
+        font-size: 1rem;
+    }
+}
+
+/* Анимации для мобильных устройств */
+@media (max-width: 768px) {
+    :global(.searchable-select-dropdown) {
+        animation: slideUp 0.3s ease-out;
+    }
+    
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(100%);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+}
+
+/* Focus styling */
+:global(.searchable-select-open .input) {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+/* Multiple selection tags (для будущего расширения) */
+:global(.searchable-select-tags) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+}
+
+:global(.searchable-select-tag) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+    border-radius: var(--border-radius-sm);
+    font-size: 0.875rem;
+}
+
+:global(.searchable-select-tag-remove) {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+    width: 1rem;
+    height: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: var(--transition-fast);
+}
+
+:global(.searchable-select-tag-remove:hover) {
+    background-color: var(--primary);
+    color: white;
+}
+
+/* Стили для кнопки очистки */
+:global(.searchable-select-input-wrapper) {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+:global(.searchable-select-clear-btn) {
+    position: absolute;
+    right: 2.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-muted, #6b7280);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+:global(.searchable-select-clear-btn:hover) {
+    background-color: var(--bg-secondary, #f3f4f6);
+    color: var(--text-primary, #374151);
+}
+
+:global(.searchable-select-clear-btn:focus) {
+    outline: 2px solid var(--primary, #007bff);
+    outline-offset: 2px;
+} 

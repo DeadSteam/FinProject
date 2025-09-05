@@ -9,7 +9,7 @@ from src.repository.db import users_db
 from src.service.users import UserService, role_service
 from src.scheme.users import (
     Token, TokenPair, RefreshToken, LoginRequest, 
-    User, RegistrationRequest, PasswordResetRequest
+    User, RegistrationRequest, PasswordResetRequest, ChangePasswordRequest
 )
 from src.core.config import settings
 
@@ -19,6 +19,19 @@ router = APIRouter()
 user_service = UserService()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=settings.OAUTH2_TOKEN_URL)
+
+# Добавляем OPTIONS handler для CORS preflight
+@router.options("/login")
+@router.options("/token") 
+@router.options("/register")
+@router.options("/refresh")
+@router.options("/logout")
+@router.options("/me")
+@router.options("/change-password")
+@router.options("/reset-password")
+async def options_handler():
+    """Обработчик CORS preflight запросов"""
+    return {"message": "OK"}
 
 # Вспомогательные функции
 async def get_current_user(
@@ -108,9 +121,33 @@ async def login(
     """
     Авторизация пользователя по email или номеру телефона
     """
+    # Определяем, что передано - email или телефон
+    email = None
+    phone_number = None
+    
+    if hasattr(login_data, 'identifier') and login_data.identifier:
+        identifier = login_data.identifier
+        if '@' in identifier:
+            email = identifier
+        else:
+            phone_number = identifier
+    else:
+        # Для обратной совместимости
+        email = login_data.email
+        phone_number = login_data.phone_number
+    
+    # Проверяем, что указан хотя бы один идентификатор
+    if not email and not phone_number:
+        print("Не указан ни email, ни phone_number")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Необходимо указать email или номер телефона",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
     user = await user_service.authenticate(
-        email=login_data.email,
-        phone_number=login_data.phone_number,
+        email=email,
+        phone_number=phone_number,
         password=login_data.password,
         session=session
     )
@@ -240,6 +277,16 @@ async def refresh_token(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
+@router.get("/me", response_model=User)
+async def get_current_user_info(
+    current_user = Depends(get_current_user)
+):
+    """
+    Получение информации о текущем пользователе
+    """
+    return current_user
+
+
 @router.post("/logout")
 async def logout(response: Response):
     """
@@ -251,6 +298,40 @@ async def logout(response: Response):
     )
     
     return {"message": "Успешный выход из системы"}
+
+
+@router.post("/change-password", status_code=status.HTTP_200_OK)
+async def change_password(
+    change_data: ChangePasswordRequest,
+    current_user = Depends(get_current_user),
+    session: AsyncSession = Depends(users_db.get_session)
+):
+    """
+    Смена пароля текущего пользователя
+    """
+    # Проверяем текущий пароль
+    is_valid = user_service._verify_password(change_data.current_password, current_user.password_hash)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Неверный текущий пароль",
+        )
+    
+    # Проверяем, что новый пароль отличается от текущего
+    if change_data.current_password == change_data.new_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Новый пароль должен отличаться от текущего",
+        )
+    
+    # Обновляем пароль
+    await user_service.update(
+        id=current_user.id,
+        obj_in={"password": change_data.new_password},
+        session=session
+    )
+    
+    return {"message": "Пароль успешно изменен"}
 
 
 @router.post("/reset-password", status_code=status.HTTP_200_OK)

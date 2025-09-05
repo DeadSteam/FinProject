@@ -1,11 +1,13 @@
 import uuid
 from typing import Optional, List, Dict, Any
 from decimal import Decimal
+from datetime import datetime
 
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from pydantic import TypeAdapter
+from fastapi import HTTPException
 
 from src.repository import finances_db
 from src.model.finance.actual_value import ActualValue
@@ -13,7 +15,8 @@ from src.scheme.finance.actual_value import (
     ActualValue as ActualValueSchema, 
     ActualValueWithRelations, 
     ActualValueCreate, 
-    ActualValueUpdate
+    ActualValueUpdate,
+    ReasonUpdate
 )
 from src.service.base import BaseService
 
@@ -31,7 +34,8 @@ class ActualValueService(BaseService[ActualValue, ActualValueSchema, ActualValue
             .options(
                 selectinload(self.model.metric),
                 selectinload(self.model.shop),
-                selectinload(self.model.period)
+                selectinload(self.model.period),
+                selectinload(self.model.documents)
             )
             .where(self.model.id == id)
         )
@@ -51,8 +55,43 @@ class ActualValueService(BaseService[ActualValue, ActualValueSchema, ActualValue
             obj_dict["shop"] = db_obj.shop.__dict__
         if db_obj.period:
             obj_dict["period"] = db_obj.period.__dict__
+        if db_obj.documents:
+            obj_dict["documents"] = [doc.__dict__ for doc in db_obj.documents if doc.status]
             
         return TypeAdapter(ActualValueWithRelations).validate_python(obj_dict)
+    
+    async def update_reason(
+        self, id: uuid.UUID, reason_update: ReasonUpdate, session: AsyncSession
+    ) -> ActualValueSchema:
+        """Обновление причины отклонения."""
+        # Получаем объект из БД
+        db_obj = await self.get(id, session)
+        if not db_obj:
+            raise HTTPException(status_code=404, detail="Фактическое значение не найдено")
+            
+        # Обновляем причину
+        query = (
+            update(self.model)
+            .where(self.model.id == id)
+            .values(
+                reason=reason_update.reason,
+                reason_updated_at=datetime.utcnow()
+            )
+            .returning(self.model)
+        )
+        
+        try:
+            result = await session.execute(query)
+            await session.commit()
+            updated_obj = result.scalar_one()
+            
+            return TypeAdapter(self.schema).validate_python(updated_obj.__dict__)
+        except Exception as e:
+            await session.rollback()
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Ошибка обновления причины: {str(e)}"
+            )
     
     async def get_by_metric_shop_period(
         self, metric_id: uuid.UUID, shop_id: uuid.UUID, period_id: uuid.UUID, session: AsyncSession

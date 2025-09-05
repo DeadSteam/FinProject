@@ -167,3 +167,17 @@ logs/
 *.backup
 temp/
 tmp/
+
+*storybook.log
+storybook-static
+
+# Frontend
+frontend/node_modules
+frontend/dist
+frontend/coverage
+frontend/docs
+
+# IDE
+.idea
+.vscode
+.project

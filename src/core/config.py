@@ -18,7 +18,12 @@ def get_cors_origins(v: Any) -> List[str]:
     if isinstance(v, str):
         # Удаляем комментарии и лишние пробелы
         cleaned_value = v.split("#")[0].strip()
-        return [i.strip() for i in cleaned_value.split(",")]
+        # Удаляем кавычки если есть
+        if cleaned_value.startswith('"') and cleaned_value.endswith('"'):
+            cleaned_value = cleaned_value[1:-1]
+        origins = [i.strip() for i in cleaned_value.split(",")]
+        print(f"[CONFIG] Парсинг CORS origins: {v} -> {origins}")
+        return origins
     return v
 
 def clean_env_value(value: str) -> str:
