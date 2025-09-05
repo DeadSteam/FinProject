@@ -1,4 +1,65 @@
-/* Стили для компонента SlideSettings */
+/* Стили для компонента SlideSettings - как у slide-filters */
+
+.slide-settings {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.slide-settings .card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--card-border-radius);
+    box-shadow: var(--box-shadow);
+    transition: var(--transition);
+}
+
+.slide-settings .card:hover {
+    box-shadow: var(--box-shadow-hover);
+    transform: translateY(-2px);
+}
+
+.slide-settings .card-header {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    border-radius: var(--card-border-radius) var(--card-border-radius) 0 0;
+    padding: var(--spacing-lg);
+}
+
+.slide-settings .card-header h6 {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.slide-settings .card-body {
+    padding: var(--spacing-lg);
+    background: var(--bg-primary);
+}
+
+.slide-settings .form-label {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.slide-settings .form-control,
+.slide-settings .form-select {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    color: var(--text-primary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    transition: var(--transition);
+}
+
+.slide-settings .form-control:focus,
+.slide-settings .form-select:focus {
+    border-color: var(--border);
+    box-shadow: none;
+    outline: none;
+}
 
 .setting-group {
     margin-bottom: 1rem;

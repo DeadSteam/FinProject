@@ -8,9 +8,9 @@ const SlideSettings = ({
     slideType, 
     title, 
     description,
-    settings, 
-    filters, 
-    availableData,
+    settings = {}, 
+    filters = {}, 
+    availableData = {},
     onTitleChange, 
     onDescriptionChange, 
     onSettingsChange, 
@@ -33,9 +33,71 @@ const SlideSettings = ({
                 );
 
             case 'analytics-chart':
-            case 'finance-chart':
             case 'trends':
             case 'plan-vs-actual':
+                return (
+                    <div className="setting-group">
+                        <div className="setting-row">
+                            <div className="setting-column">
+                                <label className="form-label">Тип графика</label>
+                                <div className="chart-type-selector">
+                                    <div className="btn-group" role="group">
+                                        <button 
+                                            type="button"
+                                            className={`btn ${(settings?.chartType || 'line') === 'line' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                            onClick={() => onSettingsChange({ chartType: 'line' })}
+                                        >
+                                            Линейный
+                                        </button>
+                                        <button 
+                                            type="button"
+                                            className={`btn ${settings?.chartType === 'bar' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                            onClick={() => onSettingsChange({ chartType: 'bar' })}
+                                        >
+                                            Столбчатый
+                                        </button>
+                                        <button 
+                                            type="button"
+                                            className={`btn ${settings?.chartType === 'pie' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                            onClick={() => onSettingsChange({ chartType: 'pie' })}
+                                        >
+                                            Круговая
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="setting-column">
+                                <label className="form-label">Период отображения</label>
+                                <div className="period-selector">
+                                    <div className="btn-group" role="group">
+                                        <button 
+                                            type="button"
+                                            className={`btn ${(filters?.periodType || 'quarters') === 'quarters' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                            onClick={() => onFiltersChange({
+                                                ...filters,
+                                                periodType: 'quarters'
+                                            })}
+                                        >
+                                            Кварталы
+                                        </button>
+                                        <button 
+                                            type="button"
+                                            className={`btn ${filters?.periodType === 'months' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                            onClick={() => onFiltersChange({
+                                                ...filters,
+                                                periodType: 'months'
+                                            })}
+                                        >
+                                            Месяцы
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+
+            case 'finance-chart':
                 return (
                     <div className="setting-group">
                         <div className="setting-row">
@@ -136,7 +198,17 @@ const SlideSettings = ({
                                     <div className="btn-group" role="group">
                                         <button 
                                             type="button"
-                                            className={`btn ${(filters?.periodType || 'quarters') === 'quarters' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                            className={`btn ${(filters?.periodType || 'year') === 'year' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                            onClick={() => onFiltersChange({
+                                                ...filters,
+                                                periodType: 'year'
+                                            })}
+                                        >
+                                            Год
+                                        </button>
+                                        <button 
+                                            type="button"
+                                            className={`btn ${filters?.periodType === 'quarters' ? 'btn-primary' : 'btn-outline-primary'}`}
                                             onClick={() => onFiltersChange({
                                                 ...filters,
                                                 periodType: 'quarters'
@@ -158,15 +230,6 @@ const SlideSettings = ({
                                 </div>
                             </div>
                         </div>
-                        <div className="setting-row">
-                            <div>
-                                <label className="form-label">Информация</label>
-                                <div className="alert alert-info">
-                                    <i className="fas fa-info-circle me-2"></i>
-                                    Метрики (факт, план, отклонение, процент) настраиваются в фильтрах слайда
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 );
 
@@ -184,9 +247,10 @@ const SlideSettings = ({
         <div className="slide-settings">
             {/* Объединенные настройки */}
             <div className="card mb-3">
+                <div className="card-header">
+                    <h6 className="mb-0">Настройки слайда</h6>
+                </div>
                 <div className="card-body">
-                    <h6 className="card-title">Настройки слайда</h6>
-                    
                     <div className="setting-group">
                         <label className="form-label">Заголовок слайда</label>
                         <input

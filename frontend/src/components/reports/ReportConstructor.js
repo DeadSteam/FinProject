@@ -33,6 +33,10 @@ const ReportConstructor = ({
     const [slideEditorMode, setSlideEditorMode] = useState('create'); // 'create' | 'edit'
     const [isModalOpen, setIsModalOpen] = useState(false);
     
+    // Состояние для drag & drop
+    const [draggedSlideId, setDraggedSlideId] = useState(null);
+    const [dragOverSlideId, setDragOverSlideId] = useState(null);
+    
     // Доступные данные для слайдов
     const availableData = useMemo(() => ({
         // Полное соответствие форматам страницы аналитики: { id, name, value }
@@ -187,36 +191,68 @@ const ReportConstructor = ({
         }
     }, [report, onReportChange, showSuccess]);
 
-    const handleMoveSlide = useCallback((slideId, direction) => {
-        const slides = [...(report.slides || [])];
-        const currentIndex = slides.findIndex(slide => slide.id === slideId);
-        
-        if (currentIndex === -1) return;
-        
-        const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-        
-        if (newIndex < 0 || newIndex >= slides.length) return;
-        
-        // Меняем местами слайды
-        [slides[currentIndex], slides[newIndex]] = [slides[newIndex], slides[currentIndex]];
-        
-        const updatedReport = {
-            ...report,
-            slides
-        };
-        
-        onReportChange(updatedReport);
-        showInfo(`Слайд перемещен ${direction === 'up' ? 'вверх' : 'вниз'}`);
-        
-        if (dev) {
-            console.log('Slide moved:', slideId, direction);
-        }
-    }, [report, onReportChange, showInfo]);
 
     const handleCloseEditor = useCallback(() => {
         setIsCreatingSlide(false);
         setSelectedSlideId(null);
     }, []);
+
+    // Обработчики drag & drop
+    const handleDragStart = useCallback((e, slideId) => {
+        setDraggedSlideId(slideId);
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', e.target.outerHTML);
+        e.target.style.opacity = '0.5';
+    }, []);
+
+    const handleDragEnd = useCallback((e) => {
+        e.target.style.opacity = '1';
+        setDraggedSlideId(null);
+        setDragOverSlideId(null);
+    }, []);
+
+    const handleDragOver = useCallback((e, slideId) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        setDragOverSlideId(slideId);
+    }, []);
+
+    const handleDragLeave = useCallback((e) => {
+        e.preventDefault();
+        setDragOverSlideId(null);
+    }, []);
+
+    const handleDrop = useCallback((e, targetSlideId) => {
+        e.preventDefault();
+        
+        if (draggedSlideId && draggedSlideId !== targetSlideId) {
+            const slides = [...(report.slides || [])];
+            const draggedIndex = slides.findIndex(slide => slide.id === draggedSlideId);
+            const targetIndex = slides.findIndex(slide => slide.id === targetSlideId);
+            
+            if (draggedIndex !== -1 && targetIndex !== -1) {
+                // Удаляем перетаскиваемый элемент
+                const [draggedSlide] = slides.splice(draggedIndex, 1);
+                // Вставляем его в новую позицию
+                slides.splice(targetIndex, 0, draggedSlide);
+                
+                const updatedReport = {
+                    ...report,
+                    slides
+                };
+                
+                onReportChange(updatedReport);
+                showInfo('Слайд перемещен');
+                
+                if (dev) {
+                    console.log('Slide reordered:', { draggedSlideId, targetSlideId });
+                }
+            }
+        }
+        
+        setDraggedSlideId(null);
+        setDragOverSlideId(null);
+    }, [draggedSlideId, report, onReportChange, showInfo]);
 
     // Получаем текущий слайд для редактирования
     const currentSlide = useMemo(() => {
@@ -233,101 +269,83 @@ const ReportConstructor = ({
             <div className="constructor-layout">
                 {/* Панель слайдов (левая сторона) */}
                 <div className="slides-panel">
-                    <div className="card">
-                        <div className="card-header">
-                            <div className="d-flex justify-content-between align-items-center">
-                                <h6 className="mb-0">Слайды</h6>
-                                <button
-                                    className="btn btn-primary btn-sm"
-                                    onClick={handleOpenModal}
-                                    title="Добавить слайд"
-                                >
-                                    <i className="fas fa-plus"></i>
-                                </button>
-                            </div>
+                    <div className="slides-panel-header">
+                        <div className="d-flex justify-content-between align-items-center">
+                            <h6 className="mb-0">Слайды</h6>
+                            <button
+                                className="btn btn-primary btn-sm"
+                                onClick={handleOpenModal}
+                                title="Добавить слайд"
+                            >
+                                <i className="fas fa-plus"></i>
+                            </button>
                         </div>
-                        
-                        <div className="card-body">
-                            {/* Список слайдов */}
-                            <div className="slides-list">
-                                {(report.slides || []).length === 0 ? (
-                                    <div className="text-center text-muted">
-                                        <i className="fas fa-file-alt fa-3x mb-3"></i>
-                                        <p>Нет слайдов</p>
-                                        <small>Создайте первый слайд для начала работы</small>
-                                    </div>
-                                ) : (
-                                    (report.slides || []).map((slide, index) => (
-                                        <div
-                                            key={slide.id}
-                                            className={`slide-item ${selectedSlideId === slide.id ? 'active' : ''}`}
-                                            onClick={() => handleEditSlide(slide.id)}
-                                        >
-                                            <div className="slide-item-content">
-                                                <div className="slide-number">{index + 1}</div>
-                                                <div className="slide-info">
-                                                    <div className="slide-title">{slide.title}</div>
-                                                    <div className="slide-type">
-                                                        {slide.type === 'title' && '📄 Титульный'}
-                                                        {slide.type === 'analytics-chart' && '📊 График аналитики'}
-                                                        {slide.type === 'finance-chart' && '💰 Финансовый график'}
-                                                        {slide.type === 'analytics-table' && '📋 Таблица аналитики'}
-                                                        {slide.type === 'finance-table' && '📊 Финансовая таблица'}
-                                                        {slide.type === 'comparison' && '⚖️ Сравнение'}
-                                                        {slide.type === 'trends' && '📈 Тренды'}
-                                                        {slide.type === 'plan-vs-actual' && '🎯 План vs Факт'}
-                                                    </div>
-                                                </div>
+                    </div>
+                    
+                    <div className="slides-panel-body">
+                        {/* Список слайдов */}
+                        <div className="slides-list">
+                            {(report.slides || []).length === 0 ? (
+                                <div className="text-center text-muted">
+                                    <i className="fas fa-file-alt fa-3x mb-3"></i>
+                                    <p>Нет слайдов</p>
+                                    <small>Создайте первый слайд для начала работы</small>
+                                </div>
+                            ) : (
+                                (report.slides || []).map((slide, index) => (
+                                    <div
+                                        key={slide.id}
+                                        className={`slide-item ${selectedSlideId === slide.id ? 'active' : ''} ${draggedSlideId === slide.id ? 'dragging' : ''} ${dragOverSlideId === slide.id ? 'drag-over' : ''}`}
+                                        onClick={() => handleEditSlide(slide.id)}
+                                        draggable
+                                        onDragStart={(e) => handleDragStart(e, slide.id)}
+                                        onDragEnd={handleDragEnd}
+                                        onDragOver={(e) => handleDragOver(e, slide.id)}
+                                        onDragLeave={handleDragLeave}
+                                        onDrop={(e) => handleDrop(e, slide.id)}
+                                    >
+                                        <div className="slide-item-content">
+                                            <div className="slide-number">{index + 1}</div>
+                                            <div className="slide-drag-handle">
+                                                <i className="fas fa-grip-vertical"></i>
                                             </div>
-                                            
-                                            <div className="slide-actions" onClick={(e) => e.stopPropagation()}>
-                                                <button
-                                                    className="btn btn-outline-primary btn-sm"
-                                                    onClick={() => handleEditSlide(slide.id)}
-                                                    title="Редактировать"
-                                                >
-                                                    <i className="fas fa-edit"></i>
-                                                </button>
-                                                
-                                                <button
-                                                    className="btn btn-outline-secondary btn-sm"
-                                                    onClick={() => handleDuplicateSlide(slide.id)}
-                                                    title="Дублировать"
-                                                >
-                                                    <i className="fas fa-copy"></i>
-                                                </button>
-                                                
-                                                <div className="btn-group-vertical">
-                                                    <button
-                                                        className="btn btn-outline-secondary btn-sm"
-                                                        onClick={() => handleMoveSlide(slide.id, 'up')}
-                                                        disabled={index === 0}
-                                                        title="Переместить вверх"
-                                                    >
-                                                        <i className="fas fa-chevron-up"></i>
-                                                    </button>
-                                                    <button
-                                                        className="btn btn-outline-secondary btn-sm"
-                                                        onClick={() => handleMoveSlide(slide.id, 'down')}
-                                                        disabled={index === (report.slides || []).length - 1}
-                                                        title="Переместить вниз"
-                                                    >
-                                                        <i className="fas fa-chevron-down"></i>
-                                                    </button>
+                                            <div className="slide-info">
+                                                <div className="slide-title">{slide.title}</div>
+                                                <div className="slide-type">
+                                                    {slide.type === 'title' && 'Титульный'}
+                                                    {slide.type === 'analytics-chart' && 'График аналитики'}
+                                                    {slide.type === 'finance-chart' && 'Финансовый график'}
+                                                    {slide.type === 'analytics-table' && 'Таблица аналитики'}
+                                                    {slide.type === 'finance-table' && 'Финансовая таблица'}
+                                                    {slide.type === 'comparison' && 'Сравнение'}
+                                                    {slide.type === 'trends' && 'Тренды'}
+                                                    {slide.type === 'plan-vs-actual' && 'План vs Факт'}
                                                 </div>
-                                                
-                                                <button
-                                                    className="btn btn-outline-danger btn-sm"
-                                                    onClick={() => handleSlideDelete(slide.id)}
-                                                    title="Удалить"
-                                                >
-                                                    <i className="fas fa-trash"></i>
-                                                </button>
                                             </div>
                                         </div>
-                                    ))
-                                )}
-                            </div>
+                                        
+                                        <div className="slide-actions" onClick={(e) => e.stopPropagation()}>
+                                            <button
+                                                className="btn btn-outline-secondary btn-sm"
+                                                onClick={() => handleDuplicateSlide(slide.id)}
+                                                title="Дублировать"
+                                            >
+                                                <i className="fas fa-copy"></i>
+                                            </button>
+                                            
+                                            <button
+                                                className="btn btn-outline-danger btn-sm"
+                                                onClick={() => handleSlideDelete(slide.id)}
+                                                title="Удалить"
+                                            >
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                    <path d="M19 7l-0.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v3M4 7h16"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>
@@ -346,15 +364,15 @@ const ReportConstructor = ({
                     ) : (
                         <div className="card">
                             <div className="card-body text-center text-muted">
-                                <i className="fas fa-edit fa-3x mb-3"></i>
-                                <h5>Редактор слайдов</h5>
-                                <p>Выберите слайд для редактирования или создайте новый</p>
+                                <i className="fas fa-file-alt fa-4x mb-4"></i>
+                                <h5>Создайте первый слайд</h5>
+                                <p>Нажмите "Добавить слайд", чтобы начать создание отчета</p>
                                 <button
                                     className="btn btn-primary"
                                     onClick={handleOpenModal}
                                 >
-                                    <i className="fas fa-plus me-1"></i>
-                                    Создать слайд
+                                    <i className="fas fa-plus me-2"></i>
+                                    Добавить слайд
                                 </button>
                             </div>
                         </div>

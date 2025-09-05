@@ -104,7 +104,7 @@ const ComparisonFilters = ({
 
 
     return (
-        <div className="card">
+        <div className="card comparison-filters">
             <div className="card-header">
                 <h6 className="mb-0">Фильтры для сравнения</h6>
             </div>
@@ -266,7 +266,16 @@ const ComparisonFilters = ({
                             </div>
                         </div>
                         <div className="filter-card-body">
-                            <div className="metrics-toggles">
+                            <div 
+                                className="metrics-toggles"
+                                style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: '1fr 1fr',
+                                    gap: '0.5rem 0.75rem',
+                                    width: '100%',
+                                    maxWidth: '100%'
+                                }}
+                            >
                                 <div className="toggle-item">
                                     <span className="toggle-text">Факт</span>
                                     <label className={`toggle-switch ${filters.metrics?.includes('fact') ? 'active' : ''}`}>

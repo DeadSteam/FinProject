@@ -38,14 +38,21 @@ const SlidePreview = ({
     // Загрузка данных при изменении фильтров
     useEffect(() => {
         if (slideType !== 'title' && filters) {
+            if (dev) {
+                console.log('🔍 SlidePreview: Фильтры изменились, перезагружаем данные:', filters);
+            }
             loadData();
         }
-    }, [slideType, filters]);
+    }, [slideType, filters, loadData]);
 
     const loadData = useCallback(async () => {
         if (slideType === 'title') {
             setData({ type: 'title' });
             return;
+        }
+
+        if (dev) {
+            console.log('🔍 SlidePreview loadData: Начинаем загрузку данных для', slideType, 'с фильтрами:', filters);
         }
 
         setLoading(true);
@@ -63,10 +70,21 @@ const SlidePreview = ({
             const slideData = await loadSlideData(slideType, normalizedFilters, settings);
             
             if (slideData) {
+                // Определяем метрики для отображения
+                let selectedMetrics = ['plan', 'fact']; // По умолчанию
+                if (filters?.metrics && filters.metrics.length > 0) {
+                    // Используем выбранные пользователем метрики
+                    selectedMetrics = filters.metrics.map(m => m?.value ?? m?.id ?? m);
+                }
+                
+                if (dev) {
+                    console.log('🔍 SlidePreview loadData: selectedMetrics для transformDataForChart:', selectedMetrics);
+                }
+                
                 const transformedData = transformDataForChart(
                     slideData, 
                     slideType, 
-                    filters?.metrics || ['plan', 'fact']
+                    selectedMetrics
                 );
                 
                 setData({
@@ -88,36 +106,48 @@ const SlidePreview = ({
 
     // Рендеринг в зависимости от типа слайда
     const renderSlideContent = () => {
-        if (loading) {
-            return (
-                <div className="slide-loading">
-                    <div className="loading-spinner">
-                        <div className="spinner-border" role="status">
-                            <span className="sr-only">Загрузка...</span>
+        try {
+            if (loading) {
+                return (
+                    <div className="slide-loading">
+                        <div className="loading-spinner">
+                            <div className="spinner-border" role="status">
+                                <span className="sr-only">Загрузка...</span>
+                            </div>
+                            <span className="loading-text">Загрузка данных...</span>
                         </div>
-                        <span className="loading-text">Загрузка данных...</span>
+                    </div>
+                );
+            }
+
+            switch (slideType) {
+                case 'title':
+                    return renderTitleSlide();
+                case 'analytics-chart':
+                case 'finance-chart':
+                    return renderChartSlide();
+                case 'analytics-table':
+                case 'finance-table':
+                    return renderTableSlide();
+                case 'comparison':
+                    return renderComparisonSlide();
+                case 'trends':
+                    return renderTrendsSlide();
+                case 'plan-vs-actual':
+                    return renderPlanVsActualSlide();
+                default:
+                    return renderDefaultSlide();
+            }
+        } catch (error) {
+            console.error('Ошибка рендеринга слайда:', error);
+            return (
+                <div className="slide-error">
+                    <div className="alert alert-danger">
+                        <i className="fas fa-exclamation-triangle me-2"></i>
+                        Ошибка загрузки слайда: {error.message}
                     </div>
                 </div>
             );
-        }
-
-        switch (slideType) {
-            case 'title':
-                return renderTitleSlide();
-            case 'analytics-chart':
-            case 'finance-chart':
-                return renderChartSlide();
-            case 'analytics-table':
-            case 'finance-table':
-                return renderTableSlide();
-            case 'comparison':
-                return renderComparisonSlide();
-            case 'trends':
-                return renderTrendsSlide();
-            case 'plan-vs-actual':
-                return renderPlanVsActualSlide();
-            default:
-                return renderDefaultSlide();
         }
     };
 
@@ -145,9 +175,13 @@ const SlidePreview = ({
         const chartType = settings?.chartType || 'bar';
         
         // Определяем метрики из фильтров или используем по умолчанию
-        const selectedMetrics = filters?.metrics && filters.metrics.length > 0 
-            ? filters.metrics.map(m => m?.value ?? m?.id ?? m)
-            : ['plan', 'fact'];
+        // Для финансовых графиков всегда показываем стандартные метрики
+        // Выбранная метрика используется для загрузки данных, но отображение всегда стандартное
+        let selectedMetrics = ['plan', 'fact'];
+        if (filters?.metrics && filters.metrics.length > 0) {
+            // Если переданы метрики как массив (для других типов слайдов)
+            selectedMetrics = filters.metrics.map(m => m?.value ?? m?.id ?? m);
+        }
         
         // Логируем для отладки
         if (dev) {
@@ -157,7 +191,9 @@ const SlidePreview = ({
                 chartDataLength: data?.chartData?.length,
                 selectedMetrics,
                 chartType,
-                filters
+                filters,
+                filtersMetric: filters?.metric,
+                filtersMetrics: filters?.metrics
             });
         }
         
@@ -241,33 +277,46 @@ const SlidePreview = ({
     );
 
     // Сравнение
-    const renderComparisonSlide = () => (
-        <div className="comparison-slide-preview">
-            <div className="slide-header">
-                <h2 className="slide-title">{title || 'Сравнительный анализ'}</h2>
-                {description && <p className="slide-description">{description}</p>}
-            </div>
-            <div className="comparison-container p-2">
-                <div className="comparison-full-width">
-                    <AnalyticsComparison
-                        analyticsData={data?.analytics || data}
-                        filters={{
-                            years: (filters?.years && filters.years.length ? filters.years : [new Date().getFullYear()]),
-                            categories: (filters?.categories || []).map((c) => (c?.value ?? c?.id ?? c)),
-                            shops: (filters?.shops || []).map((s) => (s?.value ?? s?.id ?? s)),
-                            metrics: (filters?.metrics || ['fact', 'plan', 'deviation', 'percentage']).map((m) => (m?.value ?? m?.id ?? m)),
-                            periodType: filters?.periodType || 'years'
-                        }}
-                        isLoading={loading}
-                        showControls={false}
-                        showTable={false}
-                        showSummary={false}
-                        showHeader={false}
-                    />
+    const renderComparisonSlide = () => {
+        // Безопасная обработка фильтров
+        const safeFilters = {
+            years: Array.isArray(filters?.years) && filters.years.length > 0 
+                ? filters.years 
+                : [new Date().getFullYear()],
+            categories: Array.isArray(filters?.categories) 
+                ? filters.categories.map((c) => (c?.value ?? c?.id ?? c)).filter(Boolean)
+                : [],
+            shops: Array.isArray(filters?.shops) 
+                ? filters.shops.map((s) => (s?.value ?? s?.id ?? s)).filter(Boolean)
+                : [],
+            metrics: Array.isArray(filters?.metrics) && filters.metrics.length > 0
+                ? filters.metrics.map((m) => (m?.value ?? m?.id ?? m)).filter(Boolean)
+                : ['fact', 'plan', 'deviation', 'percentage'],
+            periodType: filters?.periodType || 'year'
+        };
+
+        return (
+            <div className="comparison-slide-preview">
+                <div className="slide-header">
+                    <h2 className="slide-title">{title || 'Сравнительный анализ'}</h2>
+                    {description && <p className="slide-description">{description}</p>}
+                </div>
+                <div className="comparison-container p-2">
+                    <div className="comparison-full-width">
+                        <AnalyticsComparison
+                            analyticsData={data?.analytics || data || {}}
+                            filters={safeFilters}
+                            isLoading={loading}
+                            showControls={false}
+                            showTable={false}
+                            showSummary={false}
+                            showHeader={false}
+                        />
+                    </div>
                 </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     // Тренды
     const renderTrendsSlide = () => (

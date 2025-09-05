@@ -1,51 +1,63 @@
 /* Стили для SlideFilters - тумблеры и улучшенный дизайн */
 
-/* Тумблеры для метрик - используем те же стили, что и в ComparisonFilters */
-.metrics-toggles {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 0.5rem;
-    width: 100%;
-    max-width: 100%;
-    overflow: hidden;
+/* Максимально специфичный селектор для равномерного распределения */
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div > div.card-body > div.slide-filters > div > div.card-body > div:nth-child(2) > div.col-md-8 > div > div.metrics-toggles,
+.slide-filters .metrics-toggles {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    align-items: center !important;
+    justify-content: space-between !important;
 }
 
-.toggle-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-    padding: 0.375rem 0.5rem;
-    transition: all 0.2s ease;
-    width: 100%;
-    max-width: 100%;
-    overflow: hidden;
-    box-sizing: border-box;
+/* Максимально специфичный селектор для равномерного распределения элементов */
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div > div.card-body > div.slide-filters > div > div.card-body > div:nth-child(2) > div.col-md-8 > div > div > div.toggle-item,
+.slide-filters .toggle-item {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    cursor: pointer !important;
+    padding: 0.125rem 0.25rem !important;
+    transition: all 0.2s ease !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    flex-shrink: 1 !important;
+    box-sizing: border-box !important;
+    white-space: nowrap !important;
+    gap: 0.25rem !important;
+    margin: 0 !important;
 }
 
-.toggle-text {
+/* Максимально специфичный селектор для минимального расстояния */
+#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div > div.card-body > div.slide-filters > div > div.card-body > div:nth-child(2) > div.col-md-8 > div > div > div.toggle-item > span.toggle-text,
+.slide-filters .toggle-text {
     font-weight: 500;
     color: #262626;
     font-size: 0.875rem;
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    flex-shrink: 0;
     white-space: nowrap;
-    margin-right: 0.5rem;
+    margin-right: 0.125rem !important;
+    padding: 0 !important;
+    width: auto !important;
+    max-width: none !important;
 }
 
-.toggle-switch {
+.slide-filters .toggle-switch {
     position: relative;
-    width: 52px;
-    height: 26px;
+    width: 44px;
+    height: 22px;
     background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
-    border-radius: 26px;
+    border-radius: 22px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
     cursor: pointer;
-    min-width: 52px;
-    max-width: 52px;
+    min-width: 44px;
+    max-width: 44px;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -72,8 +84,8 @@
 .toggle-slider:before {
     position: absolute;
     content: "";
-    height: 20px;
-    width: 20px;
+    height: 16px;
+    width: 16px;
     left: 3px;
     top: 50%;
     transform: translateY(-50%) translateZ(0);
@@ -90,7 +102,7 @@
 }
 
 .toggle-input:checked + .toggle-slider:before {
-    transform: translateX(26px) translateY(-50%);
+    transform: translateX(22px) translateY(-50%);
     box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4), 0 2px 6px rgba(79, 70, 229, 0.2);
 }
 
@@ -264,49 +276,199 @@
 }
 
 /* Адаптивность для тумблеров */
-@media (max-width: 768px) {
-    .metrics-toggles {
-        grid-template-columns: 1fr !important;
-        gap: 0.5rem;
+@media (max-width: 1200px) {
+    .slide-filters .metrics-toggles {
+        gap: 0.25rem !important;
     }
     
-    .toggle-item {
-        padding: 0.5rem 0.75rem;
+    .slide-filters .toggle-item {
+        padding: 0.125rem 0.125rem !important;
+        gap: 0.125rem !important;
     }
     
-    .toggle-text {
+    .slide-filters .toggle-text {
         font-size: 0.8rem;
     }
     
-    .toggle-switch {
+    .slide-filters .toggle-switch {
+        width: 40px;
+        height: 20px;
+        min-width: 40px;
+        max-width: 40px;
+    }
+    
+    .slide-filters .toggle-slider:before {
+        height: 14px;
+        width: 14px;
+        left: 3px;
+    }
+    
+    .slide-filters .toggle-input:checked + .toggle-slider:before {
+        transform: translateX(18px) translateY(-50%);
+    }
+}
+
+@media (max-width: 992px) {
+    .slide-filters .metrics-toggles {
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+        align-items: stretch !important;
+    }
+    
+    .slide-filters .toggle-item {
+        flex: none !important;
+        width: 100% !important;
+        padding: 0.5rem 0.75rem !important;
+        gap: 0.5rem !important;
+    }
+    
+    .slide-filters .toggle-text {
+        font-size: 0.875rem;
+    }
+    
+    .slide-filters .toggle-switch {
         width: 48px;
         height: 24px;
         min-width: 48px;
         max-width: 48px;
     }
     
-    .toggle-slider:before {
+    .slide-filters .toggle-slider:before {
         height: 18px;
         width: 18px;
         left: 3px;
     }
     
-    .toggle-input:checked + .toggle-slider:before {
+    .slide-filters .toggle-input:checked + .toggle-slider:before {
         transform: translateX(24px) translateY(-50%);
     }
+}
+
+@media (max-width: 768px) {
+    .slide-filters .card-body {
+        padding: 1rem !important;
+    }
     
-    .period-selector .btn {
-        padding: 0.375rem 0.5rem;
+    .slide-filters .metrics-toggles {
+        gap: 0.375rem !important;
+    }
+    
+    .slide-filters .toggle-item {
+        padding: 0.375rem 0.5rem !important;
+        gap: 0.375rem !important;
+    }
+    
+    .slide-filters .toggle-text {
+        font-size: 0.8rem;
+    }
+    
+    .slide-filters .toggle-switch {
+        width: 44px;
+        height: 22px;
+        min-width: 44px;
+        max-width: 44px;
+    }
+    
+    .slide-filters .toggle-slider:before {
+        height: 16px;
+        width: 16px;
+        left: 3px;
+    }
+    
+    .slide-filters .toggle-input:checked + .toggle-slider:before {
+        transform: translateX(22px) translateY(-50%);
+    }
+    
+    .slide-filters .form-label {
+        font-size: 0.75rem !important;
+    }
+    
+    .slide-filters .form-control,
+    .slide-filters .form-select {
+        font-size: 0.8rem !important;
+        padding: 0.5rem 0.75rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .slide-filters .card-body {
+        padding: 0.75rem !important;
+    }
+    
+    .slide-filters .metrics-toggles {
+        gap: 0.25rem !important;
+    }
+    
+    .slide-filters .toggle-item {
+        padding: 0.25rem 0.375rem !important;
+        gap: 0.25rem !important;
+    }
+    
+    .slide-filters .toggle-text {
         font-size: 0.75rem;
+    }
+    
+    .slide-filters .toggle-switch {
+        width: 36px;
+        height: 18px;
+        min-width: 36px;
+        max-width: 36px;
+    }
+    
+    .slide-filters .toggle-slider:before {
+        height: 12px;
+        width: 12px;
+        left: 3px;
+    }
+    
+    .slide-filters .toggle-input:checked + .toggle-slider:before {
+        transform: translateX(18px) translateY(-50%);
+    }
+    
+    .slide-filters .form-label {
+        font-size: 0.7rem !important;
+    }
+    
+    .slide-filters .form-control,
+    .slide-filters .form-select {
+        font-size: 0.75rem !important;
+        padding: 0.375rem 0.5rem !important;
     }
 }
 
 @media (max-width: 480px) {
     .slide-filters .card-body {
-        padding: 1rem;
+        padding: 0.5rem !important;
     }
     
-    .toggle-item {
-        padding: 0.375rem 0.5rem;
+    .slide-filters .metrics-toggles {
+        gap: 0.125rem !important;
+    }
+    
+    .slide-filters .toggle-item {
+        padding: 0.125rem 0.25rem !important;
+        gap: 0.125rem !important;
+    }
+    
+    .slide-filters .toggle-text {
+        font-size: 0.7rem;
+    }
+    
+    .slide-filters .toggle-switch {
+        width: 32px;
+        height: 16px;
+        min-width: 32px;
+        max-width: 32px;
+    }
+    
+    .slide-filters .toggle-slider:before {
+        height: 10px;
+        width: 10px;
+        left: 3px;
+    }
+    
+    .slide-filters .toggle-input:checked + .toggle-slider:before {
+        transform: translateX(16px) translateY(-50%);
     }
 }
+

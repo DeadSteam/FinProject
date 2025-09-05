@@ -323,8 +323,40 @@ export const ReportDataProvider = ({ children }) => {
 
             // Используем тот же сервис, что и FinanceDetails
             const details = await analyticsService.getDetailedCategoryMetrics(categoryId, shopId, year);
-            const metric = Array.isArray(details?.metrics) && details.metrics.length > 0 ? details.metrics[0] : null;
+            
+            if (dev) {
+                console.log('🔍 loadFinanceDetails: API response:', details);
+                console.log('🔍 loadFinanceDetails: metrics from API:', details?.metrics);
+            }
+            
+            // Находим конкретную метрику по ID, если указана
+            let metric = null;
+            if (filters.metric && filters.metric !== 'all' && Array.isArray(details?.metrics)) {
+                // Пробуем найти метрику по разным полям
+                metric = details.metrics.find(m => 
+                    m.id === filters.metric || 
+                    m.value === filters.metric || 
+                    m.metric_id === filters.metric ||
+                    m.metricId === filters.metric
+                );
+            }
+            
+            // Если метрика не найдена или не указана, берем первую доступную
+            if (!metric && Array.isArray(details?.metrics) && details.metrics.length > 0) {
+                metric = details.metrics[0];
+            }
+            
             const periodsValue = metric?.periods_value || {};
+            
+            if (dev) {
+                console.log('🔍 loadFinanceDetails: выбранная метрика:', {
+                    requestedMetric: filters.metric,
+                    foundMetric: metric?.id,
+                    metricName: metric?.name,
+                    allMetrics: details?.metrics?.map(m => ({ id: m.id, name: m.name })),
+                    allMetricsFull: details?.metrics
+                });
+            }
 
             const periodType = filters.periodType === 'months' ? 'months' : 'quarters';
 
@@ -356,6 +388,7 @@ export const ReportDataProvider = ({ children }) => {
 
             if (dev) {
                 console.log('🔍 loadFinanceDetails result:', { chartData, periodType });
+                console.log('🔍 loadFinanceDetails chartData sample:', chartData[0]);
             }
 
             return { chartData };
@@ -371,11 +404,17 @@ export const ReportDataProvider = ({ children }) => {
      */
     const loadSlideData = async (slideType, filters = {}, settings = {}) => {
         try {
-            if (slideType.includes('analytics')) {
+            // Убеждаемся, что slideType - это строка
+            const slideTypeStr = String(slideType || '');
+            
+            if (slideTypeStr.includes('analytics')) {
                 return await loadAnalyticsData(filters);
-            } else if (slideType.includes('finance')) {
+            } else if (slideTypeStr.includes('finance')) {
                 // Для финансовых слайдов попробуем использовать детальные метрики,
                 // если заданы год/категория/магазин; иначе fallback на сводную аналитику
+                if (dev) {
+                    console.log('🔍 loadSlideData finance: передаем фильтры в loadFinanceDetails:', filters);
+                }
                 const details = await loadFinanceDetails(filters);
                 if (details && details.chartData && details.chartData.length > 0) {
                     if (dev) {
@@ -389,7 +428,7 @@ export const ReportDataProvider = ({ children }) => {
                     console.log('🔍 loadSlideData finance: using finance data:', financeData);
                 }
                 return financeData;
-            } else if (slideType === 'comparison') {
+            } else if (slideTypeStr.includes('comparison')) {
                 // Загружаем данные для сравнения
                 const [analyticsData, financeData] = await Promise.all([
                     loadAnalyticsData(filters),
@@ -402,14 +441,14 @@ export const ReportDataProvider = ({ children }) => {
                     finance: financeData,
                     comparisonType: filters.comparisonType || 'period'
                 };
-            } else if (slideType === 'trends') {
+            } else if (slideTypeStr.includes('trends')) {
                 // Загружаем данные для анализа трендов
                 const data = await loadFinanceData(filters);
                 return {
                     ...data,
                     trends: generateTrendsAnalysis(data)
                 };
-            } else if (slideType === 'plan-vs-actual') {
+            } else if (slideTypeStr.includes('plan-vs-actual')) {
                 // Загружаем данные для сравнения план vs факт
                 const data = await loadFinanceData(filters);
                 return {
@@ -570,6 +609,45 @@ export const ReportDataProvider = ({ children }) => {
         }));
     };
 
+    /**
+     * Фильтрация данных по выбранным метрикам
+     */
+    const filterDataByMetrics = (data, metrics) => {
+        if (!Array.isArray(data) || !metrics || metrics.length === 0) {
+            return data;
+        }
+        
+        return data.map(item => {
+            const filteredItem = {
+                label: item.label,
+                type: item.type
+            };
+            
+            // Добавляем только выбранные метрики
+            if (metrics.includes('plan') && item.plan !== undefined) {
+                filteredItem.plan = item.plan;
+            }
+            if ((metrics.includes('fact') || metrics.includes('actual')) && item.fact !== undefined) {
+                filteredItem.fact = item.fact;
+            }
+            if (metrics.includes('deviation') && item.deviation !== undefined) {
+                filteredItem.deviation = item.deviation;
+            }
+            if (metrics.includes('percentage') && item.percentage !== undefined) {
+                filteredItem.percentage = item.percentage;
+            }
+            
+            // Сохраняем другие свойства (например, isForecast)
+            Object.keys(item).forEach(key => {
+                if (!['plan', 'fact', 'deviation', 'percentage', 'label', 'type'].includes(key)) {
+                    filteredItem[key] = item[key];
+                }
+            });
+            
+            return filteredItem;
+        });
+    };
+
     const transformFinanceData = (data, metrics) => {
         if (dev) {
             console.log('🔍 transformFinanceData input:', { data, metrics });
@@ -580,20 +658,35 @@ export const ReportDataProvider = ({ children }) => {
             if (dev) {
                 console.log('🔍 transformFinanceData: using existing chartData:', data.chartData);
             }
-            return data.chartData;
+            // Фильтруем существующие данные по выбранным метрикам
+            return filterDataByMetrics(data.chartData, metrics);
         }
         
         // Данные по метрикам (подкатегориям) или общие расходы
         if (data.metrics && Array.isArray(data.metrics) && data.metrics.length > 0) {
-            const transformed = data.metrics.map(metric => ({
-                label: metric.name || metric.metric_name || 'Без названия',
-                plan: Math.abs(metric.plan_value || metric.plan || 0),
-                fact: Math.abs(metric.fact_value || metric.fact || metric.actual || 0),
-                deviation: metric.deviation || (metric.fact_value || metric.fact || metric.actual || 0) - (metric.plan_value || metric.plan || 0),
-                percentage: metric.plan_value || metric.plan ? 
-                    ((metric.fact_value || metric.fact || metric.actual || 0) / (metric.plan_value || metric.plan)) * 100 : 0,
-                type: 'expense' // Пока только расходы
-            }));
+            const transformed = data.metrics.map(metric => {
+                const item = {
+                    label: metric.name || metric.metric_name || 'Без названия',
+                    type: 'expense' // Пока только расходы
+                };
+                
+                // Добавляем только выбранные метрики
+                if (metrics.includes('plan')) {
+                    item.plan = Math.abs(metric.plan_value || metric.plan || 0);
+                }
+                if (metrics.includes('fact') || metrics.includes('actual')) {
+                    item.fact = Math.abs(metric.fact_value || metric.fact || metric.actual || 0);
+                }
+                if (metrics.includes('deviation')) {
+                    item.deviation = metric.deviation || (metric.fact_value || metric.fact || metric.actual || 0) - (metric.plan_value || metric.plan || 0);
+                }
+                if (metrics.includes('percentage')) {
+                    item.percentage = metric.plan_value || metric.plan ? 
+                        ((metric.fact_value || metric.fact || metric.actual || 0) / (metric.plan_value || metric.plan)) * 100 : 0;
+                }
+                
+                return item;
+            });
             
             if (dev) {
                 console.log('🔍 transformFinanceData: transformed from metrics:', transformed);
@@ -602,40 +695,140 @@ export const ReportDataProvider = ({ children }) => {
         }
         
         // Если нет детальных метрик - показываем общие данные
-        const fallback = [
-            {
-                label: 'Общие расходы', 
-                plan: Math.abs(data.summary?.plan || data.summary?.totalPlan || 0),
-                fact: Math.abs(data.summary?.totalExpense || data.summary?.totalFact || 0),
-                deviation: data.summary?.deviation || 0,
-                percentage: data.summary?.plan || data.summary?.totalPlan ? 
-                    ((data.summary?.totalExpense || data.summary?.totalFact || 0) / (data.summary?.plan || data.summary?.totalPlan)) * 100 : 0,
-                type: 'expense'
-            }
-        ];
+        const fallback = {
+            label: 'Общие расходы', 
+            type: 'expense'
+        };
+        
+        // Добавляем только выбранные метрики
+        if (metrics.includes('plan')) {
+            fallback.plan = Math.abs(data.summary?.plan || data.summary?.totalPlan || 0);
+        }
+        if (metrics.includes('fact') || metrics.includes('actual')) {
+            fallback.fact = Math.abs(data.summary?.totalExpense || data.summary?.totalFact || 0);
+        }
+        if (metrics.includes('deviation')) {
+            fallback.deviation = data.summary?.deviation || 0;
+        }
+        if (metrics.includes('percentage')) {
+            fallback.percentage = data.summary?.plan || data.summary?.totalPlan ? 
+                ((data.summary?.totalExpense || data.summary?.totalFact || 0) / (data.summary?.plan || data.summary?.totalPlan)) * 100 : 0;
+        }
         
         if (dev) {
-            console.log('🔍 transformFinanceData: using fallback data:', fallback);
+            console.log('🔍 transformFinanceData: using fallback data:', [fallback]);
         }
-        return fallback;
+        return [fallback];
     };
 
     const transformComparisonData = (data, metrics) => {
         if (!data.analytics && !data.finance) return [];
         
-        // Простое сравнение текущих и предыдущих данных
-        return [
-            {
+        // Получаем данные для текущего и предыдущего периодов
+        const currentAnalytics = data.analytics?.summary?.value || 0;
+        const currentFinance = data.finance?.summary?.totalIncome || 0;
+        const previousAnalytics = currentAnalytics * 0.9; // Заглушка для предыдущего периода
+        const previousFinance = currentFinance * 0.95; // Заглушка для предыдущего периода
+        
+        const result = [];
+        
+        // Добавляем данные в зависимости от выбранных метрик
+        if (metrics.includes('plan')) {
+            result.push({
                 label: 'Текущий период',
-                analytics: data.analytics?.summary?.value || 0,
-                finance: data.finance?.summary?.totalIncome || 0
-            },
-            {
-                label: 'Предыдущий период',
-                analytics: (data.analytics?.summary?.value || 0) * 0.9, // Заглушка
-                finance: (data.finance?.summary?.totalIncome || 0) * 0.95 // Заглушка
+                plan: currentFinance,
+                type: 'comparison'
+            });
+            result.push({
+                label: 'Предыдущий период', 
+                plan: previousFinance,
+                type: 'comparison'
+            });
+        }
+        
+        if (metrics.includes('fact') || metrics.includes('actual')) {
+            if (result.length === 0) {
+                // Если нет данных для плана, создаем новые записи
+                result.push({
+                    label: 'Текущий период',
+                    fact: currentAnalytics,
+                    type: 'comparison'
+                });
+                result.push({
+                    label: 'Предыдущий период',
+                    fact: previousAnalytics,
+                    type: 'comparison'
+                });
+            } else {
+                // Добавляем факт к существующим записям
+                result[0].fact = currentAnalytics;
+                result[1].fact = previousAnalytics;
             }
-        ];
+        }
+        
+        if (metrics.includes('deviation')) {
+            const currentDeviation = currentAnalytics - currentFinance;
+            const previousDeviation = previousAnalytics - previousFinance;
+            
+            if (result.length === 0) {
+                result.push({
+                    label: 'Текущий период',
+                    deviation: currentDeviation,
+                    type: 'comparison'
+                });
+                result.push({
+                    label: 'Предыдущий период',
+                    deviation: previousDeviation,
+                    type: 'comparison'
+                });
+            } else {
+                result[0].deviation = currentDeviation;
+                result[1].deviation = previousDeviation;
+            }
+        }
+        
+        if (metrics.includes('percentage')) {
+            const currentPercentage = currentFinance ? (currentAnalytics / currentFinance) * 100 : 0;
+            const previousPercentage = previousFinance ? (previousAnalytics / previousFinance) * 100 : 0;
+            
+            if (result.length === 0) {
+                result.push({
+                    label: 'Текущий период',
+                    percentage: currentPercentage,
+                    type: 'comparison'
+                });
+                result.push({
+                    label: 'Предыдущий период',
+                    percentage: previousPercentage,
+                    type: 'comparison'
+                });
+            } else {
+                result[0].percentage = currentPercentage;
+                result[1].percentage = previousPercentage;
+            }
+        }
+        
+        // Если нет выбранных метрик, показываем план и факт по умолчанию
+        if (result.length === 0) {
+            result.push({
+                label: 'Текущий период',
+                plan: currentFinance,
+                fact: currentAnalytics,
+                type: 'comparison'
+            });
+            result.push({
+                label: 'Предыдущий период',
+                plan: previousFinance,
+                fact: previousAnalytics,
+                type: 'comparison'
+            });
+        }
+        
+        if (dev) {
+            console.log('🔍 transformComparisonData result:', result);
+        }
+        
+        return result;
     };
 
     const transformTrendsData = (data, metrics) => {

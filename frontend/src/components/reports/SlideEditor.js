@@ -110,16 +110,54 @@ const SlideEditor = ({
     }, [localSlide, onSlideChange]);
 
     const handleFiltersChange = useCallback((newFilters) => {
+        // Преобразуем поля showDeviation и showPercentage в массив metrics для финансовых слайдов
+        let processedFilters = { ...newFilters };
+        
+        if (localSlide.type === 'finance-chart' || localSlide.type === 'finance-table') {
+            const metrics = [];
+            
+            // Добавляем стандартные метрики
+            if (newFilters.showPlan !== false) {
+                metrics.push('plan');
+            }
+            if (newFilters.showFact !== false) {
+                metrics.push('fact');
+            }
+            if (newFilters.showDeviation === true) {
+                metrics.push('deviation');
+            }
+            if (newFilters.showPercentage === true) {
+                metrics.push('percentage');
+            }
+            
+            processedFilters.metrics = metrics;
+            
+            if (dev) {
+                console.log('🔍 SlideEditor: Преобразованы метрики для финансового слайда:', {
+                    showPlan: newFilters.showPlan,
+                    showFact: newFilters.showFact,
+                    showDeviation: newFilters.showDeviation,
+                    showPercentage: newFilters.showPercentage,
+                    metrics
+                });
+            }
+        }
+        
         const updatedSlide = {
             ...localSlide,
             content: {
                 ...localSlide.content,
-                filters: { ...localSlide.content.filters, ...newFilters }
+                filters: { ...localSlide.content.filters, ...processedFilters }
             }
         };
         setLocalSlide(updatedSlide);
         onSlideChange?.(updatedSlide);
         setPreviewData(null); // Сбрасываем предпросмотр при изменении фильтров
+        
+        if (dev) {
+            console.log('🔍 SlideEditor: Фильтры изменились, обновляем слайд:', processedFilters);
+            console.log('🔍 SlideEditor: Обновленные фильтры слайда:', updatedSlide.content.filters);
+        }
     }, [localSlide, onSlideChange]);
 
     // Загрузка данных для предпросмотра с кэшированием

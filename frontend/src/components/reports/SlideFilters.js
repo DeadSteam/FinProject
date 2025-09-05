@@ -67,7 +67,8 @@ const SlideFilters = ({
                 const metrics = await response.json();
                 setCategoryMetrics(metrics);
                 if (dev) {
-                    console.log(`Loaded metrics for category ${categoryId}:`, metrics);
+                    console.log(`🔍 SlideFilters: Loaded metrics for category ${categoryId}:`, metrics);
+                    console.log('🔍 SlideFilters: Metrics structure:', metrics.map(m => ({ id: m.id, name: m.name, value: m.value })));
                 }
             } else {
                 // Если не удалось загрузить, показываем все метрики
@@ -114,9 +115,10 @@ const SlideFilters = ({
         onFiltersChange?.(newFilters);
         
         if (dev) {
-            console.log('Filter changed:', filterKey, value);
-            console.log('Available metrics:', availableData.metrics);
-            console.log('Selected category:', value);
+            console.log('🔍 SlideFilters: Фильтр изменился:', filterKey, value);
+            console.log('🔍 SlideFilters: Новые фильтры:', newFilters);
+            console.log('🔍 SlideFilters: Доступные метрики:', availableData.metrics);
+            console.log('🔍 SlideFilters: Выбранная категория:', value);
         }
     }, [localFilters, onFiltersChange, availableData.metrics]);
 
@@ -294,7 +296,7 @@ const SlideFilters = ({
                         </div>
                     </div>
 
-                    {/* Метрики для выбранной категории */}
+                    {/* Метрики и тумблеры в одной строке */}
                     <div className="row">
                         <div className="col-md-4">
                             <div className="mb-3">
@@ -319,10 +321,8 @@ const SlideFilters = ({
                                 </select>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div className="row">
-                        <div className="col-md-6">
+                        
+                        <div className="col-md-8">
                             <div className="mb-3">
                                 <label className="form-label">Показывать данные</label>
                                 <div className="metrics-toggles">
@@ -360,6 +360,19 @@ const SlideFilters = ({
                                                 type="checkbox"
                                                 checked={localFilters.showDeviation === true}
                                                 onChange={(e) => handleFilterChange('showDeviation', e.target.checked)}
+                                            />
+                                            <span className="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    
+                                    <div className="toggle-item">
+                                        <span className="toggle-text">Процент</span>
+                                        <label className={`toggle-switch ${localFilters.showPercentage === true ? 'active' : ''}`}>
+                                            <input
+                                                className="toggle-input"
+                                                type="checkbox"
+                                                checked={localFilters.showPercentage === true}
+                                                onChange={(e) => handleFilterChange('showPercentage', e.target.checked)}
                                             />
                                             <span className="toggle-slider"></span>
                                         </label>

@@ -220,14 +220,58 @@
     box-sizing: border-box !important;
 }
 
-/* Тумблеры для метрик - используем те же стили, что и в AnalyticsFilters */
+/* Тумблеры для метрик - располагаем в два столбца */
 .metrics-toggles {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
-    gap: 0.5rem;
+    gap: 0.5rem 0.75rem !important;
     width: 100%;
     max-width: 100%;
     overflow: hidden;
+}
+
+/* Максимально специфичный селектор для переопределения */
+.filter-card .metrics-toggles {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.5rem 0.75rem !important;
+    flex-direction: unset !important;
+}
+
+/* Еще более специфичный селектор */
+.filter-card-body .metrics-toggles {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.5rem 0.75rem !important;
+    flex-direction: unset !important;
+    align-items: unset !important;
+    justify-content: unset !important;
+}
+
+/* Максимально специфичный селектор для переопределения SlideFilters */
+.comparison-filters .metrics-toggles {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.5rem 0.75rem !important;
+    flex-direction: unset !important;
+    flex-wrap: unset !important;
+    align-items: unset !important;
+    justify-content: unset !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* Еще более специфичный селектор с полным путем */
+#root .comparison-filters .filter-card .filter-card-body .metrics-toggles {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.5rem 0.75rem !important;
+    flex-direction: unset !important;
+    flex-wrap: unset !important;
+    align-items: unset !important;
+    justify-content: unset !important;
+    width: 100% !important;
+    max-width: 100% !important;
 }
 
 .toggle-item {
@@ -356,12 +400,17 @@
         font-size: 0.7rem;
         padding: 0.125rem 0.25rem;
     }
+    
+    .metrics-toggles {
+        grid-template-columns: 1fr !important;
+        gap: 0.5rem !important;
+    }
 }
 
 @media (max-width: 480px) {
     .metrics-toggles {
         grid-template-columns: 1fr !important;
-        gap: 0.5rem;
+        gap: 0.5rem !important;
     }
 }
 

@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useNotifications } from '../../hooks';
+import { useReportData } from './ReportDataProvider';
 import Chart from '../ui/Chart';
-import ReportChart from './ReportChart';
 import AnalyticsDataTable from '../ui/AnalyticsDataTable';
-import reportsService from '../../services/reportsService';
+import AnalyticsComparison from '../analytics/AnalyticsComparison';
 import './ReportPreview.css';
 
 // Безопасное определение development режима
@@ -22,6 +22,7 @@ const dev = isDevelopment();
  */
 const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPDF, onExportToPPTX }) => {
     const { showSuccess, showError, showInfo } = useNotifications();
+    const { loadSlideData, transformDataForChart } = useReportData();
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [presentationMode, setPresentationMode] = useState(false);
     const previewRef = useRef(null);
@@ -154,92 +155,85 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
     // Загрузка данных для всех слайдов при открытии предпросмотра
     useEffect(() => {
         if (report.slides && report.slides.length > 0) {
+            if (dev) {
+                console.log('🔍 ReportPreview: Загружаем данные для слайдов:', report.slides.map(s => ({ id: s.id, type: s.type })));
+            }
             report.slides.forEach(slide => {
                 if (slide.type !== 'title' && !slideData.has(slide.id) && !loadingSlides.has(slide.id)) {
-                    loadSlideData(slide);
+                    if (dev) {
+                        console.log('🔍 ReportPreview: Загружаем данные для слайда:', slide.id, slide.type);
+                    }
+                    loadSlideDataForPreview(slide);
                 }
             });
         }
-    }, [report.slides]); // Убираем loadSlideData из зависимостей
+    }, [report.slides, loadSlideDataForPreview]); // Добавляем loadSlideDataForPreview в зависимости
 
     // Загрузка данных для текущего слайда (если еще не загружены)
     useEffect(() => {
         if (currentSlide && !slideData.has(currentSlide.id) && !loadingSlides.has(currentSlide.id)) {
-            loadSlideData(currentSlide);
+            loadSlideDataForPreview(currentSlide);
         }
-    }, [currentSlide?.id]); // Убираем зависимости, которые вызывают циклические вызовы
+    }, [currentSlide?.id, loadSlideDataForPreview]); // Добавляем loadSlideDataForPreview в зависимости
 
-    // Загрузка данных для слайда
-    const loadSlideData = useCallback(async (slide) => {
+    // Загрузка данных для слайда (используем тот же подход, что и в SlidePreview)
+    const loadSlideDataForPreview = useCallback(async (slide) => {
         if (slide.type === 'title') return; // Титульные слайды не требуют данных
         
         // Проверяем, не загружаем ли мы уже данные для этого слайда
         if (loadingSlides.has(slide.id)) return;
         
+        if (dev) {
+            console.log('🔍 ReportPreview loadSlideDataForPreview: Начинаем загрузку для слайда:', slide.id, slide.type);
+        }
+        
         setLoadingSlides(prev => new Set([...prev, slide.id]));
         
         try {
-            let data;
-            const filters = slide.content.filters || {};
+            const filters = slide.content?.filters || {};
+            const settings = slide.content?.settings || {};
             
-            if (slide.type?.includes('analytics')) {
-                data = await reportsService.getAnalyticsDataForSlide(filters);
-            } else if (slide.type?.includes('finance')) {
-                const financeFilters = {
-                    year: filters.year || new Date().getFullYear().toString(),
-                    shop: filters.shop || 'all',
-                    category: filters.category || 'all',
-                    metric: filters.metric || 'all',
-                    periodType: filters.periodType || 'quarters',
-                    showPlan: filters.showPlan !== false,
-                    showFact: filters.showFact !== false,
-                    showDeviation: filters.showDeviation === true
-                };
-                
-                data = await reportsService.getFinanceDataForSlide(financeFilters);
-            } else if (slide.type === 'comparison') {
-                // Загружаем данные для слайда сравнения
-                const comparisonFilters = {
-                    years: filters.years || [filters.year || new Date().getFullYear().toString()],
-                    categories: filters.categories || [filters.category || 'all'],
-                    shops: filters.shops || [filters.shop || 'all'],
-                    metrics: filters.metrics || ['fact', 'plan', 'deviation', 'percentage'],
-                    periodType: filters.periodType || 'years'
-                };
-                
-                data = await reportsService.getComparisonDataForSlide(comparisonFilters);
-            } else if (slide.type === 'trends') {
-                // Загружаем данные для слайда трендов
-                const trendsFilters = {
-                    year: filters.year || new Date().getFullYear().toString(),
-                    shop: filters.shop || 'all',
-                    category: filters.category || 'all',
-                    metric: filters.metric || 'all',
-                    showPlan: filters.showPlan !== false,
-                    showFact: filters.showFact !== false,
-                    showDeviation: filters.showDeviation === true
-                };
-                
-                data = await reportsService.getTrendsDataForSlide(trendsFilters);
-            } else if (slide.type === 'plan-vs-actual') {
-                // Загружаем данные для слайда план vs факт
-                const planVsActualFilters = {
-                    year: filters.year || new Date().getFullYear().toString(),
-                    shop: filters.shop || 'all',
-                    category: filters.category || 'all',
-                    metric: filters.metric || 'all',
-                    showPlan: filters.showPlan !== false,
-                    showFact: filters.showFact !== false,
-                    showDeviation: filters.showDeviation === true
-                };
-                
-                data = await reportsService.getTrendsDataForSlide(planVsActualFilters);
-            }
+            // Нормализуем фильтры как в SlidePreview
+            const normalizedFilters = {
+                ...filters,
+                years: (filters?.years || []).map((y) => (y?.value ?? y?.id ?? y)),
+                categories: (filters?.categories || []).map((c) => (c?.value ?? c?.id ?? c)),
+                shops: (filters?.shops || []).map((s) => (s?.value ?? s?.id ?? s)),
+                metrics: (filters?.metrics || []).map((m) => (m?.value ?? m?.id ?? m)),
+                periodType: filters?.periodType || 'years'
+            };
+
+            // Используем тот же loadSlideData, что и в SlidePreview
+            const slideData = await loadSlideData(slide.type, normalizedFilters, settings);
             
-            if (data) {
+            if (slideData) {
+                // Определяем метрики для отображения (как в SlidePreview)
+                let selectedMetrics = ['plan', 'fact']; // По умолчанию
+                if (filters?.metrics && filters.metrics.length > 0) {
+                    // Используем выбранные пользователем метрики
+                    selectedMetrics = filters.metrics.map(m => m?.value ?? m?.id ?? m);
+                }
+                
+                if (dev) {
+                    console.log('🔍 ReportPreview loadSlideDataForPreview: selectedMetrics для transformDataForChart:', selectedMetrics);
+                }
+                
+                // Преобразуем данные для графика как в SlidePreview
+                const transformedData = transformDataForChart(
+                    slideData, 
+                    slide.type, 
+                    selectedMetrics
+                );
+                
+                const processedData = {
+                    ...slideData,
+                    chartData: transformedData,
+                    tableData: slideData.tableData || slideData.metrics || []
+                };
+                
                 setSlideData(prev => {
                     const newMap = new Map(prev);
-                    newMap.set(slide.id, data);
+                    newMap.set(slide.id, processedData);
                     return newMap;
                 });
             }
@@ -254,7 +248,7 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
                 return newSet;
             });
         }
-    }, []); // Пустой массив зависимостей, так как функция не зависит от внешних переменных
+    }, [loadSlideData, transformDataForChart]);
 
 
 
@@ -438,10 +432,11 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
                 return renderTitleSlideContent(slide);
             case 'analytics-chart':
             case 'finance-chart':
-            case 'comparison':
             case 'trends':
             case 'plan-vs-actual':
                 return renderChartSlideContent(slide);
+            case 'comparison':
+                return renderComparisonSlideContent(slide);
             case 'analytics-table':
             case 'finance-table':
                 return renderTableSlideContent(slide);
@@ -509,7 +504,7 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
                             <p>Данные не загружены</p>
                             <button 
                                 className="btn btn-sm btn-outline-primary"
-                                onClick={() => loadSlideData(slide)}
+                                onClick={() => loadSlideDataForPreview(slide)}
                             >
                                 Повторить загрузку
                             </button>
@@ -519,17 +514,24 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
             );
         }
 
-        // Определяем какие типы данных показывать для подписи
-        const showTypes = [];
+        // Определяем метрики из фильтров или используем по умолчанию (как в SlidePreview)
         const filters = slide.content.filters || {};
-        if (filters?.showPlan !== false) showTypes.push('план');
-        if (filters?.showFact !== false) showTypes.push('факт');
-        if (filters?.showDeviation === true) showTypes.push('отклонение');
+        const selectedMetrics = filters?.metrics && filters.metrics.length > 0 
+            ? filters.metrics.map(m => m?.value ?? m?.id ?? m)
+            : ['plan', 'fact'];
 
-        // Получаем названия из данных слайда (они приходят с API)
-        const shopName = currentSlideData?.shopName;
-        const categoryName = currentSlideData?.categoryName;  
-        const metricName = currentSlideData?.metricName;
+        // Логируем для отладки (как в SlidePreview)
+        if (dev) {
+            console.log('🔍 ReportPreview renderChartSlideContent:', {
+                slideType: slide.type,
+                data: currentSlideData,
+                chartData: currentSlideData?.chartData,
+                chartDataLength: currentSlideData?.chartData?.length,
+                selectedMetrics,
+                chartType: slide.content.settings?.chartType || 'bar',
+                filters
+            });
+        }
 
         return (
             <div className="slide-content chart-slide-content">
@@ -538,80 +540,108 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
 
                 
                 <div className="chart-container">
-                    {slide.type === 'comparison' ? (
-                        // Для месячного и квартального режимов показываем отдельный график для каждой метрики
-                        (filters?.periodType === 'months' || filters?.periodType === 'quarters') ? (
-                            <div className="monthly-metrics-charts">
-                                {(filters?.metrics || ['plan', 'fact', 'deviation', 'percentage']).map(metric => {
-                                    const metricData = currentSlideData.comparisonData?.[metric] || [];
-                                    if (metricData.length === 0) return null;
-                                    
-                                    const metricTitles = {
-                                        'fact': 'Факт',
-                                        'plan': 'План',
-                                        'deviation': 'Отклонение',
-                                        'percentage': '% выполнения'
-                                    };
-                                    
-                                    // Получаем годы из данных или фильтров
-                                    const years = filters?.years || Object.keys(metricData[0] || {}).filter(key => key !== 'label' && key !== 'month');
-                                    
-                                    return (
-                                        <div key={metric} className="metric-chart-container mb-4">
-                                            <ReportChart
-                                                data={metricData}
-                                                title={`${metricTitles[metric] || metric} ${filters?.periodType === 'months' ? 'по месяцам' : 'по кварталам'}`}
-                                                type={slide.content.settings.chartType || 'bar'}
-                                                selectedMetrics={years}
-                                                isFiltering={false}
-                                            />
-                                        </div>
-                                    );
-                                })}
-                                
-
-                            </div>
-                        ) : (
-                            <ReportChart
-                                data={Array.isArray(currentSlideData.comparisonData) ? currentSlideData.comparisonData : []}
+                    {Array.isArray(currentSlideData?.chartData) && currentSlideData.chartData.length > 0 ? (
+                        <div className="chart-full-width">
+                            <Chart
+                                type={slide.content.settings?.chartType || 'bar'}
+                                data={currentSlideData.chartData}
+                                selectedMetrics={selectedMetrics}
                                 title={slide.title}
-                                type={slide.content.settings.chartType || 'bar'}
-                                selectedMetrics={filters?.metrics || ['plan', 'fact', 'deviation', 'percentage']} // Используем метрики из фильтров
-                                isFiltering={false}
                             />
-                        )
-                    ) : slide.type === 'trends' ? (
-                        <ReportChart
-                            data={currentSlideData.trends?.periods || currentSlideData.chartData || []}
-                            title={slide.title}
-                            type={slide.content.settings.chartType || 'line'}
-                            selectedMetrics={['plan', 'fact', 'deviation']}
-                            isFiltering={false}
-                        />
-                    ) : slide.type === 'plan-vs-actual' ? (
-                        <ReportChart
-                            data={currentSlideData.planVsActual?.categories || currentSlideData.chartData || []}
-                            title={slide.title}
-                            type={slide.content.settings.chartType || 'bar'}
-                            selectedMetrics={['plan', 'fact', 'deviation']}
-                            isFiltering={false}
-                        />
+                        </div>
                     ) : (
-                        <>
-                            {console.log('🔍 ReportPreview: Данные для финансового графика:', currentSlideData)}
-                            {console.log('🔍 ReportPreview: chartData:', currentSlideData.chartData)}
-                            {console.log('🔍 ReportPreview: selectedMetrics:', currentSlideData.selectedMetrics)}
-                            {console.log('🔍 ReportPreview: slide.content.settings:', slide.content.settings)}
-                            <ReportChart
-                                data={currentSlideData.chartData || []}
-                                title={slide.title}
-                                type={slide.content.settings.chartType || 'bar'}
-                                selectedMetrics={currentSlideData.selectedMetrics || ['plan', 'fact']}
-                                isFiltering={false}
-                                unit={currentSlideData.unit}
-                            />
-                        </>
+                        <div className="no-data">
+                            <i className="fas fa-chart-line fa-3x mb-3"></i>
+                            <p>Нет данных для отображения</p>
+                        </div>
                     )}
+                </div>
+            </div>
+        );
+    }
+
+    function renderComparisonSlideContent(slide) {
+        const currentSlideData = slideData.get(slide.id);
+        const isLoadingCurrentSlide = loadingSlides.has(slide.id);
+        const filters = slide.content?.filters || {};
+        
+        // Безопасная обработка фильтров (точно как в SlidePreview)
+        const safeFilters = {
+            years: Array.isArray(filters?.years) && filters.years.length > 0 
+                ? filters.years 
+                : [new Date().getFullYear()],
+            categories: Array.isArray(filters?.categories) 
+                ? filters.categories.map((c) => (c?.value ?? c?.id ?? c)).filter(Boolean)
+                : [],
+            shops: Array.isArray(filters?.shops) 
+                ? filters.shops.map((s) => (s?.value ?? s?.id ?? s)).filter(Boolean)
+                : [],
+            metrics: Array.isArray(filters?.metrics) && filters.metrics.length > 0
+                ? filters.metrics.map((m) => (m?.value ?? m?.id ?? m)).filter(Boolean)
+                : ['fact', 'plan', 'deviation', 'percentage'],
+            periodType: filters?.periodType || 'year'
+        };
+
+        if (dev) {
+            console.log('🔍 ReportPreview renderComparisonSlideContent:', {
+                slideId: slide.id,
+                slideData: currentSlideData,
+                filters,
+                safeFilters,
+                isLoading: isLoadingCurrentSlide
+            });
+        }
+
+        if (isLoadingCurrentSlide) {
+            return (
+                <div className="slide-content comparison-slide-content">
+                    <h2 className="slide-title">{slide.title}</h2>
+                    <div className="comparison-container d-flex justify-content-center align-items-center">
+                        <div className="text-center">
+                            <div className="spinner-border text-primary mb-3" role="status">
+                                <span className="visually-hidden">Загрузка...</span>
+                            </div>
+                            <p className="text-muted">Загрузка данных...</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (!currentSlideData) {
+            return (
+                <div className="slide-content comparison-slide-content">
+                    <h2 className="slide-title">{slide.title}</h2>
+                    <div className="comparison-container d-flex justify-content-center align-items-center">
+                        <div className="text-center text-muted">
+                            <p>Данные не загружены</p>
+                            <button 
+                                className="btn btn-sm btn-outline-primary"
+                                onClick={() => loadSlideDataForPreview(slide)}
+                            >
+                                Повторить загрузку
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <div className="slide-content comparison-slide-content">
+                <h2 className="slide-title">{slide.title}</h2>
+                <div className="comparison-container p-2">
+                    <div className="comparison-full-width">
+                        <AnalyticsComparison
+                            analyticsData={currentSlideData?.analytics || currentSlideData || {}}
+                            filters={safeFilters}
+                            isLoading={isLoadingCurrentSlide}
+                            showControls={false}
+                            showTable={false}
+                            showSummary={false}
+                            showHeader={false}
+                        />
+                    </div>
                 </div>
             </div>
         );
@@ -646,7 +676,7 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
                             <p>Данные не загружены</p>
                             <button 
                                 className="btn btn-sm btn-outline-primary"
-                                onClick={() => loadSlideData(slide)}
+                                onClick={() => loadSlideDataForPreview(slide)}
                             >
                                 Повторить загрузку
                             </button>
