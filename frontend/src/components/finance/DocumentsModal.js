@@ -229,16 +229,23 @@ const DocumentsModal = ({ isOpen, onClose, actualValueId, onUpload }) => {
                                                     }}
                                                     title="Скачать"
                                                 >
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                                        <path d="M20 8.94a1.31 1.31 0 0 0-0.06-0.27l0-0.09a1.07 1.07 0 0 0-0.19-0.28h0l-6-6h0a1.07 1.07 0 0 0-0.28-0.19l-0.1 0A1.1 1.1 0 0 0 13.06 2H7A3 3 0 0 0 4 5V19a3 3 0 0 0 3 3H17a3 3 0 0 0 3-3V9S20 9 20 8.94ZM14 5.41L16.59 8H15a1 1 0 0 1-1-1ZM18 19a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5A1 1 0 0 1 7 4h5V7a3 3 0 0 0 3 3h3Zm-4.71-4.71l-0.29 0.3V12a1 1 0 0 0-2 0v2.59l-0.29-0.3a1 1 0 0 0-1.42 1.42l2 2a1 1 0 0 0 0.33 0.21a0.94 0.94 0 0 0 0.76 0a1 1 0 0 0 0.33-0.21l2-2a1 1 0 0 0-1.42-1.42Z"/>
+                                                    <svg fill="currentColor" viewBox="0 0 64 64" data-name="Layer 1" id="Layer_1" xmlns="http://www.w3.org/2000/svg">
+                                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                                                        <g id="SVGRepo_iconCarrier">
+                                                            <title></title>
+                                                            <path d="M48.5,58.5h-33a2,2,0,0,1-2-2V26a2,2,0,0,1,4,0V54.5h29V21.55l-9.4-12H17.5v4.41a2,2,0,0,1-4,0V7.5a2,2,0,0,1,2-2H38.07a2,2,0,0,1,1.58.77L50.08,19.63a2,2,0,0,1,.42,1.23V56.5A2,2,0,0,1,48.5,58.5Z"></path>
+                                                            <path d="M32,50.36a2,2,0,0,1-1.41-.58l-5.07-5.07a2,2,0,0,1,2.83-2.83L32,45.54l3.65-3.66a2,2,0,0,1,2.83,2.83l-5.07,5.07A2,2,0,0,1,32,50.36Z"></path>
+                                                            <path d="M32,50.36a2,2,0,0,1-2-2V31.43a2,2,0,0,1,4,0V48.36A2,2,0,0,1,32,50.36Z"></path>
+                                                        </g>
                                                     </svg>
                                                 </button>
                                                 <button
-                                                    className={styles.downloadBtn}
+                                                    className={styles.previewBtn}
                                                     onClick={() => setPreviewDoc(doc)}
                                                     title="Просмотр"
                                                 >
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                                         <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle>
                                                     </svg>
                                                 </button>
@@ -247,7 +254,7 @@ const DocumentsModal = ({ isOpen, onClose, actualValueId, onUpload }) => {
                                                     onClick={() => handleDeleteDocument(doc.id)}
                                                     title="Удалить"
                                                 >
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                                         <path d="M19 7l-0.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v3M4 7h16"/>
                                                     </svg>
                                                 </button>

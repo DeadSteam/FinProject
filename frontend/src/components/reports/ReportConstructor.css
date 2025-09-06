@@ -305,14 +305,14 @@
 }
 
 .slide-actions .btn-outline-secondary:hover {
-    background: var(--secondary);
-    border-color: var(--secondary);
+    background: var(--primary);
+    border-color: var(--primary);
     color: white;
 }
 
 .slide-actions .btn-outline-danger:hover {
-    background: var(--danger);
-    border-color: var(--danger);
+    background: var(--primary);
+    border-color: var(--primary);
     color: white;
 }
 
@@ -325,16 +325,47 @@
     justify-content: center;
     padding: 0;
     position: relative;
+    color: var(--text-secondary);
+    border-color: var(--border);
+}
+
+.slide-actions .btn-outline-secondary {
+    min-width: 32px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    position: relative;
+    color: var(--text-secondary);
+    border-color: var(--border);
 }
 
 .slide-actions .btn-outline-danger svg {
     width: 14px;
     height: 14px;
-    stroke: #6b7280;
+    fill: none;
+    stroke: currentColor;
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
-    transition: none;
+    transition: all 0.2s ease;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.slide-actions .btn-outline-secondary svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: all 0.2s ease;
     position: absolute;
     top: 50%;
     left: 50%;

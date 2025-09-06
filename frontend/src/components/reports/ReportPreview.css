@@ -582,3 +582,50 @@
         font-size: 0.8rem;
     }
 }
+
+/* Индикатор прогресса экспорта */
+.export-progress-container {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-light);
+    padding: 1rem 1.5rem;
+    flex-shrink: 0;
+}
+
+.export-progress-container .progress {
+    height: 8px;
+    background-color: var(--bg-light);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.export-progress-container .progress-bar {
+    background: linear-gradient(45deg, var(--primary), var(--primary-light));
+    transition: width 0.3s ease;
+}
+
+.export-progress-container .progress-bar-striped {
+    background-image: linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.15) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(255, 255, 255, 0.15) 50%,
+        rgba(255, 255, 255, 0.15) 75%,
+        transparent 75%,
+        transparent
+    );
+    background-size: 1rem 1rem;
+}
+
+.export-progress-container .progress-bar-animated {
+    animation: progress-bar-stripes 1s linear infinite;
+}
+
+@keyframes progress-bar-stripes {
+    0% {
+        background-position: 1rem 0;
+    }
+    100% {
+        background-position: 0 0;
+    }
+}

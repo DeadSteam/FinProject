@@ -375,24 +375,7 @@ const Analytics = () => {
     return (
         <ErrorBoundary>
             <div className="main-content">
-                <div className="card mb-4">
-                    <div className="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h1 className="mb-2">Комплексная аналитика</h1>
-                            <p className="text-secondary mb-0">Многомерный анализ финансовых данных с настраиваемыми фильтрами</p>
-                        </div>
-                        
-                        <div>
-                            <button 
-                                className="btn btn-primary btn-sm"
-                                onClick={handleManualRefresh}
-                                disabled={isLoading}
-                            >
-                                {isLoading ? <LoadingSpinner size="small" /> : 'Обновить данные'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                
 
                 {/* Фильтры */}
                 <div className="card mb-4">

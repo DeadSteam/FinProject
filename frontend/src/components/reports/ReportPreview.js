@@ -4,6 +4,7 @@ import { useReportData } from './ReportDataProvider';
 import Chart from '../ui/Chart';
 import AnalyticsDataTable from '../ui/AnalyticsDataTable';
 import AnalyticsComparison from '../analytics/AnalyticsComparison';
+import reportsService from '../../services/reportsService';
 import './ReportPreview.css';
 
 // Безопасное определение development режима
@@ -30,6 +31,10 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
     // Состояние для загрузки данных слайдов
     const [slideData, setSlideData] = useState(new Map());
     const [loadingSlides, setLoadingSlides] = useState(new Set());
+    
+    // Состояние для экспорта
+    const [isExporting, setIsExporting] = useState(false);
+    const [exportProgress, setExportProgress] = useState(0);
     
     // Используем статичные данные для стабильной работы предпросмотра
     const availableData = useMemo(() => ({
@@ -76,6 +81,74 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
     const handleSlideClick = (index) => {
         onSlideSelect(index);
     };
+
+    // Обработчики экспорта
+    const handleExportToPDF = useCallback(async () => {
+        if (!report || !report.slides || report.slides.length === 0) {
+            showError('Нет слайдов для экспорта');
+            return;
+        }
+
+        setIsExporting(true);
+        setExportProgress(0);
+
+        try {
+            setExportProgress(20);
+            const pdf = await reportsService.generateClientPDF(report, {
+                orientation: 'landscape',
+                format: 'a4'
+            });
+            
+            setExportProgress(80);
+            
+            // Скачиваем файл
+            const filename = `${report.title || 'report'}_${new Date().toISOString().split('T')[0]}.pdf`;
+            pdf.save(filename);
+            
+            setExportProgress(100);
+            showSuccess('Отчет успешно экспортирован в PDF');
+            
+        } catch (error) {
+            if (dev) console.error('Export PDF error:', error);
+            showError('Ошибка экспорта в PDF: ' + error.message);
+        } finally {
+            setIsExporting(false);
+            setExportProgress(0);
+        }
+    }, [report, showError, showSuccess]);
+
+    const handleExportToPPTX = useCallback(async () => {
+        if (!report || !report.slides || report.slides.length === 0) {
+            showError('Нет слайдов для экспорта');
+            return;
+        }
+
+        setIsExporting(true);
+        setExportProgress(0);
+
+        try {
+            setExportProgress(20);
+            const pptx = await reportsService.generateClientPPTX(report, {
+                quality: 'high'
+            });
+            
+            setExportProgress(80);
+            
+            // Скачиваем файл
+            const filename = `${report.title || 'report'}_${new Date().toISOString().split('T')[0]}.pptx`;
+            await pptx.writeFile({ fileName: filename });
+            
+            setExportProgress(100);
+            showSuccess('Отчет успешно экспортирован в PowerPoint');
+            
+        } catch (error) {
+            if (dev) console.error('Export PPTX error:', error);
+            showError('Ошибка экспорта в PowerPoint: ' + error.message);
+        } finally {
+            setIsExporting(false);
+            setExportProgress(0);
+        }
+    }, [report, showError, showSuccess]);
 
     // Полноэкранный режим
     const handleToggleFullscreen = () => {
@@ -305,6 +378,43 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
                                     <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
                                 </svg>
                             </button>
+                            <button
+                                className="btn btn-outline-danger btn-sm"
+                                onClick={handleExportToPDF}
+                                disabled={isExporting || !report?.slides?.length}
+                                title="Экспорт в PDF"
+                            >
+                                {isExporting ? (
+                                    <div className="spinner-border spinner-border-sm me-1" role="status">
+                                        <span className="visually-hidden">Экспорт...</span>
+                                    </div>
+                                ) : (
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="me-1">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                        <polyline points="14,2 14,8 20,8"/>
+                                    </svg>
+                                )}
+                                PDF
+                            </button>
+                            <button
+                                className="btn btn-primary btn-sm"
+                                onClick={handleExportToPPTX}
+                                disabled={isExporting || !report?.slides?.length}
+                                title="Экспорт в PowerPoint"
+                            >
+                                {isExporting ? (
+                                    <div className="spinner-border spinner-border-sm me-1" role="status">
+                                        <span className="visually-hidden">Экспорт...</span>
+                                    </div>
+                                ) : (
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="me-1">
+                                        <rect width="18" height="18" x="3" y="3" rx="2"/>
+                                        <path d="M7 7h10"/>
+                                        <path d="M7 12h4"/>
+                                    </svg>
+                                )}
+                                PowerPoint
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -481,7 +591,7 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
         
         if (isLoadingCurrentSlide) {
             return (
-                <div className="slide-content chart-slide-content">
+                <div className="slide-content chart-slide-content" data-slide-id={slide.id}>
                     <h2 className="slide-title">{slide.title}</h2>
                     <div className="chart-container d-flex justify-content-center align-items-center">
                         <div className="text-center">
@@ -497,7 +607,7 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
         
         if (!currentSlideData) {
             return (
-                <div className="slide-content chart-slide-content">
+                <div className="slide-content chart-slide-content" data-slide-id={slide.id}>
                     <h2 className="slide-title">{slide.title}</h2>
                     <div className="chart-container d-flex justify-content-center align-items-center">
                         <div className="text-center text-muted">
@@ -534,7 +644,7 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
         }
 
         return (
-            <div className="slide-content chart-slide-content">
+            <div className="slide-content chart-slide-content" data-slide-id={slide.id}>
                 <h2 className="slide-title">{slide.title}</h2>
                 
 
@@ -542,6 +652,11 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
                 <div className="chart-container">
                     {Array.isArray(currentSlideData?.chartData) && currentSlideData.chartData.length > 0 ? (
                         <div className="chart-full-width">
+                            {dev && console.log('🔍 ReportPreview renderChartSlideContent: Rendering chart with data:', {
+                                chartData: currentSlideData.chartData,
+                                selectedMetrics,
+                                slideType: slide.type
+                            })}
                             <Chart
                                 type={slide.content.settings?.chartType || 'bar'}
                                 data={currentSlideData.chartData}
@@ -553,6 +668,13 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
                         <div className="no-data">
                             <i className="fas fa-chart-line fa-3x mb-3"></i>
                             <p>Нет данных для отображения</p>
+                            {dev && (
+                                <div className="mt-3 text-muted small">
+                                    <p>Debug info:</p>
+                                    <p>currentSlideData: {JSON.stringify(currentSlideData, null, 2)}</p>
+                                    <p>selectedMetrics: {JSON.stringify(selectedMetrics)}</p>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -594,7 +716,7 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
 
         if (isLoadingCurrentSlide) {
             return (
-                <div className="slide-content comparison-slide-content">
+                <div className="slide-content comparison-slide-content" data-slide-id={slide.id}>
                     <h2 className="slide-title">{slide.title}</h2>
                     <div className="comparison-container d-flex justify-content-center align-items-center">
                         <div className="text-center">
@@ -610,7 +732,7 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
 
         if (!currentSlideData) {
             return (
-                <div className="slide-content comparison-slide-content">
+                <div className="slide-content comparison-slide-content" data-slide-id={slide.id}>
                     <h2 className="slide-title">{slide.title}</h2>
                     <div className="comparison-container d-flex justify-content-center align-items-center">
                         <div className="text-center text-muted">
@@ -628,7 +750,7 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
         }
 
         return (
-            <div className="slide-content comparison-slide-content">
+            <div className="slide-content comparison-slide-content" data-slide-id={slide.id}>
                 <h2 className="slide-title">{slide.title}</h2>
                 <div className="comparison-container p-2">
                     <div className="comparison-full-width">
@@ -835,6 +957,26 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
                                 <path d="M6 6l12 12"/>
                             </svg>
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Индикатор прогресса экспорта */}
+            {isExporting && (
+                <div className="export-progress-container">
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                        <span className="text-muted">Экспорт в процессе...</span>
+                        <span className="text-muted">{exportProgress}%</span>
+                    </div>
+                    <div className="progress">
+                        <div
+                            className="progress-bar progress-bar-striped progress-bar-animated"
+                            style={{ width: `${exportProgress}%` }}
+                            role="progressbar"
+                            aria-valuenow={exportProgress}
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                        />
                     </div>
                 </div>
             )}

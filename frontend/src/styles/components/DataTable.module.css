@@ -807,13 +807,13 @@
 }
 
 .reasonBtn.reasonPositive {
-  color: #2ecc71 !important;
+  color: #000000 !important;
   border-color: #2ecc71 !important;
   background-color: transparent;
 }
 
 .reasonBtn.reasonNegative {
-  color: #e74c3c !important;
+  color: #000000 !important;
   border-color: #e74c3c !important;
   background-color: transparent;
 }
@@ -870,11 +870,11 @@
 }
 
 .reasonBtn {
-    color: #e74c3c;
+    color: #000000;
 }
 
 .reasonBtn.hasReason {
-    color: #2ecc71;
+    color: #000000;
 }
 
 .deviationContent {

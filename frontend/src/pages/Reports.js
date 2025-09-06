@@ -201,62 +201,7 @@ const Reports = () => {
             <ReportDataProvider>
                     <div className="main-content">
                         {/* Заголовок страницы */}
-                        <div className="card mb-4">
-                            <div className="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h1 className="mb-2">Отчеты и презентации</h1>
-                                    <p className="text-secondary mb-0">
-                                        Создание презентаций и PDF отчетов с данными из аналитики и финансовых деталей
-                                    </p>
-                                </div>
-                                
-                                {/* Кнопки управления отчетом */}
-                                <div className="d-flex gap-2">
-                                    <button 
-                                        className="btn btn-outline-secondary"
-                                        onClick={handleNewReport}
-                                        title="Создать новый отчет"
-                                    >
-                                        <i className="fas fa-plus me-1"></i>
-                                        Новый
-                                    </button>
-                                    
-                                    {currentReport.slides.length > 0 && (
-                                        <button 
-                                            className="btn btn-outline-info"
-                                            onClick={handleDuplicateReport}
-                                            title="Дублировать отчет"
-                                        >
-                                            <i className="fas fa-copy me-1"></i>
-                                            Дублировать
-                                        </button>
-                                    )}
-                                    
-                                    {/* Кнопки экспорта */}
-                                    {currentReport.slides.length > 0 && (
-                                        <>
-                                            <button 
-                                                className="btn btn-outline-primary"
-                                                onClick={handleExportToPDF}
-                                                title="Экспорт в PDF"
-                                            >
-                                                <i className="fas fa-file-pdf me-1"></i>
-                                                PDF
-                                            </button>
-                                            
-                                            <button 
-                                                className="btn btn-primary"
-                                                onClick={handleExportToPPTX}
-                                                title="Экспорт в PowerPoint"
-                                            >
-                                                <i className="fas fa-file-powerpoint me-1"></i>
-                                                PowerPoint
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
+                        
 
                         {/* Вкладки */}
                         <div className="card mb-4">
@@ -294,8 +239,6 @@ const Reports = () => {
                                         report={currentReport}
                                         selectedSlideIndex={selectedSlideIndex}
                                         onSlideSelect={handleSlideSelect}
-                                        onExportToPDF={handleExportToPDF}
-                                        onExportToPPTX={handleExportToPPTX}
                                     />
                                 )}
                             </Suspense>

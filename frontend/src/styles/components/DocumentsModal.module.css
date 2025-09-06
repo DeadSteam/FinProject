@@ -143,11 +143,14 @@
 }
 
 .downloadBtn:hover {
-    background: var(--background-primary);
-    color: var(--primary-color);
+    background: #e3f2fd;
+    color: #1976d2;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.2);
 }
 
 .downloadBtn svg,
+.previewBtn svg,
 .deleteBtn svg {
     width: 16px;
     height: 16px;
@@ -156,6 +159,7 @@
     padding: 0;
     flex-shrink: 0;
     line-height: 1;
+    transition: all 0.2s ease;
 }
 
 .deleteBtn {
@@ -175,6 +179,29 @@
 .deleteBtn:hover {
     background: #fdeaea;
     color: #e74c3c;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(231, 76, 60, 0.2);
+}
+
+.previewBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.previewBtn:hover {
+    background: #f0f8ff;
+    color: #4a90e2;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
 }
 
 .addDocumentSection {
