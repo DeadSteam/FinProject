@@ -230,8 +230,8 @@ const DocumentsModal = ({ isOpen, onClose, actualValueId, onUpload }) => {
                                                     title="Скачать"
                                                 >
                                                     <svg fill="currentColor" viewBox="0 0 64 64" data-name="Layer 1" id="Layer_1" xmlns="http://www.w3.org/2000/svg">
-                                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                                                        <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
+                                                        <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
                                                         <g id="SVGRepo_iconCarrier">
                                                             <title></title>
                                                             <path d="M48.5,58.5h-33a2,2,0,0,1-2-2V26a2,2,0,0,1,4,0V54.5h29V21.55l-9.4-12H17.5v4.41a2,2,0,0,1-4,0V7.5a2,2,0,0,1,2-2H38.07a2,2,0,0,1,1.58.77L50.08,19.63a2,2,0,0,1,.42,1.23V56.5A2,2,0,0,1,48.5,58.5Z"></path>

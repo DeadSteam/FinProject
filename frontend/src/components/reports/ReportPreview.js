@@ -93,7 +93,29 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
         setExportProgress(0);
 
         try {
-            setExportProgress(20);
+            setExportProgress(10);
+            
+            // Ждем, чтобы все графики загрузились
+            const chartSlides = report.slides.filter(slide => 
+                ['analytics-chart', 'finance-chart', 'trends', 'plan-vs-actual', 'comparison'].includes(slide.type)
+            );
+            
+            if (chartSlides.length > 0) {
+                console.log('⏳ Ждем загрузку графиков перед экспортом...');
+                setExportProgress(20);
+                
+                // Ждем, пока все графики загрузятся
+                for (const slide of chartSlides) {
+                    const currentSlideData = slideData.get(slide.id);
+                    if (!currentSlideData || !currentSlideData.chartData || currentSlideData.chartData.length === 0) {
+                        console.log(`⏳ Ждем загрузку данных для слайда ${slide.id}...`);
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                }
+                
+                setExportProgress(40);
+            }
+            
             const pdf = await reportsService.generateClientPDF(report, {
                 orientation: 'landscape',
                 format: 'a4'
@@ -115,7 +137,7 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
             setIsExporting(false);
             setExportProgress(0);
         }
-    }, [report, showError, showSuccess]);
+    }, [report, showError, showSuccess, slideData]);
 
     const handleExportToPPTX = useCallback(async () => {
         if (!report || !report.slides || report.slides.length === 0) {
@@ -127,7 +149,29 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
         setExportProgress(0);
 
         try {
-            setExportProgress(20);
+            setExportProgress(10);
+            
+            // Ждем, чтобы все графики загрузились
+            const chartSlides = report.slides.filter(slide => 
+                ['analytics-chart', 'finance-chart', 'trends', 'plan-vs-actual', 'comparison'].includes(slide.type)
+            );
+            
+            if (chartSlides.length > 0) {
+                console.log('⏳ Ждем загрузку графиков перед экспортом...');
+                setExportProgress(20);
+                
+                // Ждем, пока все графики загрузятся
+                for (const slide of chartSlides) {
+                    const currentSlideData = slideData.get(slide.id);
+                    if (!currentSlideData || !currentSlideData.chartData || currentSlideData.chartData.length === 0) {
+                        console.log(`⏳ Ждем загрузку данных для слайда ${slide.id}...`);
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                }
+                
+                setExportProgress(40);
+            }
+            
             const pptx = await reportsService.generateClientPPTX(report, {
                 quality: 'high'
             });
@@ -148,7 +192,7 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
             setIsExporting(false);
             setExportProgress(0);
         }
-    }, [report, showError, showSuccess]);
+    }, [report, showError, showSuccess, slideData]);
 
     // Полноэкранный режим
     const handleToggleFullscreen = () => {
