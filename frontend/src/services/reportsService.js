@@ -3,6 +3,7 @@ import jsPDF from 'jspdf';
 import PptxGenJS from 'pptxgenjs';
 import html2canvas from 'html2canvas';
 import * as htmlToImage from 'html-to-image';
+import slideRenderer from './slideRenderer';
 
 class ReportsService {
     constructor() {
@@ -624,14 +625,10 @@ class ReportsService {
         try {
             console.log('🔄 ReportsService: Генерация PDF для отчета:', report.title);
             
-            // Ждем, чтобы все графики успели отрендериться
-            console.log('⏳ Ждем рендеринг графиков...');
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // Сначала захватываем все графики как изображения
-            console.log('📸 Захватываем графики...');
-            const chartImages = await this.captureAllCharts(report);
-            console.log(`📸 Захвачено ${chartImages.size} графиков`);
+            // Используем новую логику рендеринга слайдов на сервере
+            console.log('🎨 Рендерим слайды на сервере...');
+            const chartImages = await slideRenderer.renderAllSlides(report, options.slideDataMap || new Map());
+            console.log(`🎨 Отрендерено ${chartImages.size} слайдов на сервере`);
             
             // Проверяем, что графики действительно захвачены
             if (chartImages.size === 0) {
@@ -794,14 +791,10 @@ class ReportsService {
         try {
             console.log('🔄 ReportsService: Генерация PowerPoint для отчета:', report.title);
             
-            // Ждем, чтобы все графики успели отрендериться
-            console.log('⏳ Ждем рендеринг графиков...');
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // Сначала захватываем все графики как изображения
-            console.log('📸 Захватываем графики для PowerPoint...');
-            const chartImages = await this.captureAllCharts(report);
-            console.log(`📸 Захвачено ${chartImages.size} графиков`);
+            // Используем новую логику рендеринга слайдов на сервере
+            console.log('🎨 Рендерим слайды на сервере для PowerPoint...');
+            const chartImages = await slideRenderer.renderAllSlides(report, options.slideDataMap || new Map());
+            console.log(`🎨 Отрендерено ${chartImages.size} слайдов на сервере`);
             
             // Проверяем, что графики действительно захвачены
             if (chartImages.size === 0) {
