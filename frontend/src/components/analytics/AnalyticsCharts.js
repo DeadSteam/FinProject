@@ -9,7 +9,6 @@ const AnalyticsCharts = ({ filters, analyticsData, isLoading }) => {
     const [activeView, setActiveView] = useState('categories');
     const [chartType, setChartType] = useState('bar');
 
-    console.log('🔍 AnalyticsCharts render:', { filters, analyticsData: !!analyticsData, isLoading });
 
     // Вспомогательная функция безопасного преобразования чисел
     const toSafeNumber = (value) => {

@@ -8,7 +8,7 @@ import MonthRow from './MonthRow.js';
 import QuarterRow from './QuarterRow.js';
 import MetricCells from './MetricCells.js';
 
-const DataTable = React.memo(({ metrics, periods, view, onEditValue, hasAdminRights = false, isFiltering = false }) => {
+const DataTable = React.memo(({ metrics, periods, view, onEditValue, hasAdminRights = false, isFiltering = false, showQuarters = true, visibleColumns = { plan: true, fact: true, deviation: true, percentage: true } }) => {
 
     // Получаем подготовленные данные из нового хука
     const { tableData, totalData } = useTableData(metrics, periods);
@@ -41,6 +41,14 @@ const DataTable = React.memo(({ metrics, periods, view, onEditValue, hasAdminRig
         );
     }
 
+    const enabledSubHeaders = (metric) => {
+        const headers = [];
+        if (visibleColumns.plan) headers.push('План');
+        if (visibleColumns.fact) headers.push('Факт');
+        if (visibleColumns.deviation) headers.push('Отклонение');
+        return headers;
+    };
+
     return (
         <div className={styles.tableContainer}>
             <table className={`${styles.dataTable} ${isFiltering ? styles.filtering : ''}`}>
@@ -49,41 +57,53 @@ const DataTable = React.memo(({ metrics, periods, view, onEditValue, hasAdminRig
                         <th rowSpan="2" className={styles.periodHeader}>
                             Период
                         </th>
-                        {metrics.map(metric => (
-                            <th key={metric.id} colSpan="3" className={styles.metricHeader}>
-                                {metric.name} ({metric.unit})
-                            </th>
-                        ))}
+                        {metrics.map(metric => {
+                            const colCount = (visibleColumns.plan ? 1 : 0) + (visibleColumns.fact ? 1 : 0) + (visibleColumns.deviation ? 1 : 0);
+                            if (colCount === 0) return null;
+                            return (
+                                <th key={metric.id} colSpan={colCount} className={styles.metricHeader}>
+                                    {metric.name} ({metric.unit})
+                                </th>
+                            );
+                        })}
                     </tr>
                     <tr className={styles.subHeader}>
                         {metrics.map(metric => (
                             <React.Fragment key={metric.id}>
-                                <th>
-                                    <div className={styles.sortableHeader}>
-                                        План
-                                    </div>
-                                </th>
-                                <th>
-                                    <div className={styles.sortableHeader}>
-                                        Факт
-                                    </div>
-                                </th>
-                                <th>
-                                    <div className={styles.sortableHeader}>
-                                        Отклонение
-                                    </div>
-                                </th>
+                                {visibleColumns.plan && (
+                                    <th>
+                                        <div className={styles.sortableHeader}>
+                                            План
+                                        </div>
+                                    </th>
+                                )}
+                                {visibleColumns.fact && (
+                                    <th>
+                                        <div className={styles.sortableHeader}>
+                                            Факт
+                                        </div>
+                                    </th>
+                                )}
+                                {visibleColumns.deviation && (
+                                    <th>
+                                        <div className={styles.sortableHeader}>
+                                            Отклонение
+                                        </div>
+                                    </th>
+                                )}
                             </React.Fragment>
                         ))}
                     </tr>
                 </thead>
                 <tbody>
-                    {tableData.map(row => {
-                        if (row.isQuarter) {
-                            return <QuarterRow key={row.id} row={row} metrics={metrics} hasAdminRights={hasAdminRights} onEditValue={handleEdit} />;
-                        }
-                        return <MonthRow key={row.id} row={row} metrics={metrics} hasAdminRights={hasAdminRights} onEditValue={handleEdit} />;
-                    })}
+                    {tableData
+                        .filter(row => showQuarters ? true : !row.isQuarter)
+                        .map(row => {
+                            if (row.isQuarter) {
+                                return <QuarterRow key={row.id} row={row} metrics={metrics} hasAdminRights={hasAdminRights} onEditValue={handleEdit} visibleColumns={visibleColumns} />;
+                            }
+                            return <MonthRow key={row.id} row={row} metrics={metrics} hasAdminRights={hasAdminRights} onEditValue={handleEdit} visibleColumns={visibleColumns} />;
+                        })}
                 </tbody>
                 {totalData && (
                     <tfoot>
@@ -95,6 +115,7 @@ const DataTable = React.memo(({ metrics, periods, view, onEditValue, hasAdminRig
                                     row={totalData} 
                                     metric={metric} 
                                     hasAdminRights={false} // Редактирование итогов отключено
+                                    visibleColumns={visibleColumns}
                                 />
                             ))}
                         </tr>

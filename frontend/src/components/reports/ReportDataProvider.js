@@ -89,20 +89,6 @@ export const ReportDataProvider = ({ children }) => {
                 metrics: Array.isArray(metrics) ? metrics : (metrics?.items || [])
             }));
             
-            if (dev) {
-                console.log('Loaded metrics:', metrics);
-                console.log('Metrics response structure:', {
-                    isArray: Array.isArray(metrics),
-                    hasItems: metrics?.items ? true : false,
-                    firstMetric: Array.isArray(metrics) ? metrics[0] : (metrics?.items?.[0] || null)
-                });
-                console.log('Available lists updated:', {
-                    years: Array.isArray(years) ? years : (years?.items || []),
-                    categories: Array.isArray(categories) ? categories : (categories?.items || []),
-                    shops: Array.isArray(shops) ? shops : (shops?.items || []),
-                    metrics: Array.isArray(metrics) ? metrics : (metrics?.items || [])
-                });
-            }
         } catch (e) {
             if (dev) console.warn('Не удалось загрузить справочные списки:', e);
         }
@@ -324,10 +310,6 @@ export const ReportDataProvider = ({ children }) => {
             // Используем тот же сервис, что и FinanceDetails
             const details = await analyticsService.getDetailedCategoryMetrics(categoryId, shopId, year);
             
-            if (dev) {
-                console.log('🔍 loadFinanceDetails: API response:', details);
-                console.log('🔍 loadFinanceDetails: metrics from API:', details?.metrics);
-            }
             
             // Находим конкретную метрику по ID, если указана
             let metric = null;
@@ -348,15 +330,6 @@ export const ReportDataProvider = ({ children }) => {
             
             const periodsValue = metric?.periods_value || {};
             
-            if (dev) {
-                console.log('🔍 loadFinanceDetails: выбранная метрика:', {
-                    requestedMetric: filters.metric,
-                    foundMetric: metric?.id,
-                    metricName: metric?.name,
-                    allMetrics: details?.metrics?.map(m => ({ id: m.id, name: m.name })),
-                    allMetricsFull: details?.metrics
-                });
-            }
 
             const periodType = filters.periodType === 'months' ? 'months' : 'quarters';
 
@@ -386,12 +359,30 @@ export const ReportDataProvider = ({ children }) => {
 
             const chartData = periodType === 'months' ? buildMonthData() : buildQuarterData();
 
-            if (dev) {
-                console.log('🔍 loadFinanceDetails result:', { chartData, periodType });
-                console.log('🔍 loadFinanceDetails chartData sample:', chartData[0]);
+            // Подготовим структуры для таблицы
+            const processedMetrics = Array.isArray(details?.metrics)
+                ? details.metrics.map((m) => ({
+                    id: m.metric_id ?? m.id,
+                    name: m.metric_name ?? m.name,
+                    unit: m.unit,
+                    periods_value: m.periods_value || {}
+                }))
+                : [];
+
+            // Сгенерируем периоды по выбранному году
+            const yearInt = parseInt(year);
+            const periods = [];
+            if (!Number.isNaN(yearInt)) {
+                periods.push({ id: `year-${yearInt}`, year: yearInt, quarter: null, month: null });
+                for (let q = 1; q <= 4; q++) {
+                    periods.push({ id: `quarter-${yearInt}-${q}`, year: yearInt, quarter: q, month: null });
+                }
+                for (let m = 1; m <= 12; m++) {
+                    periods.push({ id: `month-${yearInt}-${m}`, year: yearInt, quarter: Math.ceil(m / 3), month: m });
+                }
             }
 
-            return { chartData };
+            return { chartData, metrics: processedMetrics, periods };
         } catch (error) {
             if (dev) console.error('Error loading finance details:', error);
             showError('Ошибка загрузки финансовых метрик');
@@ -421,9 +412,6 @@ export const ReportDataProvider = ({ children }) => {
                         { label: 'Июнь', plan: 280000, fact: 290000, deviation: 10000, percentage: 103.6 }
                     ];
                     
-                    if (dev) {
-                        console.log('🔍 loadSlideData analytics: using test data:', testChartData);
-                    }
                     
                     return { 
                         metrics: testChartData,
@@ -435,39 +423,48 @@ export const ReportDataProvider = ({ children }) => {
             } else if (slideTypeStr.includes('finance')) {
                 // Для финансовых слайдов попробуем использовать детальные метрики,
                 // если заданы год/категория/магазин; иначе fallback на сводную аналитику
-                if (dev) {
-                    console.log('🔍 loadSlideData finance: передаем фильтры в loadFinanceDetails:', filters);
-                }
                 const details = await loadFinanceDetails(filters);
                 if (details && details.chartData && details.chartData.length > 0) {
-                    if (dev) {
-                        console.log('🔍 loadSlideData finance: using details data:', details);
-                    }
+                    if (dev) console.log('[ReportDataProvider] using finance details for slide', { filters, detailsKeys: Object.keys(details) });
                     return details;
                 }
-                
+
                 const financeData = await loadFinanceData(filters);
-                if (dev) {
-                    console.log('🔍 loadSlideData finance: using finance data:', financeData);
+                if (dev) console.log('[ReportDataProvider] using finance summary for slide', { filters, hasChartData: !!financeData?.chartData, analyticsKeys: Object.keys(financeData?.analytics || {}) });
+
+                // Сформируем минимальные metrics/periods для таблицы, если они отсутствуют
+                const currentYear = (Array.isArray(filters.years) ? (filters.years[0]) : filters.year) || new Date().getFullYear();
+                const yearInt = parseInt(currentYear);
+                const periods = [];
+                if (!Number.isNaN(yearInt)) {
+                    periods.push({ id: `year-${yearInt}`, year: yearInt, quarter: null, month: null });
+                    for (let q = 1; q <= 4; q++) periods.push({ id: `quarter-${yearInt}-${q}`, year: yearInt, quarter: q, month: null });
+                    for (let m = 1; m <= 12; m++) periods.push({ id: `month-${yearInt}-${m}`, year: yearInt, quarter: Math.ceil(m/3), month: m });
                 }
-                
-                // Если данные не загрузились, создаем тестовые данные
-                if (!financeData || !financeData.chartData) {
-                    const testChartData = [
-                        { label: 'I квартал', plan: 250000, fact: 240000, deviation: -10000, percentage: 96 },
-                        { label: 'II квартал', plan: 300000, fact: 320000, deviation: 20000, percentage: 106.7 },
-                        { label: 'III квартал', plan: 280000, fact: 275000, deviation: -5000, percentage: 98.2 },
-                        { label: 'IV квартал', plan: 350000, fact: 340000, deviation: -10000, percentage: 97.1 }
+
+                // Если нет метрик — создадим пустой список, иначе попробуем привести к ожидаемому виду
+                const metrics = Array.isArray(financeData?.analytics?.metrics)
+                    ? financeData.analytics.metrics.map((m, idx) => ({
+                        id: m.id ?? m.metric_id ?? (idx + 1),
+                        name: m.name ?? m.metric_name ?? `Метрика ${idx + 1}`,
+                        unit: m.unit ?? '₽',
+                        periods_value: m.periods_value ?? {}
+                    }))
+                    : [];
+
+                // Если нет chartData — подставим заглушку
+                const chartData = Array.isArray(financeData?.chartData) && financeData.chartData.length
+                    ? financeData.chartData
+                    : [
+                        { label: 'I квартал', plan: 0, fact: 0, deviation: 0, percentage: 0 },
+                        { label: 'II квартал', plan: 0, fact: 0, deviation: 0, percentage: 0 },
+                        { label: 'III квартал', plan: 0, fact: 0, deviation: 0, percentage: 0 },
+                        { label: 'IV квартал', plan: 0, fact: 0, deviation: 0, percentage: 0 }
                     ];
-                    
-                    if (dev) {
-                        console.log('🔍 loadSlideData finance: using test data:', testChartData);
-                    }
-                    
-                    return { chartData: testChartData };
-                }
-                
-                return financeData;
+
+                const result = { chartData, metrics, periods };
+                if (dev) console.log('[ReportDataProvider] prepared finance fallback result', { metricsLen: metrics.length, periodsLen: periods.length });
+                return result;
             } else if (slideTypeStr.includes('comparison')) {
                 // Загружаем данные для сравнения
                 const [analyticsData, financeData] = await Promise.all([
@@ -652,15 +649,9 @@ export const ReportDataProvider = ({ children }) => {
      */
     const transformDataForChart = (rawData, slideType, selectedMetrics = []) => {
         if (!rawData) {
-            if (dev) {
-                console.log('🔍 transformDataForChart: no rawData');
-            }
             return [];
         }
 
-        if (dev) {
-            console.log('🔍 transformDataForChart input:', { rawData, slideType, selectedMetrics });
-        }
 
         let result = [];
         
@@ -691,9 +682,6 @@ export const ReportDataProvider = ({ children }) => {
                 result = [];
         }
         
-        if (dev) {
-            console.log('🔍 transformDataForChart result:', result);
-        }
         
         return result;
     };
@@ -749,15 +737,9 @@ export const ReportDataProvider = ({ children }) => {
     };
 
     const transformFinanceData = (data, metrics) => {
-        if (dev) {
-            console.log('🔍 transformFinanceData input:', { data, metrics });
-        }
         
         // Если данные уже в правильном формате (из loadFinanceDetails)
         if (data.chartData && Array.isArray(data.chartData)) {
-            if (dev) {
-                console.log('🔍 transformFinanceData: using existing chartData:', data.chartData);
-            }
             // Фильтруем существующие данные по выбранным метрикам
             return filterDataByMetrics(data.chartData, metrics);
         }
@@ -788,9 +770,6 @@ export const ReportDataProvider = ({ children }) => {
                 return item;
             });
             
-            if (dev) {
-                console.log('🔍 transformFinanceData: transformed from metrics:', transformed);
-            }
             return transformed;
         }
         
@@ -815,9 +794,6 @@ export const ReportDataProvider = ({ children }) => {
                 ((data.summary?.totalExpense || data.summary?.totalFact || 0) / (data.summary?.plan || data.summary?.totalPlan)) * 100 : 0;
         }
         
-        if (dev) {
-            console.log('🔍 transformFinanceData: using fallback data:', [fallback]);
-        }
         return [fallback];
     };
 
@@ -880,9 +856,6 @@ export const ReportDataProvider = ({ children }) => {
                 });
             }
             
-            if (dev) {
-                console.log('🔍 transformComparisonData from comparison data:', result);
-            }
             
             return result;
         }
@@ -985,9 +958,6 @@ export const ReportDataProvider = ({ children }) => {
             });
         }
         
-        if (dev) {
-            console.log('🔍 transformComparisonData fallback result:', result);
-        }
         
         return result;
     };

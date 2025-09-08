@@ -1,7 +1,7 @@
 import { rest } from 'msw';
 
 // Base API URL for mocking
-const API_BASE = process.env.REACT_APP_API_URL || '/api/v1';
+const API_BASE = '/api/v1';
 
 export const handlers = [
   // Authentication endpoints

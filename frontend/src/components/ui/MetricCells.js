@@ -8,7 +8,7 @@ import ReasonModal from '../finance/ReasonModal';
 import { useApiQuery } from '../../hooks';
 import { API_BASE_URL } from '../../config/api.js';
 
-const MetricCells = ({ row, metric, hasAdminRights, onEditValue }) => {
+const MetricCells = ({ row, metric, hasAdminRights, onEditValue, visibleColumns = { plan: true, fact: true, deviation: true } }) => {
     const [showReasonModal, setShowReasonModal] = useState(false);
     const [showDocumentsModal, setShowDocumentsModal] = useState(false);
     const [documents, setDocuments] = useState([]);
@@ -55,6 +55,7 @@ const MetricCells = ({ row, metric, hasAdminRights, onEditValue }) => {
     return (
         <React.Fragment>
             {/* План */}
+            {visibleColumns.plan && (
             <td className={styles.valueCell}>
                 <div className={styles.cellContent}>
                     <span className={styles.value}>
@@ -73,8 +74,10 @@ const MetricCells = ({ row, metric, hasAdminRights, onEditValue }) => {
                     )}
                 </div>
             </td>
+            )}
             
             {/* Факт */}
+            {visibleColumns.fact && (
             <td className={styles.valueCell}>
                 <div className={styles.cellContent}>
                     {factValue > 0 ? (
@@ -129,8 +132,10 @@ const MetricCells = ({ row, metric, hasAdminRights, onEditValue }) => {
                     )}
                 </div>
             </td>
+            )}
             
             {/* Отклонение */}
+            {visibleColumns.deviation && (
             <td className={`${styles.deviationCell} ${factValue > 0 ? getDeviationClass(variance) : ''}`}>
                 {factValue > 0 ? (
                     <div className={styles.deviationContent}>
@@ -193,6 +198,7 @@ const MetricCells = ({ row, metric, hasAdminRights, onEditValue }) => {
                     <span className={styles.emptyValue}>—</span>
                 )}
             </td>
+            )}
         </React.Fragment>
     );
 };

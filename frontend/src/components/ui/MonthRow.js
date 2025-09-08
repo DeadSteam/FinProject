@@ -2,7 +2,7 @@ import React from 'react';
 import styles from '@styles/components/DataTable.module.css';
 import MetricCells from './MetricCells.js';
 
-const MonthRow = ({ row, metrics, hasAdminRights, onEditValue }) => {
+const MonthRow = ({ row, metrics, hasAdminRights, onEditValue, visibleColumns }) => {
     return (
         <tr className={styles.monthRow}>
             <td className={styles.periodCell}>{row.period}</td>
@@ -13,6 +13,7 @@ const MonthRow = ({ row, metrics, hasAdminRights, onEditValue }) => {
                     metric={metric}
                     hasAdminRights={hasAdminRights}
                     onEditValue={onEditValue}
+                    visibleColumns={visibleColumns}
                 />
             ))}
         </tr>

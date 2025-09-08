@@ -132,15 +132,6 @@ const SlideEditor = ({
             
             processedFilters.metrics = metrics;
             
-            if (dev) {
-                console.log('🔍 SlideEditor: Преобразованы метрики для финансового слайда:', {
-                    showPlan: newFilters.showPlan,
-                    showFact: newFilters.showFact,
-                    showDeviation: newFilters.showDeviation,
-                    showPercentage: newFilters.showPercentage,
-                    metrics
-                });
-            }
         }
         
         const updatedSlide = {
@@ -154,10 +145,6 @@ const SlideEditor = ({
         onSlideChange?.(updatedSlide);
         setPreviewData(null); // Сбрасываем предпросмотр при изменении фильтров
         
-        if (dev) {
-            console.log('🔍 SlideEditor: Фильтры изменились, обновляем слайд:', processedFilters);
-            console.log('🔍 SlideEditor: Обновленные фильтры слайда:', updatedSlide.content.filters);
-        }
     }, [localSlide, onSlideChange]);
 
     // Загрузка данных для предпросмотра с кэшированием

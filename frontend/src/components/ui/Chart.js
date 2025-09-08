@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+ import React, {useEffect, useRef, useState} from 'react';
 
 import styles from '@styles/components/Chart.module.css';
 
@@ -12,7 +12,7 @@ const isDevelopment = () => {
 
 const dev = isDevelopment();
 
-const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', selectedMetrics = ['plan', 'actual'] }) => {
+const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', selectedMetrics = ['plan', 'actual'], disableAnimations = false }) => {
   const chartRef = useRef(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [currentData, setCurrentData] = useState(data);
@@ -324,17 +324,28 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
         });
       });
       
-      // Добавляем анимацию через небольшую задержку
-      setTimeout(() => {
+      // Добавляем анимацию через небольшую задержку (если не отключена)
+      if (!disableAnimations) {
+        setTimeout(() => {
+          if (chartRef.current) {
+            const bars = chartRef.current.querySelectorAll(`.${styles.chartBar}`);
+            bars.forEach(bar => {
+              // Устанавливаем целевую высоту для анимации
+              bar.style.height = bar.dataset.targetHeight;
+              bar.classList.add(styles.animateBar);
+            });
+          }
+        }, 50);
+      } else {
+        // Без анимации - сразу устанавливаем финальную высоту
         if (chartRef.current) {
           const bars = chartRef.current.querySelectorAll(`.${styles.chartBar}`);
           bars.forEach(bar => {
-            // Устанавливаем целевую высоту для анимации
             bar.style.height = bar.dataset.targetHeight;
-            bar.classList.add(styles.animateBar);
+            // Не добавляем класс animateBar
           });
         }
-      }, 50);
+      }
     }
     
     function renderLineChart() {
@@ -723,7 +734,7 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
   }
 
   return (
-    <div className={styles.chartContainer}>
+    <div className={`${styles.chartContainer} ${disableAnimations ? `${styles.noAnimations} export-mode` : ''}`}>
       <div className={styles.chartHeader}>
         <div className={styles.chartTitle}>{title || 'График'}</div>
         <div className={styles.chartLegend}>

@@ -20,9 +20,6 @@ const AnalyticsFilters = ({ filters, onChange, availableData, isLoading }) => {
     const [isExpanded, setIsExpanded] = useState(true);
     const [hoveredMetric, setHoveredMetric] = useState(null);
     
-    if (dev) {
-        console.log('🔍 AnalyticsFilters render:', { filters, availableData, isLoading });
-    }
 
     if (!availableData || !availableData.years) {
         if (dev) {

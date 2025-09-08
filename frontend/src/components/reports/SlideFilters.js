@@ -66,10 +66,6 @@ const SlideFilters = ({
             if (response.ok) {
                 const metrics = await response.json();
                 setCategoryMetrics(metrics);
-                if (dev) {
-                    console.log(`🔍 SlideFilters: Loaded metrics for category ${categoryId}:`, metrics);
-                    console.log('🔍 SlideFilters: Metrics structure:', metrics.map(m => ({ id: m.id, name: m.name, value: m.value })));
-                }
             } else {
                 // Если не удалось загрузить, показываем все метрики
                 setCategoryMetrics(availableData.metrics || []);
@@ -114,12 +110,6 @@ const SlideFilters = ({
         setLocalFilters(newFilters);
         onFiltersChange?.(newFilters);
         
-        if (dev) {
-            console.log('🔍 SlideFilters: Фильтр изменился:', filterKey, value);
-            console.log('🔍 SlideFilters: Новые фильтры:', newFilters);
-            console.log('🔍 SlideFilters: Доступные метрики:', availableData.metrics);
-            console.log('🔍 SlideFilters: Выбранная категория:', value);
-        }
     }, [localFilters, onFiltersChange, availableData.metrics]);
 
     const handleMultipleFilterChange = useCallback((updates) => {
@@ -131,9 +121,6 @@ const SlideFilters = ({
         setLocalFilters(newFilters);
         onFiltersChange?.(newFilters);
         
-        if (dev) {
-            console.log('Multiple filters changed:', updates);
-        }
     }, [localFilters, onFiltersChange]);
 
     // Рендеринг фильтров в зависимости от типа слайда

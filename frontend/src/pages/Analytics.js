@@ -89,22 +89,12 @@ const Analytics = () => {
             };
 
             // Параллельная загрузка всех справочников
-            if (dev) {
-                console.log('🔄 Загрузка справочных данных...');
-            }
             const [yearsResponse, categoriesResponse, shopsResponse] = await Promise.all([
                 fetch('/api/v1/finance/years', { headers }),
                 fetch('/api/v1/finance/categories', { headers }),
                 fetch('/api/v1/finance/shops', { headers })
             ]);
 
-            if (dev) {
-                console.log('📊 Статусы ответов:', {
-                    years: yearsResponse.status,
-                    categories: categoriesResponse.status,
-                    shops: shopsResponse.status
-                });
-            }
 
             if (!yearsResponse.ok || !categoriesResponse.ok || !shopsResponse.ok) {
                 throw new Error('Ошибка загрузки справочных данных');
@@ -116,13 +106,6 @@ const Analytics = () => {
                 shopsResponse.json()
             ]);
 
-            if (dev) {
-                console.log('✅ Справочные данные загружены:', {
-                    years: years.length,
-                    categories: categories.length,
-                    shops: shops.length
-                });
-            }
 
             // Проверяем, есть ли данные
             if (years.length === 0 && categories.length === 0 && shops.length === 0) {
@@ -174,13 +157,6 @@ const Analytics = () => {
                 metrics: ['fact', 'plan'] // Устанавливаем метрики по умолчанию (fact = actual)
             }));
 
-            if (dev) {
-                console.log('🎯 Установлены фильтры по умолчанию:', {
-                    years: defaultYears,
-                    totalYears: years.length,
-                    metrics: ['fact', 'plan']
-                });
-            }
 
         } catch (error) {
             if (dev) {
@@ -249,8 +225,6 @@ const Analytics = () => {
 
             const url = `/api/v1/finance/analytics/comprehensive?${params}`;
                     if (dev) {
-            console.log('🔄 Загрузка аналитических данных:', url);
-            console.log('📋 Фильтры:', filters);
         }
             
             const response = await fetch(url, {
@@ -258,7 +232,6 @@ const Analytics = () => {
             });
 
             if (dev) {
-                console.log('📊 Статус ответа аналитики:', response.status);
             }
 
             if (!response.ok) {
@@ -266,13 +239,6 @@ const Analytics = () => {
             }
 
             const data = await response.json();
-            if (dev) {
-                console.log('✅ Аналитические данные загружены:', {
-                    hasComparison: !!data.comparison,
-                    hasTrends: !!data.trends,
-                    hasPlanVsActual: !!data.planVsActual
-                });
-            }
             
             setAnalyticsData(data);
 

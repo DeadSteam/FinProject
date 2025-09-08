@@ -160,6 +160,32 @@ const SlideSettings = ({
                     </div>
                 );
 
+            case 'finance-table':
+            case 'analytics-table':
+                return (
+                    <div className="setting-group">
+                        <div className="setting-row">
+                            <div className="setting-column">
+                                <label className="form-label">Показывать кварталы</label>
+                                <div className="metrics-toggles">
+                                    <div className="toggle-item">
+                                        <span className="toggle-text">Включить строки кварталов</span>
+                                        <label className={`toggle-switch ${settings?.showQuarters !== false ? 'active' : ''}`}>
+                                            <input
+                                                className="toggle-input"
+                                                type="checkbox"
+                                                checked={settings?.showQuarters !== false}
+                                                onChange={(e) => onSettingsChange({ showQuarters: e.target.checked })}
+                                            />
+                                            <span className="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+
             case 'comparison':
                 return (
                     <div className="setting-group">

@@ -252,9 +252,6 @@ export function useAnalytics(options = {}) {
       },
     };
 
-    if (debug) {
-      console.log('Analytics Event:', event);
-    }
 
     // Добавляем в очередь
     eventQueue.current.push(event);
@@ -308,9 +305,6 @@ export function useAnalytics(options = {}) {
       
       onBatchSent?.(batch);
       
-      if (debug) {
-        console.log('Analytics batch sent:', batch.length, 'events');
-      }
     } catch (error) {
       // Провайдеры могут вызывать ошибки, обрабатываем gracefully
       onError?.(error);

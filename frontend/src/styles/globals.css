@@ -1814,6 +1814,39 @@ button.btn svg {
     margin-right: 0.5rem !important;
 } 
 
+/* Полное отключение всех анимаций для экспорта */
+.export-mode,
+.export-mode *,
+.export-mode *::before,
+.export-mode *::after {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    animation-fill-mode: none !important;
+    animation-play-state: paused !important;
+    animation: none !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+    transition: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+}
+
+/* Убираем все CSS переменные переходов в режиме экспорта */
+.export-mode {
+    --transition: none !important;
+    --transition-fast: none !important;
+    --transition-slow: none !important;
+}
+
+/* Убираем классы анимаций */
+.export-mode .fade-in,
+.export-mode .slide-in-left,
+.export-mode .scale-up,
+.export-mode .slide-in-up {
+    animation: none !important;
+}
+
 /* Улучшенные медиа-запросы для адаптивности */
 
 /* Большие экраны (desktop) */

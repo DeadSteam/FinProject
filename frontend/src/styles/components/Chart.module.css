@@ -433,9 +433,23 @@
   bottom: -3.2rem !important;
   font-weight: 600 !important;
   color: var(--text-primary) !important;
-} 
- 
- 
- 
- 
+}
+
+/* Стили для отключения анимаций при экспорте */
+.noAnimations,
+.noAnimations * {
+  animation: none !important;
+  transition: none !important;
+  animation-duration: 0s !important;
+  transition-duration: 0s !important;
+}
+
+.noAnimations .chartBar {
+  animation: none !important;
+  transition: none !important;
+}
+
+.noAnimations .animateBar {
+  animation: none !important;
+}
  

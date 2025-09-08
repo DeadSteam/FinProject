@@ -156,13 +156,9 @@ function AdminCrudPage({
     const enhancedServiceAdapter = {
         ...serviceAdapter,
         create: (data) => {
-            console.log('🚀 Отправляем данные на сервер:', data);
-            console.log('📋 Типы полей:', Object.keys(data).map(key => `${key}: ${typeof data[key]}`));
             return serviceAdapter.create(data);
         },
         update: (id, data) => {
-            console.log('🔄 Обновляем данные на сервере:', data);
-            console.log('📋 Типы полей:', Object.keys(data).map(key => `${key}: ${typeof data[key]}`));
             return serviceAdapter.update(id, data);
         }
     };

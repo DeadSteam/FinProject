@@ -210,9 +210,6 @@ export class ApiClientFactory {
     static addLoggingInterceptors(client) {
         // Логирование запросов
         client.addRequestInterceptor(async (config) => {
-            console.group(`🔄 API Request: ${config.method || 'GET'} ${config.url}`);
-            console.log('Config:', config);
-            console.groupEnd();
             return config;
         });
 
@@ -221,12 +218,6 @@ export class ApiClientFactory {
             const isSuccess = response.ok || response.status < 400;
             const icon = isSuccess ? '✅' : '❌';
             
-            console.group(`${icon} API Response: ${response.status}`);
-            console.log('Response:', response);
-            if (response.data) {
-                console.log('Data:', response.data);
-            }
-            console.groupEnd();
             
             return response;
         });
@@ -255,7 +246,6 @@ export class ApiClientFactory {
     static switchClientType(type) {
         if (Object.values(ApiClientType).includes(type)) {
             localStorage.setItem('api_client_type', type);
-            console.log(`API client type switched to: ${type}`);
         } else {
             console.error(`Invalid client type: ${type}`);
         }

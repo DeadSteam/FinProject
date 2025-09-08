@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AnalyticsComparison from '../analytics/AnalyticsComparison';
 import Chart from '../ui/Chart';
+import DataTable from '../ui/DataTable';
 import { useNotifications } from '../../hooks';
 import { useReportData } from './ReportDataProvider';
 import './SlidePreview.css';
@@ -21,13 +22,14 @@ const dev = isDevelopment();
 const SlidePreview = ({ 
     slideType, 
     title, 
-    description, 
+    description,
     settings = {}, 
     filters = {}, 
     previewData, 
     isLoading, 
     availableData = {}, 
-    onRefreshData 
+    onRefreshData,
+    disableAnimations = false
 }) => {
     const { showError } = useNotifications();
     const { loadSlideData, transformDataForChart } = useReportData();
@@ -38,9 +40,6 @@ const SlidePreview = ({
     // Загрузка данных при изменении фильтров
     useEffect(() => {
         if (slideType !== 'title' && filters) {
-            if (dev) {
-                console.log('🔍 SlidePreview: Фильтры изменились, перезагружаем данные:', filters);
-            }
             loadData();
         }
     }, [slideType, filters, loadData]);
@@ -51,9 +50,6 @@ const SlidePreview = ({
             return;
         }
 
-        if (dev) {
-            console.log('🔍 SlidePreview loadData: Начинаем загрузку данных для', slideType, 'с фильтрами:', filters);
-        }
 
         setLoading(true);
         
@@ -67,9 +63,17 @@ const SlidePreview = ({
                 periodType: filters?.periodType || 'years'
             };
 
+            if (dev) console.log('[SlidePreview] loadData()', { slideType, normalizedFilters, settings });
             const slideData = await loadSlideData(slideType, normalizedFilters, settings);
             
             if (slideData) {
+                if (dev) console.log('[SlidePreview] raw slideData:', {
+                    keys: Object.keys(slideData || {}),
+                    chartDataLen: Array.isArray(slideData.chartData) ? slideData.chartData.length : 'n/a',
+                    metricsLen: Array.isArray(slideData.metrics) ? slideData.metrics.length : 'n/a',
+                    periodsLen: Array.isArray(slideData.periods) ? slideData.periods.length : 'n/a',
+                    tableDataLen: Array.isArray(slideData.tableData) ? slideData.tableData.length : 'n/a'
+                });
                 // Определяем метрики для отображения
                 let selectedMetrics = ['plan', 'fact']; // По умолчанию
                 if (filters?.metrics && filters.metrics.length > 0) {
@@ -77,9 +81,6 @@ const SlidePreview = ({
                     selectedMetrics = filters.metrics.map(m => m?.value ?? m?.id ?? m);
                 }
                 
-                if (dev) {
-                    console.log('🔍 SlidePreview loadData: selectedMetrics для transformDataForChart:', selectedMetrics);
-                }
                 
                 const transformedData = transformDataForChart(
                     slideData, 
@@ -87,11 +88,18 @@ const SlidePreview = ({
                     selectedMetrics
                 );
                 
-                setData({
+                const prepared = {
                     ...slideData,
                     chartData: transformedData,
                     tableData: slideData.tableData || slideData.metrics || []
+                };
+                if (dev) console.log('[SlidePreview] prepared data for render:', {
+                    chartDataLen: Array.isArray(prepared.chartData) ? prepared.chartData.length : 'n/a',
+                    metricsLen: Array.isArray(prepared.metrics) ? prepared.metrics.length : 'n/a',
+                    periodsLen: Array.isArray(prepared.periods) ? prepared.periods.length : 'n/a',
+                    tableDataLen: Array.isArray(prepared.tableData) ? prepared.tableData.length : 'n/a'
                 });
+                setData(prepared);
             } else {
                 setData(null);
             }
@@ -183,19 +191,6 @@ const SlidePreview = ({
             selectedMetrics = filters.metrics.map(m => m?.value ?? m?.id ?? m);
         }
         
-        // Логируем для отладки
-        if (dev) {
-            console.log('🔍 SlidePreview renderChartSlide:', {
-                data: data,
-                chartData: data?.chartData,
-                chartDataLength: data?.chartData?.length,
-                selectedMetrics,
-                chartType,
-                filters,
-                filtersMetric: filters?.metric,
-                filtersMetrics: filters?.metrics
-            });
-        }
         
         return (
             <div className="chart-slide-preview">
@@ -211,6 +206,7 @@ const SlidePreview = ({
                                 data={data.chartData}
                                 selectedMetrics={selectedMetrics}
                                 title={title}
+                                disableAnimations={disableAnimations}
                             />
                         </div>
                     ) : (
@@ -235,28 +231,52 @@ const SlidePreview = ({
                 <h2 className="slide-title">{title || 'Таблица данных'}</h2>
                 {description && <p className="slide-description">{description}</p>}
             </div>
-            
-            <div className="table-container">
-                {data?.tableData && data.tableData.length > 0 ? (
+            <div className="table-container p-2">
+                {(() => { if (dev) console.log('[SlidePreview] renderTableSlide()', {
+                    hasMetrics: Array.isArray(data?.metrics), metricsLen: Array.isArray(data?.metrics) ? data.metrics.length : 0,
+                    hasPeriods: Array.isArray(data?.periods), periodsLen: Array.isArray(data?.periods) ? data.periods.length : 0,
+                    hasTableData: Array.isArray(data?.tableData), tableDataLen: Array.isArray(data?.tableData) ? data.tableData.length : 0,
+                    selectedMetric: filters?.metric
+                }); return null; })()}
+                {Array.isArray(data?.metrics) && Array.isArray(data?.periods) && data.metrics.length > 0 ? (
+                    <DataTable 
+                        metrics={(filters?.metric && filters.metric !== 'all')
+                            ? data.metrics.filter(m => String(m.id) === String(filters.metric))
+                            : data.metrics}
+                        periods={data.periods}
+                        view={(filters?.periodType === 'months') ? 'months' : 'quarters'}
+                        hasAdminRights={false}
+                        onEditValue={undefined}
+                        isFiltering={false}
+                        showQuarters={settings?.showQuarters !== false}
+                        visibleColumns={{
+                            plan: filters?.showPlan !== false,
+                            fact: filters?.showFact !== false,
+                            deviation: filters?.showDeviation === true
+                        }}
+                    />
+                ) : Array.isArray(data?.tableData) && data.tableData.length > 0 ? (
                     <div className="table-responsive">
                         <table className="table table-striped">
                             <thead>
                                 <tr>
                                     <th>Показатель</th>
-                                    <th>План</th>
-                                    <th>Факт</th>
-                                    <th>Отклонение</th>
+                                    {filters?.showPlan !== false && <th>План</th>}
+                                    {filters?.showFact !== false && <th>Факт</th>}
+                                    {filters?.showDeviation === true && <th>Отклонение</th>}
                                 </tr>
                             </thead>
                             <tbody>
-                                {data.tableData.slice(0, 5).map((row, index) => (
+                                {data.tableData.slice(0, 12).map((row, index) => (
                                     <tr key={index}>
-                                        <td>{row.name || `Показатель ${index + 1}`}</td>
-                                        <td>{row.plan || '0'}</td>
-                                        <td>{row.fact || '0'}</td>
-                                        <td className={row.deviation >= 0 ? 'text-success' : 'text-danger'}>
-                                            {row.deviation || '0'}%
-                                        </td>
+                                        <td>{row.metric || row.name || `Показатель ${index + 1}`}</td>
+                                        {filters?.showPlan !== false && <td>{row.plan ?? (row.periods?.[0]?.plan ?? '0')}</td>}
+                                        {filters?.showFact !== false && <td>{row.fact ?? (row.periods?.[0]?.fact ?? '0')}</td>}
+                                        {filters?.showDeviation === true && (
+                                            <td className={(row.deviation ?? row.periods?.[0]?.deviation ?? 0) >= 0 ? 'text-success' : 'text-danger'}>
+                                                {(row.deviation ?? row.periods?.[0]?.deviation ?? 0)}
+                                            </td>
+                                        )}
                                     </tr>
                                 ))}
                             </tbody>

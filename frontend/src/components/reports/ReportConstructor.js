@@ -98,9 +98,6 @@ const ReportConstructor = ({
         
         showInfo('Создан новый слайд');
         
-        if (dev) {
-            console.log('Created new slide:', newSlide);
-        }
     }, [report, onReportChange, showInfo]);
 
     const handleOpenModal = useCallback(() => {
@@ -133,9 +130,6 @@ const ReportConstructor = ({
         
         onReportChange(updatedReport);
         
-        if (dev) {
-            console.log('Slide updated:', updatedSlide);
-        }
     }, [report, onReportChange]);
 
     const handleSlideSave = useCallback((slide) => {
@@ -162,9 +156,6 @@ const ReportConstructor = ({
         
         showInfo('Слайд удален');
         
-        if (dev) {
-            console.log('Slide deleted:', slideId);
-        }
     }, [report, onReportChange, selectedSlideId, showInfo]);
 
     const handleDuplicateSlide = useCallback((slideId) => {
@@ -186,9 +177,6 @@ const ReportConstructor = ({
         onReportChange(updatedReport);
         showSuccess('Слайд дублирован');
         
-        if (dev) {
-            console.log('Slide duplicated:', duplicatedSlide);
-        }
     }, [report, onReportChange, showSuccess]);
 
 
@@ -244,9 +232,6 @@ const ReportConstructor = ({
                 onReportChange(updatedReport);
                 showInfo('Слайд перемещен');
                 
-                if (dev) {
-                    console.log('Slide reordered:', { draggedSlideId, targetSlideId });
-                }
             }
         }
         

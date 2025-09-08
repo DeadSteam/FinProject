@@ -34,9 +34,6 @@ export class ApiClient extends HttpClient {
             return null;
         }
         
-        if (process.env.NODE_ENV === 'development') {
-            console.log('ApiClient: Используется токен:', token.substring(0, 20) + '...');
-        }
         return `${tokenType} ${token}`;
     }
 

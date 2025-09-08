@@ -22,9 +22,6 @@ const dev = isDevelopment();
  * Отображает слайды в режиме презентации с возможностью навигации.
  */
 const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPDF, onExportToPPTX }) => {
-    console.log('🔍 ReportPreview - report:', report);
-    console.log('🔍 ReportPreview - report.title:', report.title);
-    console.log('🔍 ReportPreview - report.slides:', report.slides);
     
     const { showSuccess, showError, showInfo } = useNotifications();
     const { loadSlideData, transformDataForChart } = useReportData();
@@ -101,7 +98,6 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
             setExportProgress(10);
             
             // Загружаем данные для всех слайдов перед экспортом
-            console.log('⏳ Загружаем данные для всех слайдов перед экспортом...');
             setExportProgress(20);
             
             const chartSlides = report.slides.filter(slide => 
@@ -110,16 +106,13 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
             
             // Загружаем данные для каждого слайда с графиками
             for (const slide of chartSlides) {
-                console.log(`⏳ Загружаем данные для слайда ${slide.id} типа ${slide.type}...`);
                 
                 try {
                     const slideDataResult = await loadSlideData(slide);
                     if (slideDataResult) {
                         setSlideData(prev => new Map(prev).set(slide.id, slideDataResult));
-                        console.log(`✅ Данные загружены для слайда ${slide.id}`);
                     }
                 } catch (error) {
-                    console.warn(`⚠️ Ошибка загрузки данных для слайда ${slide.id}:`, error);
                 }
                 
                 // Небольшая пауза между загрузками
@@ -128,18 +121,17 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
             
             setExportProgress(40);
             
-            // Дополнительное ожидание для рендеринга всех графиков
-            console.log('⏳ Ждем рендеринг всех графиков...');
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
             // Включаем режим экспорта для рендеринга всех слайдов
             setExportMode(true);
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Даем больше времени на рендеринг всех слайдов
+            
+            // Ждем, чтобы все слайды успели отрендериться в скрытом контейнере
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            setExportProgress(60);
             
             const pdf = await reportsService.generateClientPDF(report, {
                 orientation: 'landscape',
-                format: 'a4',
-                slideDataMap: slideData
+                format: 'a4'
             });
             
             // Выключаем режим экспорта
@@ -155,13 +147,12 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
             showSuccess('Отчет успешно экспортирован в PDF');
             
         } catch (error) {
-            if (dev) console.error('Export PDF error:', error);
             showError('Ошибка экспорта в PDF: ' + error.message);
         } finally {
             setIsExporting(false);
             setExportProgress(0);
         }
-    }, [report, showError, showSuccess, slideData]);
+    }, [report, showError, showSuccess, slideData, loadSlideData]);
 
     const handleExportToPPTX = useCallback(async () => {
         if (!report || !report.slides || report.slides.length === 0) {
@@ -176,7 +167,6 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
             setExportProgress(10);
             
             // Загружаем данные для всех слайдов перед экспортом
-            console.log('⏳ Загружаем данные для всех слайдов перед экспортом...');
             setExportProgress(20);
             
             const chartSlides = report.slides.filter(slide => 
@@ -185,16 +175,13 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
             
             // Загружаем данные для каждого слайда с графиками
             for (const slide of chartSlides) {
-                console.log(`⏳ Загружаем данные для слайда ${slide.id} типа ${slide.type}...`);
                 
                 try {
                     const slideDataResult = await loadSlideData(slide);
                     if (slideDataResult) {
                         setSlideData(prev => new Map(prev).set(slide.id, slideDataResult));
-                        console.log(`✅ Данные загружены для слайда ${slide.id}`);
                     }
                 } catch (error) {
-                    console.warn(`⚠️ Ошибка загрузки данных для слайда ${slide.id}:`, error);
                 }
                 
                 // Небольшая пауза между загрузками
@@ -203,17 +190,16 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
             
             setExportProgress(40);
             
-            // Дополнительное ожидание для рендеринга всех графиков
-            console.log('⏳ Ждем рендеринг всех графиков...');
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
             // Включаем режим экспорта для рендеринга всех слайдов
             setExportMode(true);
-            await new Promise(resolve => setTimeout(resolve, 500)); // Даем время на рендеринг
+            
+            // Ждем, чтобы все слайды успели отрендериться в скрытом контейнере
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            setExportProgress(60);
             
             const pptx = await reportsService.generateClientPPTX(report, {
-                quality: 'high',
-                slideDataMap: slideData
+                quality: 'high'
             });
             
             // Выключаем режим экспорта
@@ -229,26 +215,25 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
             showSuccess('Отчет успешно экспортирован в PowerPoint');
             
         } catch (error) {
-            if (dev) console.error('Export PPTX error:', error);
             showError('Ошибка экспорта в PowerPoint: ' + error.message);
         } finally {
             setIsExporting(false);
             setExportProgress(0);
         }
-    }, [report, showError, showSuccess, slideData]);
+    }, [report, showError, showSuccess, slideData, loadSlideData]);
 
     // Полноэкранный режим
     const handleToggleFullscreen = () => {
         if (!isFullscreen) {
             if (previewRef.current?.requestFullscreen) {
                 previewRef.current.requestFullscreen().catch(err => {
-                    console.warn('Не удалось войти в полноэкранный режим:', err);
+                    // Игнорируем ошибку
                 });
             }
         } else {
             if (document.fullscreenElement && document.exitFullscreen) {
                 document.exitFullscreen().catch(err => {
-                    console.warn('Не удалось выйти из полноэкранного режима:', err);
+                    // Игнорируем ошибку
                 });
             }
         }
@@ -262,7 +247,7 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
             setIsFullscreen(true);
             if (previewRef.current?.requestFullscreen) {
                 previewRef.current.requestFullscreen().catch(err => {
-                    console.warn('Не удалось войти в полноэкранный режим:', err);
+                    // Игнорируем ошибку
                 });
             }
         }
@@ -290,7 +275,7 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
                         setIsFullscreen(false);
                         if (document.fullscreenElement && document.exitFullscreen) {
                             document.exitFullscreen().catch(err => {
-                                console.warn('Не удалось выйти из полноэкранного режима:', err);
+                                // Игнорируем ошибку
                             });
                         }
                         break;
@@ -315,14 +300,8 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
     // Загрузка данных для всех слайдов при открытии предпросмотра
     useEffect(() => {
         if (report.slides && report.slides.length > 0) {
-            if (dev) {
-                console.log('🔍 ReportPreview: Загружаем данные для слайдов:', report.slides.map(s => ({ id: s.id, type: s.type })));
-            }
             report.slides.forEach(slide => {
                 if (slide.type !== 'title' && !slideData.has(slide.id) && !loadingSlides.has(slide.id)) {
-                    if (dev) {
-                        console.log('🔍 ReportPreview: Загружаем данные для слайда:', slide.id, slide.type);
-                    }
                     loadSlideDataForPreview(slide);
                 }
             });
@@ -343,9 +322,6 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
         // Проверяем, не загружаем ли мы уже данные для этого слайда
         if (loadingSlides.has(slide.id)) return;
         
-        if (dev) {
-            console.log('🔍 ReportPreview loadSlideDataForPreview: Начинаем загрузку для слайда:', slide.id, slide.type);
-        }
         
         setLoadingSlides(prev => new Set([...prev, slide.id]));
         
@@ -374,9 +350,6 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
                     selectedMetrics = filters.metrics.map(m => m?.value ?? m?.id ?? m);
                 }
                 
-                if (dev) {
-                    console.log('🔍 ReportPreview loadSlideDataForPreview: selectedMetrics для transformDataForChart:', selectedMetrics);
-                }
                 
                 // Преобразуем данные для графика как в SlidePreview
                 const transformedData = transformDataForChart(
@@ -538,32 +511,47 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
 
                     {/* Все слайды в режиме экспорта (скрыты) */}
                     {exportMode && (
-                        <div style={{ 
-                            position: 'absolute', 
-                            left: '-9999px', 
-                            top: '-9999px', 
-                            visibility: 'hidden',
-                            width: '800px',
-                            height: '600px',
-                            overflow: 'hidden'
-                        }}>
-                            {report.slides.map((slide, index) => (
-                                <div 
-                                    key={`export-${slide.id}`} 
-                                    data-slide-id={slide.id}
-                                    style={{
-                                        width: '800px',
-                                        height: '600px',
-                                        marginBottom: '20px',
-                                        border: '1px solid #ddd',
-                                        borderRadius: '8px',
-                                        padding: '20px',
-                                        backgroundColor: '#ffffff'
-                                    }}
-                                >
-                                    {renderSlideContent(slide)}
-                                </div>
-                            ))}
+                        <div 
+                            id="export-slides-container"
+                            style={{ 
+                                position: 'absolute', 
+                                left: '-9999px', 
+                                top: '-9999px', 
+                                visibility: 'hidden',
+                                width: '800px',
+                                height: '600px',
+                                overflow: 'hidden',
+                                pointerEvents: 'none'
+                            }}
+                        >
+                            {report.slides.map((slide, index) => {
+                                // Принудительно загружаем данные для каждого слайда в режиме экспорта
+                                const slideDataForExport = slideData.get(slide.id);
+                                if (!slideDataForExport && slide.type !== 'title') {
+                                    // Загружаем данные синхронно для экспорта
+                                    loadSlideDataForPreview(slide);
+                                }
+                                
+                                return (
+                                    <div 
+                                        key={`export-${slide.id}`} 
+                                        data-slide-id={slide.id}
+                                        data-slide-type={slide.type}
+                                        style={{
+                                            width: '800px',
+                                            height: '600px',
+                                            marginBottom: '20px',
+                                            border: '1px solid #ddd',
+                                            borderRadius: '8px',
+                                            padding: '20px',
+                                            backgroundColor: '#ffffff',
+                                            position: 'relative'
+                                        }}
+                                    >
+                                        {renderSlideContent(slide)}
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
 
@@ -702,9 +690,6 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
     }
 
     function renderChartSlideContent(slide) {
-        console.log('🔍 ReportPreview renderChartSlideContent - slide:', slide);
-        console.log('🔍 ReportPreview renderChartSlideContent - slide.title:', slide.title);
-        console.log('🔍 ReportPreview renderChartSlideContent - slide.content:', slide.content);
         
         const currentSlideData = slideData.get(slide.id);
         const isLoadingCurrentSlide = loadingSlides.has(slide.id);
@@ -752,18 +737,6 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
             ? filters.metrics.map(m => m?.value ?? m?.id ?? m)
             : ['plan', 'fact'];
 
-        // Логируем для отладки (как в SlidePreview)
-        if (dev) {
-            console.log('🔍 ReportPreview renderChartSlideContent:', {
-                slideType: slide.type,
-                data: currentSlideData,
-                chartData: currentSlideData?.chartData,
-                chartDataLength: currentSlideData?.chartData?.length,
-                selectedMetrics,
-                chartType: slide.content.settings?.chartType || 'bar',
-                filters
-            });
-        }
 
         return (
             <div className="slide-content chart-slide-content" data-slide-id={slide.id}>
@@ -774,16 +747,12 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
                 <div className="chart-container">
                     {Array.isArray(currentSlideData?.chartData) && currentSlideData.chartData.length > 0 ? (
                         <div className="chart-full-width">
-                            {dev && console.log('🔍 ReportPreview renderChartSlideContent: Rendering chart with data:', {
-                                chartData: currentSlideData.chartData,
-                                selectedMetrics,
-                                slideType: slide.type
-                            })}
                             <Chart
                                 type={slide.content.settings?.chartType || 'bar'}
                                 data={currentSlideData.chartData}
                                 selectedMetrics={selectedMetrics}
                                 title={slide.title}
+                                disableAnimations={exportMode}
                             />
                         </div>
                     ) : (
@@ -826,15 +795,6 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
             periodType: filters?.periodType || 'year'
         };
 
-        if (dev) {
-            console.log('🔍 ReportPreview renderComparisonSlideContent:', {
-                slideId: slide.id,
-                slideData: currentSlideData,
-                filters,
-                safeFilters,
-                isLoading: isLoadingCurrentSlide
-            });
-        }
 
         if (isLoadingCurrentSlide) {
             return (
