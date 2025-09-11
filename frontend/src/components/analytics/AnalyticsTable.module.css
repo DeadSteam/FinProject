@@ -1,0 +1,246 @@
+/* Контейнер таблицы - стили как в FinanceDetails */
+.tableContainer {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-top: 2rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border-radius: 12px;
+  background: var(--bg-primary);
+  transition: opacity 0.4s ease;
+}
+
+.tableContainer.filtering {
+  opacity: 0.6;
+}
+
+/* Заголовок таблицы */
+.tableHeader {
+  padding: 1.5rem 2rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.tableTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  font-family: 'Rimma Sans', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Обертка таблицы */
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Основная таблица */
+.dataTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.95rem;
+  transition: opacity 0.3s ease;
+}
+
+.dataTable.filtering {
+  opacity: 0.7;
+}
+
+/* Заголовки */
+.dataTable thead {
+  background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+}
+
+.dataTable th {
+  font-weight: 600;
+  text-align: center;
+  color: var(--secondary);
+  padding: 1rem 0.75rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 1px 0 var(--border);
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.stickyColumn {
+  position: sticky;
+  left: 0;
+  background: linear-gradient(to bottom, #f8fafc, #f1f5f9) !important;
+  z-index: 11;
+  text-align: left !important;
+}
+
+/* Заголовки метрик с объединенными ячейками */
+.metricHeader {
+  background: linear-gradient(to bottom, #f8fafc, #f1f5f9) !important;
+  font-weight: 600;
+  text-align: center;
+  color: var(--text-primary);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Заголовки годов */
+.yearHeader {
+  background: linear-gradient(to bottom, #f8fafc, #f1f5f9) !important;
+  font-weight: 500;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Ячейки данных */
+.dataTable td {
+  padding: 0.85rem 0.75rem;
+  text-align: right;
+  position: relative;
+  vertical-align: middle;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid var(--border);
+}
+
+.dataRow {
+  transition: background-color 0.2s ease;
+}
+
+.dataRow:hover {
+  background-color: rgba(79, 70, 229, 0.02);
+}
+
+.dataRow:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.01);
+}
+
+.dataRow:nth-child(even):hover {
+  background-color: rgba(79, 70, 229, 0.02);
+}
+
+.leftAlign {
+  text-align: left !important;
+  font-weight: 500;
+}
+
+.rightAlign {
+  text-align: right !important;
+}
+
+/* Загрузка */
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  gap: 1rem;
+  padding: 2rem;
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loadingContainer p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* Нет данных */
+.noData {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 2rem;
+}
+
+.noData p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  margin: 0;
+  text-align: center;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .tableContainer {
+    margin-top: 1rem;
+    border-radius: 8px;
+  }
+  
+  .tableHeader {
+    padding: 1rem 1.5rem 0.75rem;
+  }
+  
+  .tableTitle {
+    font-size: 1.1rem;
+  }
+  
+  .dataTable th,
+  .dataTable td {
+    padding: 0.6rem 0.5rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .tableHeader {
+    padding: 0.75rem 1rem 0.5rem;
+  }
+  
+  .tableTitle {
+    font-size: 1rem;
+  }
+  
+  .dataTable th,
+  .dataTable td {
+    padding: 0.5rem 0.4rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* Стили для плавной фильтрации */
+.filteringOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 8px;
+}
+
+.filteringSpinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 50%;
+  animation: filterSpin 1s linear infinite;
+}
+
+@keyframes filterSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

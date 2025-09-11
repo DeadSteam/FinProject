@@ -10,6 +10,12 @@ import MetricCells from './MetricCells.js';
 
 const DataTable = React.memo(({ metrics, periods, view, onEditValue, hasAdminRights = false, isFiltering = false, showQuarters = true, visibleColumns = { plan: true, fact: true, deviation: true, percentage: true } }) => {
 
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[DataTable] received metrics:', metrics);
+      console.log('[DataTable] received periods:', periods);
+      console.log('[DataTable] metrics.length:', metrics?.length);
+    }
+
     // Получаем подготовленные данные из нового хука
     const { tableData, totalData } = useTableData(metrics, periods);
 
@@ -71,21 +77,21 @@ const DataTable = React.memo(({ metrics, periods, view, onEditValue, hasAdminRig
                         {metrics.map(metric => (
                             <React.Fragment key={metric.id}>
                                 {visibleColumns.plan && (
-                                    <th>
+                                    <th key={`${metric.id}-plan`}>
                                         <div className={styles.sortableHeader}>
                                             План
                                         </div>
                                     </th>
                                 )}
                                 {visibleColumns.fact && (
-                                    <th>
+                                    <th key={`${metric.id}-fact`}>
                                         <div className={styles.sortableHeader}>
                                             Факт
                                         </div>
                                     </th>
                                 )}
                                 {visibleColumns.deviation && (
-                                    <th>
+                                    <th key={`${metric.id}-deviation`}>
                                         <div className={styles.sortableHeader}>
                                             Отклонение
                                         </div>

@@ -97,7 +97,7 @@
 
 .chart-container {
     flex: 1;
-    padding: var(--spacing-lg);
+    
     display: flex;
     align-items: center;
     justify-content: stretch;
@@ -180,7 +180,7 @@
 .table-container {
     flex: 1;
     padding: var(--spacing-lg);
-    overflow: auto;
+    overflow: visible;
 }
 
 .table {
@@ -477,6 +477,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    width: 100%;
 }
 
 .plan-vs-actual-container {
@@ -547,20 +548,153 @@
     color: var(--text-secondary);
 }
 
-/* Нет данных */
+/* Красивая заглушка для отсутствующих данных */
 .no-data {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: var(--spacing-xl);
-    color: var(--text-secondary);
+    padding: 4rem 2rem;
     text-align: center;
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+    border-radius: var(--card-border-radius);
+    border: 2px dashed var(--border);
+    position: relative;
+    overflow: hidden;
+    min-height: 300px;
+    width: 100%;
 }
 
-.no-data i {
-    color: var(--text-muted);
-    margin-bottom: var(--spacing-md);
+.no-data::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(79, 70, 229, 0.03) 0%, transparent 70%);
+}
+
+.no-data-icon {
+    font-size: 4rem;
+    color: var(--primary);
+    margin-bottom: 1.5rem;
+    position: relative;
+    z-index: 1;
+    opacity: 0.8;
+}
+
+.no-data-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    position: relative;
+    z-index: 1;
+}
+
+.no-data-description {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    max-width: 400px;
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
+}
+
+.no-data-button {
+    background: linear-gradient(135deg, var(--primary) 0%, #6366f1 100%);
+    border: none;
+    color: white;
+    padding: 0.75rem 2rem;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.no-data-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+}
+
+.no-data-button:active {
+    transform: translateY(0);
+}
+
+.no-data-button i {
+    font-size: 1.1rem;
+}
+
+/* Специфичный селектор для полной ширины в контейнере */
+.chart-container .no-data {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+/* Полная ширина для план vs факт */
+.plan-vs-actual-container {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+}
+
+.plan-vs-actual-container .plan-vs-actual-chart {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+.plan-vs-actual-container .base-chart {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+.plan-vs-actual-container .chart-container {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 1rem !important;
+}
+
+.plan-vs-actual-container .chartBarContainer {
+    width: 100% !important;
+    max-width: none !important;
+    gap: 2rem !important;
+}
+
+.plan-vs-actual-container .chartGroup {
+    flex: 1 !important;
+    min-width: 0 !important;
+}
+
+/* Темная тема */
+[data-theme="dark"] .no-data {
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+    border-color: var(--border);
+}
+
+[data-theme="dark"] .no-data::before {
+    background: radial-gradient(circle, rgba(79, 70, 229, 0.05) 0%, transparent 70%);
+}
+
+[data-theme="dark"] .no-data-icon {
+    color: var(--primary);
+}
+
+[data-theme="dark"] .no-data-title {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .no-data-description {
+    color: var(--text-secondary);
 }
 
 /* Адаптивность */

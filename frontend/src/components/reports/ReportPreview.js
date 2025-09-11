@@ -1,10 +1,13 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useNotifications } from '../../hooks';
 import { useReportData } from './ReportDataProvider';
+import { BaseChart, ComparisonChart, PlanVsActualChart } from '../charts';
 import Chart from '../ui/Chart';
-import AnalyticsDataTable from '../ui/AnalyticsDataTable';
 import AnalyticsComparison from '../analytics/AnalyticsComparison';
+import AnalyticsDataTable from '../ui/AnalyticsDataTable';
+import FinanceDataTable from './FinanceDataTable';
 import reportsService from '../../services/reportsService';
+import { hasDataToDisplay, createSafeFilters } from './utils/filterUtils';
 import './ReportPreview.css';
 
 // Безопасное определение development режима
@@ -295,7 +298,53 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, [presentationMode, isFullscreen, selectedSlideIndex, report.slides.length]);
 
-    const currentSlide = report.slides[selectedSlideIndex];
+    // Формируем расширенный список слайдов (разбиваем comparison на части по 2 метрики)
+    const expandedSlides = useMemo(() => {
+        const result = [];
+        (report.slides || []).forEach((slide, baseIndex) => {
+            if (slide.type === 'comparison') {
+                const filters = slide.content?.filters || {};
+                const safe = createSafeFilters(filters);
+                const allMetrics = Array.isArray(safe.metrics) ? safe.metrics : [];
+                const shouldSplit = (safe.periodType === 'months' || safe.periodType === 'quarters') && allMetrics.length > 0;
+                if (shouldSplit) {
+                    const parts = [];
+                    for (let i = 0; i < allMetrics.length; i += 2) {
+                        parts.push(allMetrics.slice(i, i + 2));
+                    }
+                    parts.forEach((metricsGroup, partIndex) => {
+                        result.push({
+                            ...slide,
+                            id: `${slide.id}__part${partIndex + 1}`,
+                            _baseIndex: baseIndex,
+                            _baseId: slide.id,
+                            _partIndex: partIndex + 1,
+                            _partsTotal: parts.length,
+                            content: {
+                                ...slide.content,
+                                filters: { ...(slide.content?.filters || {}), metrics: metricsGroup }
+                            }
+                        });
+                    });
+                    return;
+                }
+            }
+            result.push({ ...slide, _baseIndex: baseIndex, _baseId: slide.id, _partIndex: 1, _partsTotal: 1 });
+        });
+        return result;
+    }, [report.slides]);
+
+    // Локальный выбранный индекс по expandedSlides
+    const [expandedIndex, setExpandedIndex] = useState(0);
+
+    // Синхронизация с внешним индексом: позиционируем на первую часть базового слайда
+    useEffect(() => {
+        const targetBase = selectedSlideIndex ?? 0;
+        const idx = expandedSlides.findIndex(s => s._baseIndex === targetBase);
+        setExpandedIndex(idx >= 0 ? idx : 0);
+    }, [selectedSlideIndex, expandedSlides]);
+
+    const currentSlide = expandedSlides[expandedIndex];
 
     // Загрузка данных для всех слайдов при открытии предпросмотра
     useEffect(() => {
@@ -344,7 +393,7 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
             
             if (slideData) {
                 // Определяем метрики для отображения (как в SlidePreview)
-                let selectedMetrics = ['plan', 'fact']; // По умолчанию
+                let selectedMetrics = ['plan', 'actual']; // По умолчанию
                 if (filters?.metrics && filters.metrics.length > 0) {
                     // Используем выбранные пользователем метрики
                     selectedMetrics = filters.metrics.map(m => m?.value ?? m?.id ?? m);
@@ -413,7 +462,7 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
                         <div>
                             <h5 className="mb-1">{report.title || 'Без названия'}</h5>
                             <small className="text-muted">
-                                Слайд {selectedSlideIndex + 1} из {report.slides.length}
+                                Слайд {expandedIndex + 1} из {expandedSlides.length}
                                 {report.description && ` • ${report.description}`}
                             </small>
                         </div>
@@ -486,17 +535,19 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
                     <div className="slides-thumbnails">
                         <h6 className="mb-3">Слайды</h6>
                         <div className="thumbnails-list">
-                            {report.slides.map((slide, index) => (
+                            {expandedSlides.map((slide, index) => (
                                 <div
                                     key={slide.id}
-                                    className={`thumbnail-item ${selectedSlideIndex === index ? 'active' : ''}`}
-                                    onClick={() => handleSlideClick(index)}
+                                    className={`thumbnail-item ${expandedIndex === index ? 'active' : ''}`}
+                                    onClick={() => setExpandedIndex(index)}
                                 >
                                     <div className="thumbnail-number">{index + 1}</div>
                                     <div className="thumbnail-preview">
                                         {renderThumbnailContent(slide)}
                                     </div>
-                                    <div className="thumbnail-title">{slide.title}</div>
+                                    <div className="thumbnail-title">
+                                        {slide.title}{slide._partsTotal > 1 ? ` (${slide._partIndex}/${slide._partsTotal})` : ''}
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -559,8 +610,8 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
                     <div className="slide-navigation">
                         <button
                             className="btn btn-outline-primary"
-                            onClick={handlePrevSlide}
-                            disabled={selectedSlideIndex === 0}
+                            onClick={() => setExpandedIndex(Math.max(0, expandedIndex - 1))}
+                            disabled={expandedIndex === 0}
                             title="Предыдущий слайд"
                         >
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -570,13 +621,13 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
                         </button>
 
                         <span className="slide-counter">
-                            {selectedSlideIndex + 1} / {report.slides.length}
+                            {expandedIndex + 1} / {expandedSlides.length}
                         </span>
 
                         <button
                             className="btn btn-outline-primary"
-                            onClick={handleNextSlide}
-                            disabled={selectedSlideIndex === report.slides.length - 1}
+                            onClick={() => setExpandedIndex(Math.min(expandedSlides.length - 1, expandedIndex + 1))}
+                            disabled={expandedIndex === expandedSlides.length - 1}
                             title="Следующий слайд"
                         >
                             {!presentationMode && 'Вперед'}
@@ -735,40 +786,29 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
         const filters = slide.content.filters || {};
         const selectedMetrics = filters?.metrics && filters.metrics.length > 0 
             ? filters.metrics.map(m => m?.value ?? m?.id ?? m)
-            : ['plan', 'fact'];
+            : ['plan', 'actual'];
 
 
         return (
             <div className="slide-content chart-slide-content" data-slide-id={slide.id}>
-                <h2 className="slide-title">{slide.title}</h2>
-                
-
-                
-                <div className="chart-container">
-                    {Array.isArray(currentSlideData?.chartData) && currentSlideData.chartData.length > 0 ? (
-                        <div className="chart-full-width">
-                            <Chart
-                                type={slide.content.settings?.chartType || 'bar'}
-                                data={currentSlideData.chartData}
-                                selectedMetrics={selectedMetrics}
-                                title={slide.title}
-                                disableAnimations={exportMode}
-                            />
-                        </div>
-                    ) : (
-                        <div className="no-data">
-                            <i className="fas fa-chart-line fa-3x mb-3"></i>
-                            <p>Нет данных для отображения</p>
-                            {dev && (
-                                <div className="mt-3 text-muted small">
-                                    <p>Debug info:</p>
-                                    <p>currentSlideData: {JSON.stringify(currentSlideData, null, 2)}</p>
-                                    <p>selectedMetrics: {JSON.stringify(selectedMetrics)}</p>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
+                {hasDataToDisplay(currentSlideData, slide.content?.filters) ? (
+                    <Chart
+                        type={slide.content.settings?.chartType || 'bar'}
+                        data={currentSlideData.chartData}
+                        selectedMetrics={selectedMetrics}
+                        title={slide.title}
+                        disableAnimations={exportMode}
+                        noMargins={true}
+                    />
+                ) : (
+                    <div className="no-data">
+                        <i className="fas fa-chart-line no-data-icon"></i>
+                        <h3 className="no-data-title">Нет данных для отображения</h3>
+                        <p className="no-data-description">
+                            Выберите параметры фильтрации или загрузите данные для создания графика
+                        </p>
+                    </div>
+                )}
             </div>
         );
     }
@@ -779,21 +819,7 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
         const filters = slide.content?.filters || {};
         
         // Безопасная обработка фильтров (точно как в SlidePreview)
-        const safeFilters = {
-            years: Array.isArray(filters?.years) && filters.years.length > 0 
-                ? filters.years 
-                : [new Date().getFullYear()],
-            categories: Array.isArray(filters?.categories) 
-                ? filters.categories.map((c) => (c?.value ?? c?.id ?? c)).filter(Boolean)
-                : [],
-            shops: Array.isArray(filters?.shops) 
-                ? filters.shops.map((s) => (s?.value ?? s?.id ?? s)).filter(Boolean)
-                : [],
-            metrics: Array.isArray(filters?.metrics) && filters.metrics.length > 0
-                ? filters.metrics.map((m) => (m?.value ?? m?.id ?? m)).filter(Boolean)
-                : ['fact', 'plan', 'deviation', 'percentage'],
-            periodType: filters?.periodType || 'year'
-        };
+        const safeFilters = createSafeFilters(filters);
 
 
         if (isLoadingCurrentSlide) {
@@ -833,19 +859,29 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
 
         return (
             <div className="slide-content comparison-slide-content" data-slide-id={slide.id}>
-                <h2 className="slide-title">{slide.title}</h2>
+                <h2 className="slide-title">{slide.title}{slide._partsTotal > 1 ? ` (${slide._partIndex}/${slide._partsTotal})` : ''}</h2>
                 <div className="comparison-container p-2">
-                    <div className="comparison-full-width">
-                        <AnalyticsComparison
-                            analyticsData={currentSlideData?.analytics || currentSlideData || {}}
-                            filters={safeFilters}
-                            isLoading={isLoadingCurrentSlide}
-                            showControls={false}
-                            showTable={false}
-                            showSummary={false}
-                            showHeader={false}
-                        />
-                    </div>
+                    {hasDataToDisplay(currentSlideData, filters) ? (
+                        <div className="comparison-full-width">
+                            <AnalyticsComparison
+                                analyticsData={currentSlideData?.analytics || currentSlideData || {}}
+                                filters={safeFilters}
+                                isLoading={isLoadingCurrentSlide}
+                                showControls={false}
+                                showTable={false}
+                                showSummary={false}
+                                showHeader={false}
+                            />
+                        </div>
+                    ) : (
+                        <div className="no-data">
+                            <i className="fas fa-chart-bar no-data-icon"></i>
+                            <h3 className="no-data-title">Нет данных для отображения</h3>
+                            <p className="no-data-description">
+                                Выберите параметры фильтрации или загрузите данные для создания графика сравнения
+                            </p>
+                        </div>
+                    )}
                 </div>
             </div>
         );
@@ -894,11 +930,21 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
             <div className="slide-content table-slide-content">
                 <h2 className="slide-title">{slide.title}</h2>
                 <div className="table-container">
-                    <AnalyticsDataTable
-                        data={currentSlideData.tableData}
-                        columns={currentSlideData.tableColumns}
-                        maxHeight="400px"
-                    />
+                    {currentSlideData.isFinanceData ? (
+                        <FinanceDataTable
+                            data={currentSlideData.metrics}
+                            columns={currentSlideData.tableColumns}
+                            title={currentSlideData.categoryName || slide.title}
+                            maxHeight="400px"
+                            selectedMetrics={slide.filters?.metrics || []}
+                        />
+                    ) : (
+                        <AnalyticsDataTable
+                            data={currentSlideData.tableData}
+                            columns={currentSlideData.tableColumns}
+                            maxHeight="400px"
+                        />
+                    )}
                 </div>
             </div>
         );

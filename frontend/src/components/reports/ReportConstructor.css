@@ -502,7 +502,7 @@
 }
 
 .slides-list .text-center i {
-    color: var(--text-muted);
+    color: var(--primary);
     margin-bottom: var(--spacing-md);
 }
 
@@ -542,7 +542,7 @@
 
 .editor-panel .card-body.text-center i {
     font-size: 4rem;
-    color: #e2e8f0;
+    color: var(--primary);
     margin-bottom: 1.5rem;
     opacity: 0.8;
 }

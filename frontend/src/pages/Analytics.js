@@ -9,6 +9,7 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 
 // Ленивая загрузка компонентов
 const AnalyticsFilters = lazy(() => import('../components/analytics/AnalyticsFilters'));
+const TabFilters = lazy(() => import('../components/analytics/TabFilters'));
 const AnalyticsCharts = lazy(() => import('../components/analytics/AnalyticsCharts'));
 const AnalyticsTrends = lazy(() => import('../components/analytics/AnalyticsTrends'));
 const AnalyticsComparison = lazy(() => import('../components/analytics/AnalyticsComparison'));
@@ -46,13 +47,21 @@ const Analytics = () => {
         years: [],
         categories: [],
         shops: [],
-        metrics: ['fact', 'plan'],
+        metrics: ['actual', 'plan'],
         dateRange: {
             start: null,
             end: null
         },
         monthStart: 1,
-        monthEnd: 12
+        monthEnd: 12,
+        // Фильтры для вкладок
+        periodType: 'years', // 'years', 'quarters', 'months'
+        trendType: 'absolute', // 'absolute', 'percentage', 'moving_average'
+        chartType: 'bar', // 'bar', 'line'
+        smoothing: false,
+        showForecast: false,
+        viewMode: 'chart', // 'chart', 'table', 'both'
+        groupBy: 'categories' // 'categories', 'shops'
     });
 
     // Состояние данных
@@ -125,7 +134,7 @@ const Analytics = () => {
                 showError('Отсутствуют магазины. Добавьте магазины в систему.');
             }
 
-            setAvailableData({
+            const newAvailableData = {
                 years: years.map(year => ({
                     id: year.year,
                     name: year.year.toString(),
@@ -141,9 +150,19 @@ const Analytics = () => {
                     name: shop.name,
                     value: shop.id
                 })),
-                // Удаляем статические метрики - теперь используются реальные подкатегории из API
+                // Удаляем статические показатели - теперь используются реальные подкатегории из API
                 metrics: []
-            });
+            };
+
+            if (dev) {
+                console.log('✅ Analytics: Данные загружены успешно', {
+                    years: newAvailableData.years.length,
+                    categories: newAvailableData.categories.length,
+                    shops: newAvailableData.shops.length
+                });
+            }
+
+            setAvailableData(newAvailableData);
 
             // Устанавливаем фильтры по умолчанию
             const currentYear = new Date().getFullYear();
@@ -154,13 +173,16 @@ const Analytics = () => {
             setFilters(prev => ({
                 ...prev,
                 years: defaultYears,
-                metrics: ['fact', 'plan'] // Устанавливаем метрики по умолчанию (fact = actual)
+                categories: newAvailableData.categories.map(cat => cat.id), // Выбираем все категории по умолчанию
+                shops: newAvailableData.shops.map(shop => shop.id), // Выбираем все магазины по умолчанию
+                metrics: ['actual', 'plan'] // Устанавливаем показатели по умолчанию
             }));
 
 
         } catch (error) {
             if (dev) {
-                console.error('Ошибка загрузки данных:', error);
+                console.error('❌ Analytics: Ошибка загрузки данных:', error);
+                console.error('❌ Analytics: availableData состояние:', availableData);
             }
             let errorMessage = 'Ошибка загрузки данных';
             
@@ -279,12 +301,12 @@ const Analytics = () => {
         }
     };
 
-    // Обновляем данные при изменении фильтров
+    // Обновляем данные только при изменении фильтров, требующих загрузки с сервера
     useEffect(() => {
         if (filters.years.length > 0 || filters.categories.length > 0 || filters.shops.length > 0) {
             loadAnalyticsData();
         }
-    }, [filters]);
+    }, [filters.years, filters.categories, filters.shops, filters.metrics]);
 
     if (!user) {
         return null;
@@ -375,6 +397,16 @@ const Analytics = () => {
                     </div>
                 </div>
 
+                {/* Фильтры вкладок */}
+                <Suspense fallback={<div>Загрузка фильтров вкладки...</div>}>
+                    <TabFilters
+                        activeTab={activeTab}
+                        filters={filters}
+                        onFiltersChange={handleFiltersChange}
+                        onMonthRangeChange={(start, end) => setFilters(prev => ({ ...prev, monthStart: start, monthEnd: end }))}
+                    />
+                </Suspense>
+
                 {/* Контент вкладок */}
                 <div className="card">
                     <Suspense fallback={<LoadingSpinner />}>
@@ -383,6 +415,10 @@ const Analytics = () => {
                                 analyticsData={analyticsData}
                                 filters={filters}
                                 isLoading={isLoading}
+                                showTable={filters.viewMode === 'table' || filters.viewMode === 'both'}
+                                showControls={true}
+                                showSummary={false}
+                                showHeader={false}
                             />
                         )}
 

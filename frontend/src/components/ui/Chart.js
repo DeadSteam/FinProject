@@ -1,4 +1,4 @@
- import React, {useEffect, useRef, useState} from 'react';
+ import React, {useEffect, useRef, useState, useCallback} from 'react';
 
 import styles from '@styles/components/Chart.module.css';
 
@@ -12,10 +12,16 @@ const isDevelopment = () => {
 
 const dev = isDevelopment();
 
-const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', selectedMetrics = ['plan', 'actual'], disableAnimations = false }) => {
+const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', selectedMetrics = ['plan', 'actual'], disableAnimations = false, noMargins = false }) => {
   const chartRef = useRef(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [currentData, setCurrentData] = useState(data);
+  const [forceRender, setForceRender] = useState(0);
+
+  // Функция для принудительного перерендера графика
+  const forceRerender = useCallback(() => {
+    setForceRender(prev => prev + 1);
+  }, []);
 
   // Отслеживаем изменения данных для плавного перехода
   useEffect(() => {
@@ -26,6 +32,24 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
       setCurrentData(data);
     }
   }, [data, isFiltering, currentData]);
+
+  // Обработчик изменения размера окна
+  useEffect(() => {
+    const handleResize = () => {
+      if (currentData && currentData.length > 0) {
+        // Перерисовываем график при изменении размера
+        setTimeout(() => {
+          if (chartRef.current) {
+            chartRef.current.innerHTML = '';
+            forceRerender();
+          }
+        }, 100);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [currentData, type, selectedMetrics, forceRerender]);
 
   // Основной useEffect для рендеринга графика
   useEffect(() => {
@@ -43,7 +67,7 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
         values.push(planValue);
       }
       if (selectedMetrics.includes('actual') || selectedMetrics.includes('fact')) {
-        const factValue = item.fact || 0;
+        const factValue = item.actual || item.fact || 0;
         values.push(factValue);
       }
       if (selectedMetrics.includes('deviation')) {
@@ -86,7 +110,7 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
         result.plan = plan;
       }
       if (selectedMetrics.includes('actual') || selectedMetrics.includes('fact')) {
-        const fact = parseFloat(item.fact) || 0;
+        const fact = parseFloat(item.actual || item.fact) || 0;
         result.factHeight = Math.max(fact / maxValue * maxHeight, fact > 0 ? 20 : 0);
         result.fact = fact;
       }
@@ -118,7 +142,7 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
         setTimeout(() => {
           if (chartRef.current) {
             chartRef.current.innerHTML = '';
-            renderChart();
+            forceRerender();
           }
         }, 200);
         return;
@@ -135,8 +159,6 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
       
       if (type === 'line') {
         renderLineChart();
-      } else if (type === 'pie') {
-        renderPieChart();
       } else {
         renderBarChart();
       }
@@ -163,7 +185,7 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
         // Создаем столбцы для всех выбранных метрик (подход Recharts - композиция)
         const metricsToRender = [
           { key: 'plan', height: item.planHeight, value: item.plan || 0, type: 'План', className: styles.chartBarPlan },
-          { key: 'actual', height: item.factHeight, value: item.fact || 0, type: 'Факт', className: styles.chartBarFact },
+          { key: 'actual', height: item.factHeight, value: item.actual || item.fact || 0, type: 'Факт', className: styles.chartBarFact },
           { key: 'deviation', height: item.deviationHeight, value: item.deviation || 0, type: 'Отклонение', className: styles.chartBarDeviation },
           { 
             key: 'percentage', 
@@ -351,14 +373,15 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
     function renderLineChart() {
       if (!chartRef.current) return;
       
+      const containerWidth = chartRef.current.offsetWidth || 800;
+      const width = Math.max(containerWidth - 40, containerWidth - 40); // Используем всю доступную ширину
+      const height = 300;
+      
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.setAttribute('viewBox', '0 0 600 250');
+      svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
       svg.setAttribute('width', '100%');
       svg.setAttribute('height', '100%');
-      svg.style.maxHeight = '250px';
-      
-      const width = 600;
-      const height = 250;
+      svg.style.maxHeight = `${height}px`;
       const padding = 40;
       const chartWidth = width - 2 * padding;
       const chartHeight = height - 2 * padding;
@@ -366,7 +389,7 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
       // Создаем линии для всех выбранных метрик (Recharts подход)
       const metricsToRender = [
         { key: 'plan', title: 'План', color: 'var(--primary-light)', getData: (item) => item.plan || 0 },
-        { key: 'actual', title: 'Факт', color: 'var(--primary)', getData: (item) => item.fact || 0 },
+        { key: 'actual', title: 'Факт', color: 'var(--primary)', getData: (item) => item.actual || item.fact || 0 },
         { key: 'deviation', title: 'Отклонение', color: '#dc3545', getData: (item) => item.deviation || 0 },
         { key: 'percentage', title: '% выполнения', color: '#28a745', getData: (item) => item.percentage || 0 }
       ];
@@ -450,182 +473,6 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
       addTooltip(chartRef.current);
     }
     
-    function renderPieChart() {
-      if (!chartRef.current) return;
-      
-      // Создаем контейнер для круговых диаграмм
-      const pieContainer = document.createElement('div');
-      pieContainer.className = styles.chartPieContainer;
-      
-      // Определяем какие метрики показывать на основе selectedMetrics
-      const metricsToShow = [];
-      if (selectedMetrics.includes('plan')) {
-        metricsToShow.push({
-          key: 'plan',
-          title: 'План',
-          color: 'var(--primary-light)',
-          getValue: (item) => parseFloat(item.plan) || 0
-        });
-      }
-      if (selectedMetrics.includes('actual') || selectedMetrics.includes('fact')) {
-        metricsToShow.push({
-          key: 'fact',
-          title: 'Факт',
-          color: 'var(--primary)',
-          getValue: (item) => parseFloat(item.fact) || 0
-        });
-      }
-      if (selectedMetrics.includes('deviation')) {
-        metricsToShow.push({
-          key: 'deviation',
-          title: 'Отклонение',
-          color: 'var(--warning)',
-          getValue: (item) => parseFloat(item.deviation) || 0
-        });
-      }
-      if (selectedMetrics.includes('percentage')) {
-        metricsToShow.push({
-          key: 'percentage',
-          title: '% выполнения',
-          color: 'var(--success)',
-          getValue: (item) => parseFloat(item.percentage) || 0
-        });
-      }
-
-      // Если нет выбранных метрик, показываем план и факт по умолчанию
-      if (metricsToShow.length === 0) {
-        metricsToShow.push(
-          {
-            key: 'plan',
-            title: 'План',
-            color: 'var(--primary-light)',
-            getValue: (item) => parseFloat(item.plan) || 0
-          },
-          {
-            key: 'fact',
-            title: 'Факт',
-            color: 'var(--primary)',
-            getValue: (item) => parseFloat(item.fact) || 0
-          }
-        );
-      }
-
-      // Создаем SVG с динамическими размерами
-      const chartWidth = metricsToShow.length * 200;
-      const chartHeight = 300;
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.setAttribute('viewBox', `0 0 ${chartWidth} ${chartHeight}`);
-      svg.setAttribute('width', '100%');
-      svg.setAttribute('height', '300px');
-      svg.style.display = 'block';
-      svg.style.margin = '0 auto';
-      
-      const radius = 70;
-      
-      metricsToShow.forEach((metric, metricIndex) => {
-        const centerX = 100 + metricIndex * 200;
-        const centerY = 150;
-        
-        // Вычисляем общую сумму для этой метрики
-        const total = chartData.reduce((sum, item) => sum + metric.getValue(item), 0);
-        
-        // Создаем заголовок для диаграммы
-        const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        title.setAttribute('x', centerX);
-        title.setAttribute('y', 40);
-        title.setAttribute('text-anchor', 'middle');
-        title.setAttribute('fill', metric.color);
-        title.setAttribute('font-size', '16');
-        title.setAttribute('font-weight', '600');
-        title.textContent = metric.title;
-        svg.appendChild(title);
-        
-        // Создаем круговую диаграмму для этой метрики
-        if (total > 0) {
-          let currentAngle = -Math.PI / 2; // Начинаем сверху
-          
-          // Цвета используя точные переменные из globals.css  
-          let colors;
-          if (metric.key === 'plan') {
-            // Оттенки --primary-light (#c7d2fe)
-            colors = ['#f3f4ff', '#e9ebff', '#dfe2ff', '#d5d9ff', '#c7d2fe', '#b8c5fd', '#a9b8fc', '#9aabfb'];
-          } else if (metric.key === 'fact') {
-            // Оттенки --primary (#4f46e5)
-            colors = ['#f0f0ff', '#e1e0ff', '#d2d0ff', '#c3c0ff', '#4f46e5', '#443ddc', '#3934d3', '#2e2bca'];
-          } else if (metric.key === 'deviation') {
-            // Оттенки --warning (#f59e0b)
-            colors = ['#fef9f0', '#fdf3e1', '#fcecd2', '#fbe6c3', '#f59e0b', '#ec910a', '#e38409', '#da7708'];
-          } else if (metric.key === 'percentage') {
-            // Оттенки --success (#10b981)
-            colors = ['#f0fdf9', '#e6fbf3', '#dcf9ed', '#d2f7e7', '#10b981', '#0ea574', '#0c9167', '#0a7d5a'];
-          } else {
-            // --info (#3b82f6)
-            colors = ['#eff6ff', '#dbeafe', '#bfdbfe', '#93c5fd', '#3b82f6', '#2563eb', '#1d4ed8', '#1e40af'];
-          }
-          
-          chartData.forEach((item, pieIndex) => {
-            const value = metric.getValue(item);
-            if (value > 0) {
-              const angle = (value / total) * 2 * Math.PI;
-              
-              const x1 = centerX + radius * Math.cos(currentAngle);
-              const y1 = centerY + radius * Math.sin(currentAngle);
-              const x2 = centerX + radius * Math.cos(currentAngle + angle);
-              const y2 = centerY + radius * Math.sin(currentAngle + angle);
-              
-              const largeArcFlag = angle > Math.PI ? 1 : 0;
-              
-              const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-              const d = angle >= 2 * Math.PI - 0.01
-                ? `M ${centerX - radius} ${centerY} A ${radius} ${radius} 0 1 1 ${centerX + radius} ${centerY} A ${radius} ${radius} 0 1 1 ${centerX - radius} ${centerY}`
-                : `M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
-              path.setAttribute('d', d);
-              
-              // Используем разные цвета для разных элементов
-              path.setAttribute('fill', colors[pieIndex % colors.length]);
-              path.setAttribute('stroke', '#ffffff');
-              path.setAttribute('stroke-width', '2');
-              path.setAttribute('class', styles.chartPieSlice);
-              if (metric.key === 'percentage') {
-                const safe = Number.isFinite(value) ? value : 0;
-                path.dataset.value = `${safe.toFixed(1)}%`;
-              } else {
-                path.dataset.value = value.toString();
-              }
-              path.dataset.type = metric.title;
-              path.dataset.period = item.label || '';
-              
-              svg.appendChild(path);
-              currentAngle += angle;
-            }
-          });
-        }
-        
-        // Добавляем итоговое значение в центр
-        const totalText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        totalText.setAttribute('x', centerX);
-        totalText.setAttribute('y', centerY + 5);
-        totalText.setAttribute('text-anchor', 'middle');
-        totalText.setAttribute('fill', 'var(--text-primary)');
-        totalText.setAttribute('font-size', '12');
-        totalText.setAttribute('font-weight', '600');
-        if (metric.key === 'percentage') {
-          const denom = chartData.length || 1;
-          const avg = total / denom;
-          const safe = Number.isFinite(avg) ? avg : 0;
-          totalText.textContent = `${safe.toFixed(1)}%`;
-        } else {
-          totalText.textContent = total.toLocaleString('ru-RU');
-        }
-        svg.appendChild(totalText);
-      });
-      
-      pieContainer.appendChild(svg);
-      chartRef.current.appendChild(pieContainer);
-      
-      // Добавляем tooltip  
-      addTooltip(chartRef.current);
-    }
     
     function addTooltip(container) {
       const tooltip = document.createElement('div');
@@ -633,7 +480,7 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
       tooltip.style.display = 'none';
       container.appendChild(tooltip);
       
-      const elements = container.querySelectorAll(`.${styles.chartPoint}, .${styles.chartPieSlice}`);
+      const elements = container.querySelectorAll(`.${styles.chartPoint}`);
       elements.forEach(element => {
         element.addEventListener('mouseenter', (e) => {
           const value = parseInt(e.target.dataset.value).toLocaleString();
@@ -658,7 +505,7 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
                  });
        });
      }
-    }, [currentData, type]);
+    }, [currentData, type, forceRender]);
 
   // Отдельный useEffect для обработки фильтрации
   useEffect(() => {
@@ -687,7 +534,7 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
 
   if (!currentData || currentData.length === 0) {
     return (
-      <div className={styles.chartContainer}>
+      <div className={`${styles.chartContainer} ${noMargins ? styles.noMargins : ''}`}>
         <div className={styles.chartHeader}>
           <div className={styles.chartTitle}>{title || 'График'}</div>
           <div className={styles.chartLegend}>
@@ -734,7 +581,7 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
   }
 
   return (
-    <div className={`${styles.chartContainer} ${disableAnimations ? `${styles.noAnimations} export-mode` : ''}`}>
+    <div className={`${styles.chartContainer} ${noMargins ? styles.noMargins : ''} ${disableAnimations ? `${styles.noAnimations} export-mode` : ''}`}>
       <div className={styles.chartHeader}>
         <div className={styles.chartTitle}>{title || 'График'}</div>
         <div className={styles.chartLegend}>

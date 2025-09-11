@@ -8,9 +8,17 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   border: 1px solid var(--border);
   overflow: hidden;
-  max-height: 400px;
+  min-height: 400px;
+  height: auto;
+  width: 100%;
   transition: all 0.3s ease;
   position: relative;
+}
+
+/* Модификатор: без внешних отступов (для страниц отчетов и аналитики) */
+.noMargins {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
 }
 
 .chartHeader {
@@ -333,31 +341,6 @@
   r: 8;
 }
 
-/* Стили для круговых диаграмм */
-.chartPieContainer {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-  padding: 20px;
-  min-height: 300px;
-}
-
-.chartPieContainer svg {
-  width: 100%;
-  height: auto;
-  max-height: 300px;
-}
-
-.chartPieSlice {
-  transition: opacity 0.2s ease;
-  cursor: pointer;
-}
-
-.chartPieSlice:hover {
-  opacity: 0.8;
-}
 
 /* Сообщение об отсутствии данных */
 .noData {
@@ -451,5 +434,49 @@
 
 .noAnimations .animateBar {
   animation: none !important;
+}
+
+/* Стили для линейных графиков */
+.chartContainer svg {
+  width: 100% !important;
+  height: auto !important;
+  max-width: none !important;
+}
+
+/* Адаптивные стили для графиков */
+@media (max-width: 768px) {
+  .chartContainer {
+    padding: 1rem;
+    min-height: 300px;
+  }
+  
+  .chartTitle {
+    font-size: 1rem;
+  }
+  
+  .legendItem {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .chartContainer {
+    padding: 0.75rem;
+    min-height: 250px;
+  }
+  
+  .chartTitle {
+    font-size: 0.9rem;
+  }
+  
+  .legendItem {
+    font-size: 0.75rem;
+    gap: 0.25rem;
+  }
+  
+  .legendColor {
+    width: 10px;
+    height: 10px;
+  }
 }
  

@@ -142,6 +142,9 @@ const SlideFilters = ({
             case 'finance-table':
                 return renderFinanceFilters();
 
+            case 'comparison-table':
+                return renderComparisonFilters();
+
             case 'comparison':
                 return renderComparisonFilters();
 
@@ -384,233 +387,25 @@ const SlideFilters = ({
         );
     };
 
-    // Фильтры для трендов
+    // Фильтры для трендов (переиспользуем ComparisonFilters)
     const renderTrendsFilters = () => {
         return (
-            <div className="card">
-                <div className="card-header">
-                    <h6 className="mb-0">Фильтры трендов</h6>
-                </div>
-                <div className="card-body">
-                    <div className="row">
-                        <div className="col-md-4">
-                            <div className="mb-3">
-                                <label className="form-label">Год</label>
-                                <select
-                                    className="form-select"
-                                    value={localFilters.year || new Date().getFullYear().toString()}
-                                    onChange={(e) => handleFilterChange('year', e.target.value)}
-                                >
-                                    {(availableData.years || []).map(year => (
-                                        <option key={year.id} value={year.id}>
-                                            {year.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div className="col-md-4">
-                            <div className="mb-3">
-                                <label className="form-label">Магазин</label>
-                                <select
-                                    className="form-select"
-                                    value={localFilters.shop || 'all'}
-                                    onChange={(e) => handleFilterChange('shop', e.target.value)}
-                                >
-                                    <option value="all">Все магазины</option>
-                                    {(availableData.shops || []).map(shop => (
-                                        <option key={shop.id} value={shop.id}>
-                                            {shop.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div className="col-md-4">
-                            <div className="mb-3">
-                                <label className="form-label">Категория</label>
-                                <select
-                                    className="form-select"
-                                    value={localFilters.category || 'all'}
-                                    onChange={(e) => handleFilterChange('category', e.target.value)}
-                                >
-                                    <option value="all">Все категории</option>
-                                    {(availableData.categories || []).map(category => (
-                                        <option key={category.id} value={category.id}>
-                                            {category.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div className="row">
-                        <div className="col-md-12">
-                            <div className="mb-3">
-                                <label className="form-label">Показывать данные</label>
-                                <div className="metrics-toggles">
-                                    <div className="toggle-item">
-                                        <span className="toggle-text">План</span>
-                                        <label className={`toggle-switch ${localFilters.showPlan !== false ? 'active' : ''}`}>
-                                            <input
-                                                className="toggle-input"
-                                                type="checkbox"
-                                                checked={localFilters.showPlan !== false}
-                                                onChange={(e) => handleFilterChange('showPlan', e.target.checked)}
-                                            />
-                                            <span className="toggle-slider"></span>
-                                        </label>
-                                    </div>
-                                    
-                                    <div className="toggle-item">
-                                        <span className="toggle-text">Факт</span>
-                                        <label className={`toggle-switch ${localFilters.showFact !== false ? 'active' : ''}`}>
-                                            <input
-                                                className="toggle-input"
-                                                type="checkbox"
-                                                checked={localFilters.showFact !== false}
-                                                onChange={(e) => handleFilterChange('showFact', e.target.checked)}
-                                            />
-                                            <span className="toggle-slider"></span>
-                                        </label>
-                                    </div>
-                                    
-                                    <div className="toggle-item">
-                                        <span className="toggle-text">Отклонение</span>
-                                        <label className={`toggle-switch ${localFilters.showDeviation === true ? 'active' : ''}`}>
-                                            <input
-                                                className="toggle-input"
-                                                type="checkbox"
-                                                checked={localFilters.showDeviation === true}
-                                                onChange={(e) => handleFilterChange('showDeviation', e.target.checked)}
-                                            />
-                                            <span className="toggle-slider"></span>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <ComparisonFilters
+                filters={localFilters}
+                availableData={availableData}
+                onFiltersChange={handleMultipleFilterChange}
+            />
         );
     };
 
-    // Фильтры для план vs факт
+    // Фильтры для план vs факт (переиспользуем ComparisonFilters)
     const renderPlanVsActualFilters = () => {
         return (
-            <div className="card">
-                <div className="card-header">
-                    <h6 className="mb-0">Фильтры план vs факт</h6>
-                </div>
-                <div className="card-body">
-                    <div className="row">
-                        <div className="col-md-4">
-                            <div className="mb-3">
-                                <label className="form-label">Год</label>
-                                <select
-                                    className="form-select"
-                                    value={localFilters.year || new Date().getFullYear().toString()}
-                                    onChange={(e) => handleFilterChange('year', e.target.value)}
-                                >
-                                    {(availableData.years || []).map(year => (
-                                        <option key={year.id} value={year.id}>
-                                            {year.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div className="col-md-4">
-                            <div className="mb-3">
-                                <label className="form-label">Магазин</label>
-                                <select
-                                    className="form-select"
-                                    value={localFilters.shop || 'all'}
-                                    onChange={(e) => handleFilterChange('shop', e.target.value)}
-                                >
-                                    <option value="all">Все магазины</option>
-                                    {(availableData.shops || []).map(shop => (
-                                        <option key={shop.id} value={shop.id}>
-                                            {shop.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div className="col-md-4">
-                            <div className="mb-3">
-                                <label className="form-label">Категория</label>
-                                <select
-                                    className="form-select"
-                                    value={localFilters.category || 'all'}
-                                    onChange={(e) => handleFilterChange('category', e.target.value)}
-                                >
-                                    <option value="all">Все категории</option>
-                                    {(availableData.categories || []).map(category => (
-                                        <option key={category.id} value={category.id}>
-                                            {category.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div className="row">
-                        <div className="col-md-12">
-                            <div className="mb-3">
-                                <label className="form-label">Показывать данные</label>
-                                <div className="metrics-toggles">
-                                    <div className="toggle-item">
-                                        <span className="toggle-text">План</span>
-                                        <label className={`toggle-switch ${localFilters.showPlan !== false ? 'active' : ''}`}>
-                                            <input
-                                                className="toggle-input"
-                                                type="checkbox"
-                                                checked={localFilters.showPlan !== false}
-                                                onChange={(e) => handleFilterChange('showPlan', e.target.checked)}
-                                            />
-                                            <span className="toggle-slider"></span>
-                                        </label>
-                                    </div>
-                                    
-                                    <div className="toggle-item">
-                                        <span className="toggle-text">Факт</span>
-                                        <label className={`toggle-switch ${localFilters.showFact !== false ? 'active' : ''}`}>
-                                            <input
-                                                className="toggle-input"
-                                                type="checkbox"
-                                                checked={localFilters.showFact !== false}
-                                                onChange={(e) => handleFilterChange('showFact', e.target.checked)}
-                                            />
-                                            <span className="toggle-slider"></span>
-                                        </label>
-                                    </div>
-                                    
-                                    <div className="toggle-item">
-                                        <span className="toggle-text">Отклонение</span>
-                                        <label className={`toggle-switch ${localFilters.showDeviation === true ? 'active' : ''}`}>
-                                            <input
-                                                className="toggle-input"
-                                                type="checkbox"
-                                                checked={localFilters.showDeviation === true}
-                                                onChange={(e) => handleFilterChange('showDeviation', e.target.checked)}
-                                            />
-                                            <span className="toggle-slider"></span>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <ComparisonFilters
+                filters={localFilters}
+                availableData={availableData}
+                onFiltersChange={handleMultipleFilterChange}
+            />
         );
     };
 

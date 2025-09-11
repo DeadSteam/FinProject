@@ -295,6 +295,39 @@ export const ReportDataProvider = ({ children }) => {
     }, [availableLists, loadReferenceLists, showError]);
 
     /**
+     * Преобразует название месяца в ключ для periods_value
+     */
+    const getMonthKey = (monthName) => {
+        const monthMap = {
+            'Январь': 'январь',
+            'Февраль': 'февраль',
+            'Март': 'март',
+            'Апрель': 'апрель',
+            'Май': 'май',
+            'Июнь': 'июнь',
+            'Июль': 'июль',
+            'Август': 'август',
+            'Сентябрь': 'сентябрь',
+            'Октябрь': 'октябрь',
+            'Ноябрь': 'ноябрь',
+            'Декабрь': 'декабрь',
+            'Янв': 'январь',
+            'Фев': 'февраль',
+            'Мар': 'март',
+            'Апр': 'апрель',
+            'Июн': 'июнь',
+            'Июл': 'июль',
+            'Авг': 'август',
+            'Сен': 'сентябрь',
+            'Окт': 'октябрь',
+            'Ноя': 'ноябрь',
+            'Дек': 'декабрь'
+        };
+
+        return monthMap[monthName] || monthName.toLowerCase();
+    };
+
+    /**
      * Детальные финансовые метрики для FinanceDetails-подобных графиков
      */
     const loadFinanceDetails = async (filters = {}) => {
@@ -303,13 +336,74 @@ export const ReportDataProvider = ({ children }) => {
             const shopId = filters.shop || filters.shopId || (Array.isArray(filters.shops) ? filters.shops[0] : undefined);
             const year = (filters.year || (Array.isArray(filters.years) ? filters.years[0] : undefined)) ?? new Date().getFullYear();
 
+            if (dev) console.log('[ReportDataProvider] loadFinanceDetails filters:', { categoryId, shopId, year });
+
             if (!categoryId || !shopId) {
+                if (dev) console.log('[ReportDataProvider] loadFinanceDetails: missing categoryId or shopId');
                 return null;
             }
 
             // Используем тот же сервис, что и FinanceDetails
             const details = await analyticsService.getDetailedCategoryMetrics(categoryId, shopId, year);
             
+            if (dev) console.log('[ReportDataProvider] loadFinanceDetails result:', details);
+            if (dev) console.log('[ReportDataProvider] loadFinanceDetails metrics structure:', details?.metrics?.[0]);
+            
+            // Возвращаем данные в формате, совместимом с DataTable
+            if (details && details.metrics && Array.isArray(details.metrics) && details.metrics.length > 0) {
+                // API уже возвращает данные в правильном формате periods_value
+                const transformedMetrics = details.metrics.map(metric => ({
+                    id: metric.metric_id || metric.id,
+                    name: metric.metric_name || metric.name,
+                    unit: metric.unit || 'руб.',
+                    periods_value: metric.periods_value || {
+                        quarters: {},
+                        months: {}
+                    }
+                }));
+
+                // Создаем chartData для графиков из первой метрики
+                let chartData = [];
+                if (transformedMetrics.length > 0) {
+                    const firstMetric = transformedMetrics[0];
+                    const periodsValue = firstMetric.periods_value || {};
+                    const periodType = filters.periodType === 'months' ? 'months' : 'quarters';
+
+                    const buildQuarterData = () => {
+                        const labels = ['I квартал', 'II квартал', 'III квартал', 'IV квартал'];
+                        const keys = ['I квартал', 'II квартал', 'III квартал', 'IV квартал'];
+                        return keys.map((key, index) => {
+                            const q = periodsValue.quarters?.[key] || {};
+                            const plan = Number(q.plan ?? 0) || 0;
+                            const actual = Number(q.actual ?? q.fact ?? 0) || 0;
+                            const deviation = Number(q.deviation ?? q.difference ?? (actual - plan)) || 0;
+                            return { label: labels[index], plan, actual, deviation, percentage: plan ? (actual / plan) * 100 : 0 };
+                        });
+                    };
+
+                    const buildMonthData = () => {
+                        const labels = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+                        const keys = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'];
+                        return keys.map((key, index) => {
+                            const m = periodsValue.months?.[key] || {};
+                            const plan = Number(m.plan ?? 0) || 0;
+                            const actual = Number(m.actual ?? m.fact ?? 0) || 0;
+                            const deviation = Number(m.deviation ?? m.difference ?? (actual - plan)) || 0;
+                            return { label: labels[index], plan, actual, deviation, percentage: plan ? (actual / plan) * 100 : 0 };
+                        });
+                    };
+
+                    chartData = periodType === 'months' ? buildMonthData() : buildQuarterData();
+                }
+
+                return {
+                    metrics: transformedMetrics,
+                    periods: [], // Для FinanceDataTable periods не нужны
+                    categoryName: details.category_name || 'Финансовые данные',
+                    chartData, // Добавляем chartData для графиков
+                    isFinanceData: true // Флаг для определения типа данных
+                };
+            }
             
             // Находим конкретную метрику по ID, если указана
             let metric = null;
@@ -341,7 +435,7 @@ export const ReportDataProvider = ({ children }) => {
                     const plan = Number(q.plan ?? 0) || 0;
                     const actual = Number(q.actual ?? q.fact ?? 0) || 0;
                     const deviation = Number(q.deviation ?? q.difference ?? (actual - plan)) || 0;
-                    return { label: labels[index], plan, fact: actual, deviation, percentage: plan ? (actual / plan) * 100 : 0 };
+                    return { label: labels[index], plan, actual, deviation, percentage: plan ? (actual / plan) * 100 : 0 };
                 });
             };
 
@@ -353,36 +447,67 @@ export const ReportDataProvider = ({ children }) => {
                     const plan = Number(m.plan ?? 0) || 0;
                     const actual = Number(m.actual ?? m.fact ?? 0) || 0;
                     const deviation = Number(m.deviation ?? m.difference ?? (actual - plan)) || 0;
-                    return { label: labels[index], plan, fact: actual, deviation, percentage: plan ? (actual / plan) * 100 : 0 };
+                    return { label: labels[index], plan, actual, deviation, percentage: plan ? (actual / plan) * 100 : 0 };
                 });
             };
 
             const chartData = periodType === 'months' ? buildMonthData() : buildQuarterData();
 
-            // Подготовим структуры для таблицы
-            const processedMetrics = Array.isArray(details?.metrics)
-                ? details.metrics.map((m) => ({
-                    id: m.metric_id ?? m.id,
-                    name: m.metric_name ?? m.name,
-                    unit: m.unit,
-                    periods_value: m.periods_value || {}
-                }))
-                : [];
-
-            // Сгенерируем периоды по выбранному году
-            const yearInt = parseInt(year);
-            const periods = [];
-            if (!Number.isNaN(yearInt)) {
-                periods.push({ id: `year-${yearInt}`, year: yearInt, quarter: null, month: null });
-                for (let q = 1; q <= 4; q++) {
-                    periods.push({ id: `quarter-${yearInt}-${q}`, year: yearInt, quarter: q, month: null });
-                }
-                for (let m = 1; m <= 12; m++) {
-                    periods.push({ id: `month-${yearInt}-${m}`, year: yearInt, quarter: Math.ceil(m / 3), month: m });
-                }
+            // Если есть метрика, возвращаем её в формате DataTable
+            if (metric) {
+                return {
+                    metrics: [metric],
+                    periods: [],
+                    categoryName: details.categoryName || 'Финансовые данные',
+                    chartData,
+                    isFinanceData: true
+                };
             }
 
-            return { chartData, metrics: processedMetrics, periods };
+            // Если нет детальных метрик, но есть данные, создаем фиктивную метрику
+            if (chartData && chartData.length > 0) {
+                const fallbackMetric = {
+                    id: 1,
+                    name: 'Финансовые показатели',
+                    unit: 'руб.',
+                    periods_value: {
+                        quarters: {},
+                        months: {}
+                    }
+                };
+
+                // Заполняем periods_value из chartData
+                chartData.forEach((item, index) => {
+                    const isQuarter = item.label.includes('квартал');
+                    if (isQuarter) {
+                        fallbackMetric.periods_value.quarters[item.label] = {
+                            plan: item.plan || 0,
+                            actual: item.actual || 0,
+                            deviation: item.deviation || 0,
+                            procent: item.percentage || 0
+                        };
+                    } else {
+                        const monthKey = getMonthKey(item.label);
+                        fallbackMetric.periods_value.months[monthKey] = {
+                            plan: item.plan || 0,
+                            actual: item.actual || 0,
+                            deviation: item.deviation || 0,
+                            procent: item.percentage || 0
+                        };
+                    }
+                });
+
+                return {
+                    metrics: [fallbackMetric],
+                    periods: [],
+                    categoryName: details.categoryName || 'Финансовые данные',
+                    chartData,
+                    isFinanceData: true
+                };
+            }
+
+            if (dev) console.log('[ReportDataProvider] loadFinanceDetails: no data found');
+            return { chartData: [] };
         } catch (error) {
             if (dev) console.error('Error loading finance details:', error);
             showError('Ошибка загрузки финансовых метрик');
@@ -401,70 +526,38 @@ export const ReportDataProvider = ({ children }) => {
             if (slideTypeStr.includes('analytics')) {
                 const analyticsData = await loadAnalyticsData(filters);
                 
-                // Если данные не загрузились, создаем тестовые данные
+                // Если данные не загрузились, возвращаем пустой результат
                 if (!analyticsData || !analyticsData.metrics) {
-                    const testChartData = [
-                        { label: 'Январь', plan: 150000, fact: 145000, deviation: -5000, percentage: 96.7 },
-                        { label: 'Февраль', plan: 180000, fact: 190000, deviation: 10000, percentage: 105.6 },
-                        { label: 'Март', plan: 200000, fact: 195000, deviation: -5000, percentage: 97.5 },
-                        { label: 'Апрель', plan: 220000, fact: 230000, deviation: 10000, percentage: 104.5 },
-                        { label: 'Май', plan: 250000, fact: 245000, deviation: -5000, percentage: 98 },
-                        { label: 'Июнь', plan: 280000, fact: 290000, deviation: 10000, percentage: 103.6 }
-                    ];
-                    
-                    
                     return { 
-                        metrics: testChartData,
-                        chartData: testChartData
+                        metrics: [],
+                        chartData: []
                     };
                 }
                 
                 return analyticsData;
             } else if (slideTypeStr.includes('finance')) {
-                // Для финансовых слайдов попробуем использовать детальные метрики,
-                // если заданы год/категория/магазин; иначе fallback на сводную аналитику
+                // Для финансовых слайдов используем детальные метрики в формате DataTable
                 const details = await loadFinanceDetails(filters);
-                if (details && details.chartData && details.chartData.length > 0) {
-                    if (dev) console.log('[ReportDataProvider] using finance details for slide', { filters, detailsKeys: Object.keys(details) });
+                if (details && details.isFinanceData) {
+                    // Возвращаем данные в формате, совместимом с DataTable
                     return details;
                 }
-
+                
+                // Fallback на сводную аналитику
                 const financeData = await loadFinanceData(filters);
-                if (dev) console.log('[ReportDataProvider] using finance summary for slide', { filters, hasChartData: !!financeData?.chartData, analyticsKeys: Object.keys(financeData?.analytics || {}) });
-
-                // Сформируем минимальные metrics/periods для таблицы, если они отсутствуют
-                const currentYear = (Array.isArray(filters.years) ? (filters.years[0]) : filters.year) || new Date().getFullYear();
-                const yearInt = parseInt(currentYear);
-                const periods = [];
-                if (!Number.isNaN(yearInt)) {
-                    periods.push({ id: `year-${yearInt}`, year: yearInt, quarter: null, month: null });
-                    for (let q = 1; q <= 4; q++) periods.push({ id: `quarter-${yearInt}-${q}`, year: yearInt, quarter: q, month: null });
-                    for (let m = 1; m <= 12; m++) periods.push({ id: `month-${yearInt}-${m}`, year: yearInt, quarter: Math.ceil(m/3), month: m });
+                
+                // Если данные не загрузились, возвращаем пустой результат
+                if (!financeData || !financeData.chartData) {
+                    // Сформируем хотя бы таблицу из план vs факт, если есть аналитика
+                    const pva = generatePlanVsActualAnalysis(financeData);
+                    const { tableData, tableColumns } = buildPlanVsActualTable(pva);
+                    return { chartData: [], tableData, tableColumns };
                 }
-
-                // Если нет метрик — создадим пустой список, иначе попробуем привести к ожидаемому виду
-                const metrics = Array.isArray(financeData?.analytics?.metrics)
-                    ? financeData.analytics.metrics.map((m, idx) => ({
-                        id: m.id ?? m.metric_id ?? (idx + 1),
-                        name: m.name ?? m.metric_name ?? `Метрика ${idx + 1}`,
-                        unit: m.unit ?? '₽',
-                        periods_value: m.periods_value ?? {}
-                    }))
-                    : [];
-
-                // Если нет chartData — подставим заглушку
-                const chartData = Array.isArray(financeData?.chartData) && financeData.chartData.length
-                    ? financeData.chartData
-                    : [
-                        { label: 'I квартал', plan: 0, fact: 0, deviation: 0, percentage: 0 },
-                        { label: 'II квартал', plan: 0, fact: 0, deviation: 0, percentage: 0 },
-                        { label: 'III квартал', plan: 0, fact: 0, deviation: 0, percentage: 0 },
-                        { label: 'IV квартал', plan: 0, fact: 0, deviation: 0, percentage: 0 }
-                    ];
-
-                const result = { chartData, metrics, periods };
-                if (dev) console.log('[ReportDataProvider] prepared finance fallback result', { metricsLen: metrics.length, periodsLen: periods.length });
-                return result;
+                
+                // Попробуем добавить таблицу из plan vs actual
+                const pva = generatePlanVsActualAnalysis(financeData);
+                const { tableData, tableColumns } = buildPlanVsActualTable(pva);
+                return { ...financeData, tableData, tableColumns };
             } else if (slideTypeStr.includes('comparison')) {
                 // Загружаем данные для сравнения
                 const [analyticsData, financeData] = await Promise.all([
@@ -547,11 +640,16 @@ export const ReportDataProvider = ({ children }) => {
                 };
             } else if (slideTypeStr.includes('plan-vs-actual')) {
                 // Загружаем данные для сравнения план vs факт
+                console.log('[ReportDataProvider] Загружаем данные для plan-vs-actual, filters:', filters);
                 const data = await loadFinanceData(filters);
-                return {
+                console.log('[ReportDataProvider] Данные loadFinanceData:', data);
+                
+                const result = {
                     ...data,
                     planVsActual: generatePlanVsActualAnalysis(data)
                 };
+                console.log('[ReportDataProvider] Результат для plan-vs-actual:', result);
+                return result;
             }
             
             return null;
@@ -617,31 +715,97 @@ export const ReportDataProvider = ({ children }) => {
      * Генерация анализа план vs факт
      */
     const generatePlanVsActualAnalysis = (data) => {
-        if (!data || !data.analytics) return {};
+        console.log('[ReportDataProvider] generatePlanVsActualAnalysis входные данные:', data);
+        
+        if (!data || !data.analytics) {
+            console.log('[ReportDataProvider] generatePlanVsActualAnalysis: нет данных или analytics');
+            return {};
+        }
 
-        // Пока используем заглушку, в реальной реализации здесь будут плановые данные
-        const mockPlanData = [
-            { period: 'Q1 2024', plan: 1000000, actual: data.summary?.totalIncome || 950000 },
-            { period: 'Q2 2024', plan: 1200000, actual: data.summary?.totalIncome || 1150000 },
-            { period: 'Q3 2024', plan: 1100000, actual: data.summary?.totalIncome || 1080000 },
-            { period: 'Q4 2024', plan: 1300000, actual: data.summary?.totalIncome || 1250000 }
-        ];
-
-        const analysis = mockPlanData.map(item => ({
-            ...item,
-            deviation: item.actual - item.plan,
-            percentage: ((item.actual / item.plan) * 100).toFixed(1),
-            status: item.actual >= item.plan ? 'success' : 'warning'
-        }));
-
-        return {
-            quarters: analysis,
+        // Используем данные из аналитики для создания план vs факт
+        const analytics = data.analytics;
+        console.log('[ReportDataProvider] generatePlanVsActualAnalysis analytics:', analytics);
+        console.log('[ReportDataProvider] generatePlanVsActualAnalysis analytics.planVsActual:', analytics.planVsActual);
+        
+        // Создаем структуру данных для план vs факт
+        const planVsActual = {
+            categories: {},
+            shops: {},
+            metrics: {},
             summary: {
-                totalPlan: analysis.reduce((sum, item) => sum + item.plan, 0),
-                totalActual: analysis.reduce((sum, item) => sum + item.actual, 0),
-                averagePerformance: analysis.reduce((sum, item) => sum + parseFloat(item.percentage), 0) / analysis.length
+                totalPlan: 0,
+                totalActual: 0,
+                totalDeviation: 0,
+                averagePercentage: 0
             }
         };
+
+        // Используем данные из analytics.planVsActual, если они есть
+        if (analytics.planVsActual) {
+            const planVsActualData = analytics.planVsActual;
+            
+            // Копируем данные по категориям
+            if (planVsActualData.categories) {
+                Object.entries(planVsActualData.categories).forEach(([categoryName, categoryData]) => {
+                    const plan = categoryData.plan || 0;
+                    const actual = categoryData.actual || categoryData.fact || 0;
+                    const deviation = actual - plan;
+                    const percentage = plan > 0 ? (actual / plan) * 100 : 0;
+
+                    planVsActual.categories[categoryName] = {
+                        plan,
+                        actual,
+                        deviation,
+                        percentage
+                    };
+
+                    planVsActual.summary.totalPlan += plan;
+                    planVsActual.summary.totalActual += actual;
+                });
+            }
+
+            // Копируем данные по магазинам
+            if (planVsActualData.shops) {
+                Object.entries(planVsActualData.shops).forEach(([shopName, shopData]) => {
+                    const plan = shopData.plan || 0;
+                    const actual = shopData.actual || shopData.fact || 0;
+                    const deviation = actual - plan;
+                    const percentage = plan > 0 ? (actual / plan) * 100 : 0;
+
+                    planVsActual.shops[shopName] = {
+                        plan,
+                        actual,
+                        deviation,
+                        percentage
+                    };
+                });
+            }
+
+            // Копируем данные по метрикам
+            if (planVsActualData.metrics) {
+                Object.entries(planVsActualData.metrics).forEach(([metricName, metricData]) => {
+                    const plan = metricData.plan || 0;
+                    const actual = metricData.actual || metricData.fact || 0;
+                    const deviation = actual - plan;
+                    const percentage = plan > 0 ? (actual / plan) * 100 : 0;
+
+                    planVsActual.metrics[metricName] = {
+                        plan,
+                        actual,
+                        deviation,
+                        percentage
+                    };
+                });
+            }
+        }
+
+        // Рассчитываем общие показатели
+        planVsActual.summary.totalDeviation = planVsActual.summary.totalActual - planVsActual.summary.totalPlan;
+        planVsActual.summary.averagePercentage = planVsActual.summary.totalPlan > 0 ? 
+            (planVsActual.summary.totalActual / planVsActual.summary.totalPlan) * 100 : 0;
+
+        console.log('[ReportDataProvider] generatePlanVsActualAnalysis финальный результат:', planVsActual);
+        return planVsActual;
     };
 
     /**
@@ -715,8 +879,8 @@ export const ReportDataProvider = ({ children }) => {
             if (metrics.includes('plan') && item.plan !== undefined) {
                 filteredItem.plan = item.plan;
             }
-            if ((metrics.includes('fact') || metrics.includes('actual')) && item.fact !== undefined) {
-                filteredItem.fact = item.fact;
+            if (metrics.includes('actual') && (item.actual !== undefined || item.fact !== undefined)) {
+                filteredItem.actual = item.actual || item.fact;
             }
             if (metrics.includes('deviation') && item.deviation !== undefined) {
                 filteredItem.deviation = item.deviation;
@@ -727,7 +891,7 @@ export const ReportDataProvider = ({ children }) => {
             
             // Сохраняем другие свойства (например, isForecast)
             Object.keys(item).forEach(key => {
-                if (!['plan', 'fact', 'deviation', 'percentage', 'label', 'type'].includes(key)) {
+                if (!['plan', 'actual', 'fact', 'deviation', 'percentage', 'label', 'type'].includes(key)) {
                     filteredItem[key] = item[key];
                 }
             });
@@ -756,15 +920,15 @@ export const ReportDataProvider = ({ children }) => {
                 if (metrics.includes('plan')) {
                     item.plan = Math.abs(metric.plan_value || metric.plan || 0);
                 }
-                if (metrics.includes('fact') || metrics.includes('actual')) {
-                    item.fact = Math.abs(metric.fact_value || metric.fact || metric.actual || 0);
+                if (metrics.includes('actual')) {
+                    item.actual = Math.abs(metric.actual || metric.fact_value || metric.fact || 0);
                 }
                 if (metrics.includes('deviation')) {
-                    item.deviation = metric.deviation || (metric.fact_value || metric.fact || metric.actual || 0) - (metric.plan_value || metric.plan || 0);
+                    item.deviation = metric.deviation || (metric.actual || metric.fact_value || metric.fact || 0) - (metric.plan_value || metric.plan || 0);
                 }
                 if (metrics.includes('percentage')) {
                     item.percentage = metric.plan_value || metric.plan ? 
-                        ((metric.fact_value || metric.fact || metric.actual || 0) / (metric.plan_value || metric.plan)) * 100 : 0;
+                        ((metric.actual || metric.fact_value || metric.fact || 0) / (metric.plan_value || metric.plan)) * 100 : 0;
                 }
                 
                 return item;
@@ -783,8 +947,8 @@ export const ReportDataProvider = ({ children }) => {
         if (metrics.includes('plan')) {
             fallback.plan = Math.abs(data.summary?.plan || data.summary?.totalPlan || 0);
         }
-        if (metrics.includes('fact') || metrics.includes('actual')) {
-            fallback.fact = Math.abs(data.summary?.totalExpense || data.summary?.totalFact || 0);
+        if (metrics.includes('actual')) {
+            fallback.actual = Math.abs(data.summary?.totalExpense || data.summary?.totalFact || 0);
         }
         if (metrics.includes('deviation')) {
             fallback.deviation = data.summary?.deviation || 0;
@@ -882,21 +1046,21 @@ export const ReportDataProvider = ({ children }) => {
             });
         }
         
-        if (metrics.includes('fact') || metrics.includes('actual')) {
+        if (metrics.includes('actual')) {
             if (result.length === 0) {
                 result.push({
                     label: 'Текущий период',
-                    fact: currentAnalytics,
+                    actual: currentAnalytics,
                     type: 'comparison'
                 });
                 result.push({
                     label: 'Предыдущий период',
-                    fact: previousAnalytics,
+                    actual: previousAnalytics,
                     type: 'comparison'
                 });
             } else {
-                result[0].fact = currentAnalytics;
-                result[1].fact = previousAnalytics;
+                result[0].actual = currentAnalytics;
+                result[1].actual = previousAnalytics;
             }
         }
         
@@ -974,6 +1138,42 @@ export const ReportDataProvider = ({ children }) => {
         return data.planVsActual.quarters;
     };
 
+    // Строим универсальную таблицу для план vs факт
+    const buildPlanVsActualTable = (planVsActual) => {
+        try {
+            const cols = [
+                { key: 'period', header: 'Период', sticky: true, align: 'left', width: '220px' },
+                { key: 'plan', header: 'План', align: 'right', width: '120px' },
+                { key: 'actual', header: 'Факт', align: 'right', width: '120px' },
+                { key: 'deviation', header: 'Отклонение', align: 'right', width: '120px' },
+                { key: 'percentage', header: '% выполнения', align: 'right', width: '120px' }
+            ];
+
+            const rows = [];
+
+            // Приоритет: категории → магазины → метрики
+            const source = planVsActual?.categories && Object.keys(planVsActual.categories).length
+                ? planVsActual.categories
+                : planVsActual?.shops && Object.keys(planVsActual.shops).length
+                ? planVsActual.shops
+                : planVsActual?.metrics || {};
+
+            Object.entries(source).forEach(([label, item]) => {
+                rows.push({
+                    period: label,
+                    plan: item.plan ?? 0,
+                    actual: item.actual ?? item.fact ?? 0,
+                    deviation: item.deviation ?? ((item.actual ?? item.fact ?? 0) - (item.plan ?? 0)),
+                    percentage: item.percentage ?? ((item.plan ?? 0) ? (((item.actual ?? item.fact ?? 0) / (item.plan ?? 0)) * 100) : 0)
+                });
+            });
+
+            return { tableData: rows, tableColumns: cols };
+        } catch (e) {
+            return { tableData: [], tableColumns: [] };
+        }
+    };
+
     /**
      * Очистка кэша данных
      */
@@ -984,9 +1184,15 @@ export const ReportDataProvider = ({ children }) => {
     };
 
     // Значение контекста с мемоизацией
+    // Мемо-обертки для стабильности ссылок в контексте — чтобы потребители не перерендеривались от локальных фильтров
+    const memoStats = useMemo(() => {
+        // Простейшая проекция; оставляем место для расширения, но ссылка стабильна, пока не поменяются данные
+        return financeData?.analytics || analyticsData || null;
+    }, [analyticsData, financeData]);
+
     const contextValue = useMemo(() => ({
-        // Данные
-        analyticsData,
+        // Данные (мемоизированные ссылки)
+        analyticsData: memoStats,
         financeData,
         availableLists,
         
@@ -995,7 +1201,7 @@ export const ReportDataProvider = ({ children }) => {
         isLoadingFinance,
         isLoading: isLoadingAnalytics || isLoadingFinance,
         
-        // Методы загрузки
+        // Методы загрузки (стабильные useCallback)
         loadAnalyticsData,
         loadFinanceData,
         loadSlideData,
@@ -1006,14 +1212,16 @@ export const ReportDataProvider = ({ children }) => {
         // Утилиты
         clearCache
     }), [
-        analyticsData,
+        memoStats,
         financeData,
         availableLists,
         isLoadingAnalytics,
         isLoadingFinance,
         loadAnalyticsData,
         loadFinanceData,
-        transformDataForChart
+        loadSlideData,
+        transformDataForChart,
+        clearCache
     ]);
 
     return (
@@ -1037,3 +1245,5 @@ export const useReportData = () => {
 };
 
 export default ReportDataProvider;
+
+

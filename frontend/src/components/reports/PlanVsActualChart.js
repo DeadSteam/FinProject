@@ -1,11 +1,11 @@
 import React from 'react';
-import { ComparisonChart } from '../charts';
+import { PlanVsActualChart as BasePlanVsActualChart } from '../charts';
 
 /**
- * Компонент для сравнительной аналитики.
+ * Компонент для отображения диаграмм "План vs Факт" в отчетах
  * Теперь использует унифицированную систему графиков
  */
-const AnalyticsComparison = ({ 
+const PlanVsActualChart = ({ 
     analyticsData, 
     filters, 
     isLoading, 
@@ -15,22 +15,23 @@ const AnalyticsComparison = ({
     showHeader = false 
 }) => {
     return (
-        <ComparisonChart
+        <BasePlanVsActualChart
             analyticsData={analyticsData}
             filters={filters}
-                    isLoading={isLoading}
+            isLoading={isLoading}
             showControls={showControls}
             showTable={showTable}
             showSummary={showSummary}
             showHeader={showHeader}
             chartType={filters.chartType || 'bar'}
-            viewMode={filters.viewMode || 'chart'}
-            groupBy={filters.periodType === 'months' ? 'monthly' : 
-                    filters.periodType === 'quarters' ? 'quarterly' : 'years'}
+            groupBy={filters.groupBy || 'categories'}
             selectedMetrics={filters.metrics || ['plan', 'actual']}
-            title="Сравнительная аналитика"
+            title="План vs Факт"
+            className="chartInReports"
         />
     );
 };
 
-export default AnalyticsComparison; 
+export default PlanVsActualChart;
+
+

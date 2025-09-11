@@ -373,7 +373,6 @@
 
 /* Синхронизация стилей с предпросмотром слайда */
 .slide-content .chart-container {
-    margin-top: 1.5rem;
     height: 500px;
     min-height: 500px;
     position: relative;

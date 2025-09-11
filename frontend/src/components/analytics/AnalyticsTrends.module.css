@@ -337,27 +337,6 @@
     user-select: none;
 }
 
-/* Анализ сезонности */
-.seasonalityChart {
-    background: var(--bg-primary);
-    border: 1px solid var(--border);
-    border-radius: var(--card-border-radius);
-    padding: 1.5rem;
-    box-shadow: var(--box-shadow);
-    margin-top: 2rem;
-}
-
-.seasonalityBar {
-    background: var(--primary);
-    border-radius: var(--border-radius);
-    transition: var(--transition);
-    min-height: 20px;
-}
-
-.seasonalityBar:hover {
-    transform: scaleY(1.05);
-    box-shadow: var(--box-shadow);
-}
 
 /* Заголовки секций */
 .sectionTitle {
@@ -474,6 +453,66 @@
     }
 }
 
+/* Плавные анимации для графиков */
+.chartContainer {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.chartContainer.updating {
+    opacity: 0.7;
+    transform: translateY(5px);
+}
+
+.chartContainer.loading {
+    opacity: 0.5;
+    transform: scale(0.98);
+}
+
+/* Плавное появление карточек */
+.statCard,
+.statMiniCard,
+.forecastCard {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Плавные переходы для тумблеров */
+.toggleSlider {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toggleSlider:before {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Плавное изменение размеров контейнеров */
+.forecastInnerGrid,
+.statsAndForecastRow {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Анимация для появления новых элементов */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fadeInUp {
+    animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Плавное изменение высоты */
+.heightTransition {
+    transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* Стили для информационных иконок - SVG иконки без кружка, черного цвета */
 .infoIcon {
     position: absolute;
@@ -526,6 +565,7 @@
     height: 14px;
     display: inline-block;
     vertical-align: middle;
+    position: relative;
 }
 
 .infoIconInline:hover {
@@ -540,4 +580,55 @@
 
 .forecastCard .infoIconInline:hover path {
     stroke: rgba(255, 255, 255, 1);
+}
+
+/* Информационные плашки (tooltips) */
+.infoTooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    pointer-events: none;
+    max-width: 250px;
+    white-space: normal;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.infoTooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.9);
+}
+
+.infoIconMain:hover .infoTooltip,
+.infoIconMini:hover .infoTooltip,
+.infoIconInline:hover .infoTooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Специальные стили для tooltips в карточках прогнозирования */
+.forecastCard .infoTooltip {
+    background: rgba(0, 0, 0, 0.95);
+    color: white;
+}
+
+.forecastCard .infoTooltip::after {
+    border-top-color: rgba(0, 0, 0, 0.95);
 } 
+

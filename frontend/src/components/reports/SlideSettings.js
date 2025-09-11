@@ -1,5 +1,6 @@
 import React from 'react';
 import './SlideSettings.css';
+import '../../styles/components/ButtonGroup.css';
 
 /**
  * Компонент для настроек слайда
@@ -41,27 +42,20 @@ const SlideSettings = ({
                             <div className="setting-column">
                                 <label className="form-label">Тип графика</label>
                                 <div className="chart-type-selector">
-                                    <div className="btn-group" role="group">
+                                    <div className="btn-group button-group-container" role="group">
                                         <button 
                                             type="button"
-                                            className={`btn ${(settings?.chartType || 'line') === 'line' ? 'btn-primary' : 'btn-outline-primary'}`}
-                                            onClick={() => onSettingsChange({ chartType: 'line' })}
-                                        >
-                                            Линейный
-                                        </button>
-                                        <button 
-                                            type="button"
-                                            className={`btn ${settings?.chartType === 'bar' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                            className={`btn ${(settings?.chartType || 'bar') === 'bar' ? 'btn-primary' : 'btn-outline-primary'}`}
                                             onClick={() => onSettingsChange({ chartType: 'bar' })}
                                         >
                                             Столбчатый
                                         </button>
                                         <button 
                                             type="button"
-                                            className={`btn ${settings?.chartType === 'pie' ? 'btn-primary' : 'btn-outline-primary'}`}
-                                            onClick={() => onSettingsChange({ chartType: 'pie' })}
+                                            className={`btn ${ (settings?.chartType || 'bar') === 'line' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                            onClick={() => onSettingsChange({ chartType: 'line' })}
                                         >
-                                            Круговая
+                                            Линейный
                                         </button>
                                     </div>
                                 </div>
@@ -69,7 +63,7 @@ const SlideSettings = ({
                             <div className="setting-column">
                                 <label className="form-label">Период отображения</label>
                                 <div className="period-selector">
-                                    <div className="btn-group" role="group">
+                                    <div className="btn-group button-group-container" role="group">
                                         <button 
                                             type="button"
                                             className={`btn ${(filters?.periodType || 'quarters') === 'quarters' ? 'btn-primary' : 'btn-outline-primary'}`}
@@ -104,27 +98,20 @@ const SlideSettings = ({
                             <div className="setting-column">
                                 <label className="form-label">Тип графика</label>
                                 <div className="chart-type-selector">
-                                    <div className="btn-group" role="group">
+                                    <div className="btn-group button-group-container" role="group">
                                         <button 
                                             type="button"
-                                            className={`btn ${(settings?.chartType || 'line') === 'line' ? 'btn-primary' : 'btn-outline-primary'}`}
-                                            onClick={() => onSettingsChange({ chartType: 'line' })}
-                                        >
-                                            Линейный
-                                        </button>
-                                        <button 
-                                            type="button"
-                                            className={`btn ${settings?.chartType === 'bar' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                            className={`btn ${(settings?.chartType || 'bar') === 'bar' ? 'btn-primary' : 'btn-outline-primary'}`}
                                             onClick={() => onSettingsChange({ chartType: 'bar' })}
                                         >
                                             Столбчатый
                                         </button>
                                         <button 
                                             type="button"
-                                            className={`btn ${settings?.chartType === 'pie' ? 'btn-primary' : 'btn-outline-primary'}`}
-                                            onClick={() => onSettingsChange({ chartType: 'pie' })}
+                                            className={`btn ${(settings?.chartType || 'bar') === 'line' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                            onClick={() => onSettingsChange({ chartType: 'line' })}
                                         >
-                                            Круговая
+                                            Линейный
                                         </button>
                                     </div>
                                 </div>
@@ -132,7 +119,7 @@ const SlideSettings = ({
                             <div className="setting-column">
                                 <label className="form-label">Период отображения</label>
                                 <div className="period-selector">
-                                    <div className="btn-group" role="group">
+                                    <div className="btn-group button-group-container" role="group">
                                         <button 
                                             type="button"
                                             className={`btn ${(filters?.periodType || 'quarters') === 'quarters' ? 'btn-primary' : 'btn-outline-primary'}`}
@@ -193,27 +180,26 @@ const SlideSettings = ({
                             <div className="setting-column">
                                 <label className="form-label">Тип графика</label>
                                 <div className="chart-type-selector">
-                                    <div className="btn-group" role="group">
+                                    <div className="btn-group button-group-container" role="group">
                                         <button 
                                             type="button"
-                                            className={`btn ${(settings?.chartType || 'bar') === 'bar' ? 'btn-primary' : 'btn-outline-primary'}`}
-                                            onClick={() => onSettingsChange({ chartType: 'bar' })}
+                                            className={`btn ${(filters?.chartType || 'bar') === 'bar' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                            onClick={() => onFiltersChange({
+                                                ...filters,
+                                                chartType: 'bar'
+                                            })}
                                         >
                                             Столбчатый
                                         </button>
                                         <button 
                                             type="button"
-                                            className={`btn ${settings?.chartType === 'line' ? 'btn-primary' : 'btn-outline-primary'}`}
-                                            onClick={() => onSettingsChange({ chartType: 'line' })}
+                                            className={`btn ${(filters?.chartType || 'bar') === 'line' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                            onClick={() => onFiltersChange({
+                                                ...filters,
+                                                chartType: 'line'
+                                            })}
                                         >
                                             Линейный
-                                        </button>
-                                        <button 
-                                            type="button"
-                                            className={`btn ${settings?.chartType === 'pie' ? 'btn-primary' : 'btn-outline-primary'}`}
-                                            onClick={() => onSettingsChange({ chartType: 'pie' })}
-                                        >
-                                            Круговая
                                         </button>
                                     </div>
                                 </div>
@@ -221,7 +207,7 @@ const SlideSettings = ({
                             <div className="setting-column">
                                 <label className="form-label">Период отображения</label>
                                 <div className="period-selector">
-                                    <div className="btn-group" role="group">
+                                    <div className="btn-group button-group-container" role="group">
                                         <button 
                                             type="button"
                                             className={`btn ${(filters?.periodType || 'year') === 'year' ? 'btn-primary' : 'btn-outline-primary'}`}

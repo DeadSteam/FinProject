@@ -1,7 +1,11 @@
 /* SearchableSelect стили */
 :global(.searchable-select) {
     position: relative !important;
-    width: 100%;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
 }
 
 /* Dropdown через Portal - прикреплен к input как в react-select */
@@ -249,6 +253,18 @@
     position: relative;
     display: flex;
     align-items: center;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    flex: 1 !important;
+}
+
+/* Принудительное растягивание input внутри wrapper */
+:global(.searchable-select-input-wrapper) input {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    flex: 1 !important;
 }
 
 :global(.searchable-select-clear-btn) {

@@ -10,7 +10,7 @@ import {
     YearlyPlanModal 
 } from '../modals';
 import Button from '../ui/Button';
-import Chart from '../ui/Chart';
+import { BaseChart } from '../charts';
 import DataTable from '../ui/DataTable';
 
 import ChartControlPanel from './ChartControlPanel';
@@ -129,10 +129,13 @@ const FinanceDetailsView = React.memo(({
 
                     {/* График */}
                     <div className={styles.chartWrapper}>
-                        <Chart 
+                        <BaseChart 
                             data={chartData}
                             title={activeMetric ? `${activeMetric.name} по ${chartView === 'quarters' ? 'кварталам' : 'месяцам'} (${activeMetric.unit})` : 'Выберите метрику'}
-                            isFiltering={filtering}
+                            disableAnimations={filtering}
+                            showHeader={false}
+                            showTable={false}
+                            showSummary={false}
                         />
                     </div>
 
@@ -226,7 +229,7 @@ FinanceDetailsView.propTypes = {
     chartData: PropTypes.arrayOf(PropTypes.shape({
         label: PropTypes.string.isRequired,
         plan: PropTypes.number.isRequired,
-        fact: PropTypes.number.isRequired
+        actual: PropTypes.number.isRequired
     })).isRequired,
     
     // Модальные окна

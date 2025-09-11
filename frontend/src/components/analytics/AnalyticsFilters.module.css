@@ -1,5 +1,7 @@
 /* Компактные стили для AnalyticsFilters */
 
+/* Стили для кнопок теперь в ButtonGroup.css */
+
 .analyticsFilters {
     background: var(--bg-primary, #ffffff);
     border: 1px solid var(--border, #e2e8f0);
@@ -47,7 +49,7 @@
 
 .filtersGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1rem;
     align-items: start;
 }
@@ -126,7 +128,7 @@
 }
 
 .filterCardBody {
-    padding: 0.5rem;
+    padding: 0.75rem;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -155,6 +157,14 @@
     display: block;
 }
 
+/* Принудительно растягиваем все SearchableSelect */
+.filterCardBody :global(.searchable-select),
+.filterCardBody :global([class*="searchable"]) {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+}
+
 /* Стили для SearchableSelect внутри filterCardBody */
 .filterCardBody > :first-child {
     flex: 1;
@@ -165,7 +175,7 @@
     width: 100%;
 }
 
-/* Стили для SearchableSelect компонента */
+/* Специальные стили для SearchableSelect */
 .filterCardBody :global(.searchable-select) {
     width: 100% !important;
     min-width: 100% !important;
@@ -185,10 +195,16 @@
 
 /* Дополнительные стили для input полей */
 .filterCardBody input,
-.filterCardBody .form-control {
+.filterCardBody .form-control,
+.filterCardBody :global(.searchable-select),
+.filterCardBody :global(.searchable-select) > div,
+.filterCardBody :global(.searchable-select) input,
+.filterCardBody :global(.searchable-select) .form-control {
     width: 100% !important;
     min-width: 100% !important;
+    max-width: 100% !important;
     box-sizing: border-box !important;
+    display: block !important;
 }
 
 /* Специальные стили для SearchableSelect */
@@ -322,6 +338,104 @@
 
 .hintsList strong {
     font-weight: 600;
+}
+
+/* Дополнительные стили для полного растягивания инпутов */
+.filterCard {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+}
+
+.filterCardBody {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    flex: 1 !important;
+}
+
+/* Стили для SearchableSelect внутри фильтров */
+.filterCardBody :global(.searchable-select) {
+    width: 100% !important;
+    display: block !important;
+}
+
+.filterCardBody :global(.searchable-select) .searchable-select-input-wrapper {
+    width: 100% !important;
+    display: flex !important;
+}
+
+.filterCardBody :global(.searchable-select) .form-control {
+    width: 100% !important;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--border-radius);
+    transition: all 0.2s ease;
+    flex: 1 !important;
+}
+
+.filterCardBody :global(.searchable-select) .form-control:focus {
+    background: var(--bg-primary);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    color: var(--text-primary);
+}
+
+/* Принудительное растягивание всех элементов SearchableSelect */
+.filterCardBody :global(.searchable-select) * {
+    box-sizing: border-box !important;
+}
+
+.filterCardBody :global(.searchable-select) input {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* Максимально специфичные селекторы для принудительного растягивания */
+.analyticsFilters .filterCard .filterCardBody :global(.searchable-select) {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    display: block !important;
+}
+
+.analyticsFilters .filterCard .filterCardBody :global(.searchable-select) .searchable-select-input-wrapper {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    display: flex !important;
+}
+
+.analyticsFilters .filterCard .filterCardBody :global(.searchable-select) input {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    flex: 1 !important;
+}
+
+/* Дополнительные стили для полного растягивания */
+.filterCardBody :global(.searchable-select) .form-control {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    flex: 1 1 100% !important;
+}
+
+/* Принудительное растягивание для всех возможных селекторов */
+.filterCardBody :global(.searchable-select),
+.filterCardBody :global(.searchable-select) > div,
+.filterCardBody :global(.searchable-select) .searchable-select-input-wrapper,
+.filterCardBody :global(.searchable-select) .form-control,
+.filterCardBody :global(.searchable-select) input,
+.filterCardBody :global(.searchable-select) .input-wrapper {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
 }
 
 /* Адаптивность */

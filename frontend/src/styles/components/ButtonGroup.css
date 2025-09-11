@@ -1,0 +1,116 @@
+/* Переиспользуемые стили для групп кнопок */
+
+/* Основной контейнер для групп кнопок */
+.button-group-container {
+    width: 100% !important;
+    display: flex !important;
+    border-radius: var(--border-radius, 6px) !important;
+    overflow: hidden !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    justify-content: stretch !important;
+    min-width: 0 !important;
+}
+
+/* Базовые стили для кнопок в группах */
+.button-group-container .btn {
+    flex: 1 1 0% !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    padding: 0.5rem 0.75rem !important;
+    border-radius: 0 !important;
+    border: 1px solid var(--border, #e2e8f0) !important;
+    background-color: var(--bg-primary, #ffffff) !important;
+    color: var(--text-primary, #333) !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+    position: relative !important;
+    z-index: 1 !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+}
+
+/* Стили для первой кнопки в группе */
+.button-group-container .btn:first-child {
+    border-top-left-radius: var(--border-radius, 6px) !important;
+    border-bottom-left-radius: var(--border-radius, 6px) !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-right: none !important;
+}
+
+/* Стили для средних кнопок в группе */
+.button-group-container .btn:not(:first-child):not(:last-child) {
+    border-radius: 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+}
+
+/* Стили для последней кнопки в группе */
+.button-group-container .btn:last-child {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-top-right-radius: var(--border-radius, 6px) !important;
+    border-bottom-right-radius: var(--border-radius, 6px) !important;
+    border-left: none !important;
+}
+
+/* Активное состояние кнопки */
+.button-group-container .btn-primary {
+    background-color: var(--primary, #007bff) !important;
+    border-color: var(--primary, #007bff) !important;
+    color: white !important;
+    z-index: 2;
+}
+
+/* Неактивное состояние кнопки */
+.button-group-container .btn-outline-primary {
+    background-color: var(--bg-primary, #ffffff) !important;
+    border-color: var(--border, #e2e8f0) !important;
+    color: var(--text-primary, #333) !important;
+}
+
+/* Hover состояние для неактивных кнопок */
+.button-group-container .btn-outline-primary:hover {
+    background-color: var(--primary, #007bff) !important;
+    border-color: var(--primary, #007bff) !important;
+    color: white !important;
+    transform: none;
+}
+
+/* Focus состояние */
+.button-group-container .btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .button-group-container .btn {
+        font-size: 0.8rem !important;
+        padding: 0.4rem 0.6rem !important;
+    }
+}
+
+/* Утилиты для Bootstrap колонок */
+.button-group-wrapper .col-md-3,
+.button-group-wrapper .col-md-4,
+.button-group-wrapper .col-md-6 {
+    width: 100% !important;
+    max-width: none !important;
+    flex: 1 !important;
+}
+
+/* Специальные стили для контейнеров с кнопками */
+.button-group-wrapper {
+    width: 100%;
+}
+
+.button-group-wrapper .form-label {
+    font-weight: 600;
+    color: var(--text-primary, #333);
+    margin-bottom: 0.5rem;
+    display: block;
+}
+

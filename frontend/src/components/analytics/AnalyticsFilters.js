@@ -14,7 +14,7 @@ const dev = isDevelopment();
 
 /**
  * Компонент фильтров для аналитики.
- * Позволяет выбирать года, категории, магазины и метрики для анализа.
+ * Позволяет выбирать года, категории, магазины и показатели для анализа.
  */
 const AnalyticsFilters = ({ filters, onChange, availableData, isLoading }) => {
     const [isExpanded, setIsExpanded] = useState(true);
@@ -23,7 +23,7 @@ const AnalyticsFilters = ({ filters, onChange, availableData, isLoading }) => {
 
     if (!availableData || !availableData.years) {
         if (dev) {
-            console.warn('⚠️ AnalyticsFilters: availableData не загружены');
+            console.warn('⚠️ AnalyticsFilters: availableData не загружены', { availableData });
         }
         return (
             <div className="card p-4">
@@ -32,6 +32,11 @@ const AnalyticsFilters = ({ filters, onChange, availableData, isLoading }) => {
                         <span className="visually-hidden">Загрузка...</span>
                     </div>
                     <p className="mt-2 mb-0">Загрузка фильтров...</p>
+                    {dev && (
+                        <small className="text-muted d-block mt-2">
+                            Debug: availableData = {JSON.stringify(availableData)}
+                        </small>
+                    )}
                 </div>
             </div>
         );
@@ -64,6 +69,7 @@ const AnalyticsFilters = ({ filters, onChange, availableData, isLoading }) => {
             metrics: selectedMetrics
         });
     }, [filters, onChange]);
+
 
     const selectAllYears = useCallback(() => {
         const allYears = availableData.years.map(year => year.id);
@@ -262,12 +268,12 @@ const AnalyticsFilters = ({ filters, onChange, availableData, isLoading }) => {
 
                     <div className={styles.filterCard}>
                         <div className={styles.filterCardHeader}>
-                            <span className={styles.filterCardTitle}>Метрики</span>
+                            <span className={styles.filterCardTitle}>Показатели</span>
                             <div className={styles.filterCardActions}>
                                 <button 
                                     className={styles.filterActionBtn}
-                                    onClick={() => handleMetricsChange(['fact', 'plan', 'deviation', 'percentage'])}
-                                    title="Выбрать все метрики"
+                                    onClick={() => handleMetricsChange(['actual', 'plan', 'deviation', 'percentage'])}
+                                    title="Выбрать все показатели"
                                 >
                                     Все
                                 </button>
@@ -284,12 +290,12 @@ const AnalyticsFilters = ({ filters, onChange, availableData, isLoading }) => {
                             <div className={styles.metricsToggles}>
                                 <div className={styles.toggleItem}>
                                     <span className={styles.toggleText}>Факт</span>
-                                    <label className={`${styles.toggleSwitch} ${filters.metrics?.includes('fact') ? styles.active : ''}`}>
+                                    <label className={`${styles.toggleSwitch} ${filters.metrics?.includes('actual') ? styles.active : ''}`}>
                                         <input
                                             className={styles.toggleInput}
                                             type="checkbox"
-                                            checked={filters.metrics?.includes('fact') || false}
-                                            onChange={() => toggleMetric('fact')}
+                                            checked={filters.metrics?.includes('actual') || false}
+                                            onChange={() => toggleMetric('actual')}
                                         />
                                         <span className={styles.toggleSlider}></span>
                                     </label>
@@ -337,6 +343,7 @@ const AnalyticsFilters = ({ filters, onChange, availableData, isLoading }) => {
                         </div>
 
                     </div>
+
                 </div>
         </div>
     );

@@ -2,6 +2,18 @@
 
 /* Предотвращение моргания модального окна */
 .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    overflow: auto;
     will-change: auto;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
@@ -52,6 +64,8 @@
     -webkit-backface-visibility: hidden;
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
+    max-height: 90vh;
+    overflow: auto;
 }
 
 .slide-types-container {

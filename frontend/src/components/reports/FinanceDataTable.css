@@ -1,0 +1,63 @@
+/* Стили для FinanceDataTable компонента */
+.finance-table-container {
+    width: 100%;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: white;
+    overflow: visible;
+}
+
+.finance-table-container .table-header {
+    padding: 16px 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.finance-table-container .table-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+.finance-table-container .loading-container {
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.finance-table-container .loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.finance-table-container .no-data {
+    padding: 40px 20px;
+    text-align: center;
+    color: #666;
+}
+
+.finance-table-container .no-data p {
+    margin: 0;
+    font-size: 16px;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .finance-table-container .table-header {
+        padding: 12px 16px;
+    }
+    
+    .finance-table-container .table-title {
+        font-size: 16px;
+    }
+}

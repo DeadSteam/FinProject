@@ -125,16 +125,14 @@ const ChartJSAdapter = ({
             const dataset = {
                 label,
                 data: values,
-                backgroundColor: type === 'pie' 
-                    ? values.map((_, i) => colors[colorKeys[i % colorKeys.length]])
-                    : color + '80', // Полупрозрачный для столбцов
+                backgroundColor: color + '80', // Полупрозрачный для столбцов
                 borderColor: color,
                 borderWidth: 2
             };
 
             // Дополнительные настройки для линейных графиков
-            if (type === 'line' || type === 'area') {
-                dataset.fill = type === 'area';
+            if (type === 'line') {
+                dataset.fill = false;
                 dataset.tension = 0.4; // Плавные кривые
                 dataset.pointBackgroundColor = color;
                 dataset.pointBorderColor = '#ffffff';
@@ -223,7 +221,7 @@ const ChartJSAdapter = ({
         };
 
         // Настройки осей для графиков с осями
-        if (type !== 'pie' && type !== 'radar') {
+        if (type !== 'radar') {
             baseOptions.scales = {
                 x: {
                     grid: {

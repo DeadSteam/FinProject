@@ -23,6 +23,19 @@ export const useTableData = (metrics = [], periods = []) => {
 
     const hasPeriodsValue = metrics.some(m => m.periods_value);
 
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[useTableData] metrics:', metrics);
+      console.log('[useTableData] hasPeriodsValue:', hasPeriodsValue);
+      console.log('[useTableData] metrics.length:', metrics.length);
+      if (metrics[0]?.periods_value) {
+        console.log('[useTableData] periods_value structure:', metrics[0].periods_value);
+        console.log('[useTableData] quarters:', metrics[0].periods_value.quarters);
+        console.log('[useTableData] months:', metrics[0].periods_value.months);
+        console.log('[useTableData] quarters keys:', Object.keys(metrics[0].periods_value.quarters || {}));
+        console.log('[useTableData] months keys:', Object.keys(metrics[0].periods_value.months || {}));
+      }
+    }
+
     if (hasPeriodsValue) {
       // Новая структура данных
       for (let quarter = 1; quarter <= 4; quarter++) {
@@ -183,6 +196,11 @@ export const useTableData = (metrics = [], periods = []) => {
           rows.push(monthRow);
         });
       }
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[useTableData] generated rows:', rows);
+      console.log('[useTableData] rows length:', rows.length);
     }
 
     return rows;

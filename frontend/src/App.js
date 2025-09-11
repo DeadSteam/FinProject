@@ -12,7 +12,6 @@ import { useAuthStatus, useAuthInitialization } from './context/auth';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import './styles/globals.css';
 import './components/toast/ToastStyles.css';
-
 // Phase 4: Performance Optimization
 // Lazy-load all pages except for Login and NotFound.
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));

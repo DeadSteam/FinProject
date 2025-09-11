@@ -251,7 +251,7 @@ const ComparisonFilters = ({
                             <div className="filter-card-actions">
                                 <button 
                                     className="filter-action-btn"
-                                    onClick={() => handleMetricsChange(['fact', 'plan', 'deviation', 'percentage'])}
+                                    onClick={() => handleMetricsChange(['actual', 'plan', 'deviation', 'percentage'])}
                                     title="Выбрать все показатели"
                                 >
                                     Все
@@ -278,12 +278,12 @@ const ComparisonFilters = ({
                             >
                                 <div className="toggle-item">
                                     <span className="toggle-text">Факт</span>
-                                    <label className={`toggle-switch ${filters.metrics?.includes('fact') ? 'active' : ''}`}>
+                                    <label className={`toggle-switch ${filters.metrics?.includes('actual') ? 'active' : ''}`}>
                                         <input
                                             className="toggle-input"
                                             type="checkbox"
-                                            checked={filters.metrics?.includes('fact') || false}
-                                            onChange={() => toggleMetric('fact')}
+                                            checked={filters.metrics?.includes('actual') || false}
+                                            onChange={() => toggleMetric('actual')}
                                         />
                                         <span className="toggle-slider"></span>
                                     </label>

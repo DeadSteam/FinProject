@@ -121,7 +121,7 @@ const SlideEditor = ({
                 metrics.push('plan');
             }
             if (newFilters.showFact !== false) {
-                metrics.push('fact');
+                metrics.push('actual');
             }
             if (newFilters.showDeviation === true) {
                 metrics.push('deviation');
@@ -179,7 +179,7 @@ const SlideEditor = ({
                 const transformedData = transformDataForChart(
                     data, 
                     localSlide.type, 
-                    localSlide.content.filters?.metrics || ['plan', 'fact']
+                    localSlide.content.filters?.metrics || ['plan', 'actual']
                 );
                 
                 const previewData = {
@@ -273,9 +273,15 @@ const SlideEditor = ({
         },
         {
             id: 'analytics-table',
-            name: 'Таблица аналитики',
-            description: 'Табличное представление данных',
+            name: 'Таблица сравнения',
+            description: 'Сравнительное представление данных',
             icon: '📋'
+        },
+        {
+            id: 'comparison-table',
+            name: 'Таблица сравнения',
+            description: 'Сравнительная таблица с фильтрами аналитики',
+            icon: '📊'
         },
         {
             id: 'finance-table',
@@ -395,6 +401,7 @@ const SlideEditor = ({
                             isLoading={isLoadingPreview}
                             availableData={availableData}
                             onRefreshData={loadPreviewData}
+                            onGoToSettings={() => setActiveTab('settings')}
                         />
                     )}
                 </div>

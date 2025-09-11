@@ -150,12 +150,12 @@ const FinanceDetailsContainer = () => {
                     const label = quarterLabels[index];
                     
                     const plan = parseFloat(quarterData?.plan || 0);
-                    const fact = parseFloat(quarterData?.actual || 0);
+                    const actual = parseFloat(quarterData?.actual || 0);
                     
                     return {
                         label,
                         plan: isNaN(plan) ? 0 : plan,
-                        fact: isNaN(fact) ? 0 : fact
+                        actual: isNaN(actual) ? 0 : actual
                     };
                 });
             } else if (!isQuarterly && periodsData.months) {
@@ -170,12 +170,12 @@ const FinanceDetailsContainer = () => {
                     const label = monthNames[index];
                     
                     const plan = parseFloat(monthData?.plan || 0);
-                    const fact = parseFloat(monthData?.actual || 0);
+                    const actual = parseFloat(monthData?.actual || 0);
                     
                     return {
                         label,
                         plan: isNaN(plan) ? 0 : plan,
-                        fact: isNaN(fact) ? 0 : fact
+                        actual: isNaN(actual) ? 0 : actual
                     };
                 });
             }

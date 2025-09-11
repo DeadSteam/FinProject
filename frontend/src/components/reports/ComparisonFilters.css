@@ -104,6 +104,14 @@
     overflow: hidden;
 }
 
+/* Принудительно растягиваем все SearchableSelect */
+.filter-card-body .searchable-select,
+.filter-card-body [class*="searchable"] {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+}
+
 /* Footer для отображения количества выбранных элементов */
 .filter-card-footer {
     margin-top: auto;
@@ -203,10 +211,16 @@
 
 /* Дополнительные стили для input полей */
 .filter-card-body input,
-.filter-card-body .form-control {
+.filter-card-body .form-control,
+.filter-card-body .searchable-select,
+.filter-card-body .searchable-select > div,
+.filter-card-body .searchable-select input,
+.filter-card-body .searchable-select .form-control {
     width: 100% !important;
     min-width: 100% !important;
+    max-width: 100% !important;
     box-sizing: border-box !important;
+    display: block !important;
 }
 
 /* Специальные стили для SearchableSelect */
