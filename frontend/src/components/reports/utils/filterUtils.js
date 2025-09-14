@@ -16,16 +16,9 @@ export const hasSelectedFilters = (filters) => {
     const hasShops = Array.isArray(filters.shops) && filters.shops.length > 0;
     const hasMetrics = Array.isArray(filters.metrics) && filters.metrics.length > 0;
     
-    // Для финансовых графиков проверяем дополнительные поля
-    // По умолчанию showPlan и showFact должны быть true для план vs факт
-    const hasShowPlan = filters.showPlan !== false; // true по умолчанию
-    const hasShowFact = filters.showFact !== false; // true по умолчанию
-    const hasShowDeviation = filters.showDeviation === true;
-    const hasShowPercentage = filters.showPercentage === true;
-    
+    // Проверяем только основные фильтры - годы, категории, магазины, метрики
     // Возвращаем true, если есть хотя бы один выбранный фильтр
-    return hasYears || hasCategories || hasShops || hasMetrics || 
-           hasShowPlan || hasShowFact || hasShowDeviation || hasShowPercentage;
+    return hasYears || hasCategories || hasShops || hasMetrics;
 };
 
 /**
@@ -35,13 +28,22 @@ export const hasSelectedFilters = (filters) => {
  * @returns {boolean} - true, если есть данные для отображения
  */
 export const hasDataToDisplay = (slideData, filters) => {
-    // Если нет выбранных фильтров, показываем заглушку
-    if (!hasSelectedFilters(filters)) {
+    // Проверяем наличие данных
+    if (!slideData) return false;
+    
+    // Для финансовых данных не требуем выбранных фильтров
+    if (slideData.isFinanceData) {
+        // Проверяем metrics для финансовых данных
+        if (Array.isArray(slideData.metrics) && slideData.metrics.length > 0) {
+            return true;
+        }
         return false;
     }
     
-    // Проверяем наличие данных
-    if (!slideData) return false;
+    // Для остальных типов данных требуем выбранные фильтры
+    if (!hasSelectedFilters(filters)) {
+        return false;
+    }
     
     // Проверяем chartData
     if (Array.isArray(slideData.chartData) && slideData.chartData.length > 0) {
@@ -108,9 +110,9 @@ export const createSafeFilters = (filters) => {
             : [],
         periodType: filters?.periodType || 'year',
         chartType: filters?.chartType || 'bar',
-        // Финансовые фильтры
-        showPlan: filters?.showPlan !== undefined ? filters.showPlan : true,
-        showFact: filters?.showFact !== undefined ? filters.showFact : true,
+        // Финансовые фильтры - не устанавливаем дефолтные значения
+        showPlan: filters?.showPlan || false,
+        showFact: filters?.showFact || false,
         showDeviation: filters?.showDeviation || false,
         showPercentage: filters?.showPercentage || false
     };

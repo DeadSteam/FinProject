@@ -1,11 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useNotifications } from '../../hooks';
 import { useReportData } from './ReportDataProvider';
-import { BaseChart, ComparisonChart, PlanVsActualChart } from '../charts';
-import Chart from '../ui/Chart';
-import AnalyticsComparison from '../analytics/AnalyticsComparison';
-import AnalyticsDataTable from '../ui/AnalyticsDataTable';
-import FinanceDataTable from './FinanceDataTable';
+import SlideRenderer from './SlideRenderer';
 import reportsService from '../../services/reportsService';
 import { hasDataToDisplay, createSafeFilters } from './utils/filterUtils';
 import './ReportPreview.css';
@@ -26,7 +22,7 @@ const dev = isDevelopment();
  */
 const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPDF, onExportToPPTX }) => {
     
-    const { showSuccess, showError, showInfo } = useNotifications();
+    const { showSuccess, showError } = useNotifications();
     const { loadSlideData, transformDataForChart } = useReportData();
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [presentationMode, setPresentationMode] = useState(false);
@@ -41,34 +37,6 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
     const [exportProgress, setExportProgress] = useState(0);
     const [exportMode, setExportMode] = useState(false);
     
-    // Используем статичные данные для стабильной работы предпросмотра
-    const availableData = useMemo(() => ({
-        shops: [
-            { id: 'shop1', name: 'Центральный' },
-            { id: 'shop2', name: 'Северный' },
-            { id: 'shop3', name: 'Южный' },
-            { id: 'shop4', name: 'Восточный' },
-            { id: 'all', name: 'Все магазины' }
-        ],
-        categories: [
-            { id: 'electronics', name: 'Электроника' },
-            { id: 'clothing', name: 'Одежда' },
-            { id: 'food', name: 'Продукты' },
-            { id: 'books', name: 'Книги' },
-            { id: 'all', name: 'Все категории' }
-        ],
-        metrics: [
-            { id: 'revenue', name: 'Выручка' },
-            { id: 'profit', name: 'Прибыль' },
-            { id: 'orders', name: 'Заказы' },
-            { id: 'customers', name: 'Клиенты' },
-            { id: 'all', name: 'Все метрики' }
-        ],
-        years: Array.from({ length: 5 }, (_, i) => {
-            const year = new Date().getFullYear() - i;
-            return { id: year.toString(), name: year.toString() };
-        })
-    }), []);
 
     // Обработчики навигации
     const handlePrevSlide = () => {
@@ -694,422 +662,32 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
 
     // Рендеринг полного содержимого слайда
     function renderSlideContent(slide) {
-        switch (slide.type) {
-            case 'title':
-                return renderTitleSlideContent(slide);
-            case 'analytics-chart':
-            case 'finance-chart':
-            case 'trends':
-            case 'plan-vs-actual':
-                return renderChartSlideContent(slide);
-            case 'comparison':
-                return renderComparisonSlideContent(slide);
-            case 'analytics-table':
-            case 'finance-table':
-                return renderTableSlideContent(slide);
-            default:
-                return (
-                    <div className="slide-placeholder">
-                        <div className="text-center text-muted p-4">
-                            <h4>Неизвестный тип слайда</h4>
-                            <p>Тип: {slide.type}</p>
-                        </div>
-                    </div>
-                );
-        }
-    }
-
-    function renderTitleSlideContent(slide) {
-        return (
-            <div className="slide-content title-slide-content">
-                <div className="text-center">
-                    <h1 className="slide-title">{slide.title}</h1>
-                    {slide.content.description && (
-                        <p className="slide-description">{slide.content.description}</p>
-                    )}
-                    {report.title && (
-                        <div className="report-info mt-4">
-                            <h3>{report.title}</h3>
-                            {report.description && (
-                                <p className="text-muted">{report.description}</p>
-                            )}
-                        </div>
-                    )}
-                </div>
-            </div>
-        );
-    }
-
-    function renderChartSlideContent(slide) {
-        
         const currentSlideData = slideData.get(slide.id);
         const isLoadingCurrentSlide = loadingSlides.has(slide.id);
         
-
-        
-        if (isLoadingCurrentSlide) {
-            return (
-                <div className="slide-content chart-slide-content" data-slide-id={slide.id}>
-                    <h2 className="slide-title">{slide.title}</h2>
-                    <div className="chart-container d-flex justify-content-center align-items-center">
-                        <div className="text-center">
-                            <div className="spinner-border text-primary mb-3" role="status">
-                                <span className="visually-hidden">Загрузка...</span>
-                            </div>
-                            <p className="text-muted">Загрузка данных...</p>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-        
-        if (!currentSlideData) {
-            return (
-                <div className="slide-content chart-slide-content" data-slide-id={slide.id}>
-                    <h2 className="slide-title">{slide.title}</h2>
-                    <div className="chart-container d-flex justify-content-center align-items-center">
-                        <div className="text-center text-muted">
-                            <p>Данные не загружены</p>
-                            <button 
-                                className="btn btn-sm btn-outline-primary"
-                                onClick={() => loadSlideDataForPreview(slide)}
-                            >
-                                Повторить загрузку
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        // Определяем метрики из фильтров или используем по умолчанию (как в SlidePreview)
-        const filters = slide.content.filters || {};
-        const selectedMetrics = filters?.metrics && filters.metrics.length > 0 
-            ? filters.metrics.map(m => m?.value ?? m?.id ?? m)
-            : ['plan', 'actual'];
-
-
-        return (
-            <div className="slide-content chart-slide-content" data-slide-id={slide.id}>
-                {hasDataToDisplay(currentSlideData, slide.content?.filters) ? (
-                    <Chart
-                        type={slide.content.settings?.chartType || 'bar'}
-                        data={currentSlideData.chartData}
-                        selectedMetrics={selectedMetrics}
-                        title={slide.title}
-                        disableAnimations={exportMode}
-                        noMargins={true}
-                    />
-                ) : (
-                    <div className="no-data">
-                        <i className="fas fa-chart-line no-data-icon"></i>
-                        <h3 className="no-data-title">Нет данных для отображения</h3>
-                        <p className="no-data-description">
-                            Выберите параметры фильтрации или загрузите данные для создания графика
-                        </p>
-                    </div>
-                )}
-            </div>
-        );
-    }
-
-    function renderComparisonSlideContent(slide) {
-        const currentSlideData = slideData.get(slide.id);
-        const isLoadingCurrentSlide = loadingSlides.has(slide.id);
+        // Определяем метрики из фильтров или используем по умолчанию
         const filters = slide.content?.filters || {};
-        
-        // Безопасная обработка фильтров (точно как в SlidePreview)
-        const safeFilters = createSafeFilters(filters);
-
-
-        if (isLoadingCurrentSlide) {
-            return (
-                <div className="slide-content comparison-slide-content" data-slide-id={slide.id}>
-                    <h2 className="slide-title">{slide.title}</h2>
-                    <div className="comparison-container d-flex justify-content-center align-items-center">
-                        <div className="text-center">
-                            <div className="spinner-border text-primary mb-3" role="status">
-                                <span className="visually-hidden">Загрузка...</span>
-                            </div>
-                            <p className="text-muted">Загрузка данных...</p>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        if (!currentSlideData) {
-            return (
-                <div className="slide-content comparison-slide-content" data-slide-id={slide.id}>
-                    <h2 className="slide-title">{slide.title}</h2>
-                    <div className="comparison-container d-flex justify-content-center align-items-center">
-                        <div className="text-center text-muted">
-                            <p>Данные не загружены</p>
-                            <button 
-                                className="btn btn-sm btn-outline-primary"
-                                onClick={() => loadSlideDataForPreview(slide)}
-                            >
-                                Повторить загрузку
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            );
+        let selectedMetrics = ['plan', 'actual'];
+        if (filters?.metrics && filters.metrics.length > 0) {
+            selectedMetrics = filters.metrics.map(m => m?.value ?? m?.id ?? m);
         }
 
         return (
-            <div className="slide-content comparison-slide-content" data-slide-id={slide.id}>
-                <h2 className="slide-title">{slide.title}{slide._partsTotal > 1 ? ` (${slide._partIndex}/${slide._partsTotal})` : ''}</h2>
-                <div className="comparison-container p-2">
-                    {hasDataToDisplay(currentSlideData, filters) ? (
-                        <div className="comparison-full-width">
-                            <AnalyticsComparison
-                                analyticsData={currentSlideData?.analytics || currentSlideData || {}}
-                                filters={safeFilters}
-                                isLoading={isLoadingCurrentSlide}
-                                showControls={false}
-                                showTable={false}
-                                showSummary={false}
-                                showHeader={false}
-                            />
-                        </div>
-                    ) : (
-                        <div className="no-data">
-                            <i className="fas fa-chart-bar no-data-icon"></i>
-                            <h3 className="no-data-title">Нет данных для отображения</h3>
-                            <p className="no-data-description">
-                                Выберите параметры фильтрации или загрузите данные для создания графика сравнения
-                            </p>
-                        </div>
-                    )}
-                </div>
-            </div>
+            <SlideRenderer
+                slideType={slide.type}
+                title={slide.title}
+                description={slide.description}
+                settings={slide.content?.settings || {}}
+                filters={filters}
+                data={currentSlideData}
+                isLoading={isLoadingCurrentSlide}
+                disableAnimations={exportMode}
+                showHeader={true}
+            />
         );
     }
 
-    function renderTableSlideContent(slide) {
-        const currentSlideData = slideData.get(slide.id);
-        const isLoadingCurrentSlide = loadingSlides.has(slide.id);
-        
-        if (isLoadingCurrentSlide) {
-            return (
-                <div className="slide-content table-slide-content">
-                    <h2 className="slide-title">{slide.title}</h2>
-                    <div className="table-container d-flex justify-content-center align-items-center">
-                        <div className="text-center">
-                            <div className="spinner-border text-primary mb-3" role="status">
-                                <span className="visually-hidden">Загрузка...</span>
-                            </div>
-                            <p className="text-muted">Загрузка данных...</p>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-        
-        if (!currentSlideData || !currentSlideData.tableData) {
-            return (
-                <div className="slide-content table-slide-content">
-                    <h2 className="slide-title">{slide.title}</h2>
-                    <div className="table-container d-flex justify-content-center align-items-center">
-                        <div className="text-center text-muted">
-                            <p>Данные не загружены</p>
-                            <button 
-                                className="btn btn-sm btn-outline-primary"
-                                onClick={() => loadSlideDataForPreview(slide)}
-                            >
-                                Повторить загрузку
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
 
-        return (
-            <div className="slide-content table-slide-content">
-                <h2 className="slide-title">{slide.title}</h2>
-                <div className="table-container">
-                    {currentSlideData.isFinanceData ? (
-                        <FinanceDataTable
-                            data={currentSlideData.metrics}
-                            columns={currentSlideData.tableColumns}
-                            title={currentSlideData.categoryName || slide.title}
-                            maxHeight="400px"
-                            selectedMetrics={slide.filters?.metrics || []}
-                        />
-                    ) : (
-                        <AnalyticsDataTable
-                            data={currentSlideData.tableData}
-                            columns={currentSlideData.tableColumns}
-                            maxHeight="400px"
-                        />
-                    )}
-                </div>
-            </div>
-        );
-    }
-
-    return (
-        <div className={`report-preview ${presentationMode ? 'presentation-mode' : ''}`}>
-            {/* Заголовок предпросмотра */}
-            {!presentationMode && (
-                <div className="preview-header">
-                    <div className="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 className="mb-1">Предпросмотр отчета</h5>
-                            <small className="text-muted">
-                                {report.title || 'Без названия'} • {report.slides.length} слайдов
-                            </small>
-                        </div>
-                        <div className="d-flex gap-2">
-                            <button
-                                className="btn btn-outline-primary btn-sm"
-                                onClick={handleTogglePresentationMode}
-                                title="Режим презентации (F11)"
-                            >
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <rect width="18" height="18" x="3" y="3" rx="2"/>
-                                    <path d="M9 8l3 3-3 3"/>
-                                </svg>
-                                Презентация
-                            </button>
-                            <button
-                                className="btn btn-outline-secondary btn-sm"
-                                onClick={onExportToPDF}
-                                title="Экспорт в PDF"
-                            >
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                    <polyline points="14,2 14,8 20,8"/>
-                                </svg>
-                                PDF
-                            </button>
-                            <button
-                                className="btn btn-primary btn-sm"
-                                onClick={onExportToPPTX}
-                                title="Экспорт в PowerPoint"
-                            >
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <rect width="18" height="18" x="3" y="3" rx="2"/>
-                                    <path d="M7 7h10"/>
-                                    <path d="M7 12h4"/>
-                                </svg>
-                                PowerPoint
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            <div className="preview-layout">
-                {/* Миниатюры слайдов */}
-                {!presentationMode && (
-                    <div className="slides-thumbnails">
-                        <div className="thumbnails-scroll">
-                            {report.slides.map((slide, index) => (
-                                <div
-                                    key={slide.id}
-                                    className={`thumbnail-item ${selectedSlideIndex === index ? 'active' : ''}`}
-                                    onClick={() => handleSlideClick(index)}
-                                >
-                                    <div className="thumbnail-number">{index + 1}</div>
-                                    <div className="thumbnail-preview">
-                                        {renderThumbnailContent(slide)}
-                                    </div>
-                                    <div className="thumbnail-title">{slide.title}</div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* Основная область слайда */}
-                <div className="main-slide-area">
-                    <div className="slide-container">
-                        {currentSlide ? renderSlideContent(currentSlide) : (
-                            <div className="slide-placeholder">
-                                <div className="text-center text-muted p-4">
-                                    <h4>Слайд не найден</h4>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Навигация по слайдам */}
-                    <div className="slide-navigation">
-                        <button
-                            className={`btn ${presentationMode ? 'btn-outline-light' : 'btn-outline-primary'}`}
-                            onClick={handlePrevSlide}
-                            disabled={selectedSlideIndex === 0}
-                            title="Предыдущий слайд (←)"
-                        >
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <polyline points="15,18 9,12 15,6"/>
-                            </svg>
-                            {!presentationMode && <span className="ms-1">Назад</span>}
-                        </button>
-
-                        <div className="slide-counter">
-                            <span className={presentationMode ? 'text-light' : 'text-muted'}>
-                                {selectedSlideIndex + 1} / {report.slides.length}
-                            </span>
-                        </div>
-
-                        <button
-                            className={`btn ${presentationMode ? 'btn-outline-light' : 'btn-outline-primary'}`}
-                            onClick={handleNextSlide}
-                            disabled={selectedSlideIndex === report.slides.length - 1}
-                            title="Следующий слайд (→)"
-                        >
-                            {!presentationMode && <span className="me-1">Вперед</span>}
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <polyline points="9,18 15,12 9,6"/>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {/* Управление в режиме презентации */}
-            {presentationMode && (
-                <div className="presentation-controls">
-                    <div className="d-flex gap-2">
-                        <button
-                            className="btn btn-outline-light btn-sm"
-                            onClick={handleTogglePresentationMode}
-                            title="Выйти из режима презентации (Esc)"
-                        >
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M18 6L6 18"/>
-                                <path d="M6 6l12 12"/>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {/* Индикатор прогресса экспорта */}
-            {isExporting && (
-                <div className="export-progress-container">
-                    <div className="d-flex justify-content-between align-items-center mb-2">
-                        <span className="text-muted">Экспорт в процессе...</span>
-                        <span className="text-muted">{exportProgress}%</span>
-                    </div>
-                    <div className="progress">
-                        <div
-                            className="progress-bar progress-bar-striped progress-bar-animated"
-                            style={{ width: `${exportProgress}%` }}
-                            role="progressbar"
-                            aria-valuenow={exportProgress}
-                            aria-valuemin="0"
-                            aria-valuemax="100"
-                        />
-                    </div>
-                </div>
-            )}
-        </div>
-    );
 };
 
 export default ReportPreview;

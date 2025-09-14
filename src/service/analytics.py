@@ -118,7 +118,7 @@ class AnalyticsService:
                     continue
                     
                 # Рассчитываем отклонение
-                deviation = actual - plan
+                deviation = plan - actual
                 deviation_percent = (deviation / plan * 100) if plan != 0 else Decimal('0')
                 
                 shop_data = {

@@ -414,7 +414,7 @@ def prepare_comparison_data(actual_values, plan_values, periods, categories, sho
         plan_sum = sum(pv.value for pv in year_plans)
         
         # Вычисляем производные метрики
-        deviation = actual_sum - plan_sum  # Отклонение = Актуальное - План
+        deviation = plan_sum - actual_sum  # Отклонение = План - Актуальное
         percentage = (actual_sum / plan_sum * 100) if plan_sum > 0 else 0  # % выполнения
         
         comparison["yearly"][year] = {
@@ -437,7 +437,7 @@ def prepare_comparison_data(actual_values, plan_values, periods, categories, sho
             plan_sum = sum(pv.value for pv in quarter_plans)
             
             # Вычисляем производные метрики
-            deviation = actual_sum - plan_sum  # Отклонение = Актуальное - План
+            deviation = plan_sum - actual_sum  # Отклонение = План - Актуальное
             percentage = (actual_sum / plan_sum * 100) if plan_sum > 0 else 0  # % выполнения
             
             comparison["quarterly"][year][f"Q{quarter}"] = {
@@ -463,7 +463,7 @@ def prepare_comparison_data(actual_values, plan_values, periods, categories, sho
             plan_sum = sum(pv.value for pv in month_plans)
             
             # Вычисляем производные метрики
-            deviation = actual_sum - plan_sum  # Отклонение = Актуальное - План
+            deviation = plan_sum - actual_sum  # Отклонение = План - Актуальное
             percentage = (actual_sum / plan_sum * 100) if plan_sum > 0 else 0  # % выполнения
             
             comparison["monthly"][year][month_names[month - 1]] = {
@@ -486,7 +486,7 @@ def prepare_comparison_data(actual_values, plan_values, periods, categories, sho
         plan_sum = sum(pv.value for pv in cat_plans)
         
         # Вычисляем производные метрики
-        deviation = actual_sum - plan_sum  # Отклонение = Актуальное - План
+        deviation = plan_sum - actual_sum  # Отклонение = План - Актуальное
         percentage = (actual_sum / plan_sum * 100) if plan_sum > 0 else 0  # % выполнения
         
         comparison["categories"][category.name] = {
@@ -506,7 +506,7 @@ def prepare_comparison_data(actual_values, plan_values, periods, categories, sho
         plan_sum = sum(pv.value for pv in shop_plans)
         
         # Вычисляем производные метрики
-        deviation = actual_sum - plan_sum  # Отклонение = Актуальное - План
+        deviation = plan_sum - actual_sum  # Отклонение = План - Актуальное
         percentage = (actual_sum / plan_sum * 100) if plan_sum > 0 else 0  # % выполнения
         
         comparison["shops"][shop.name] = {
@@ -537,7 +537,7 @@ def prepare_trends_data(actual_values, plan_values, periods, years, month_start:
         plan_sum = sum(pv.value for pv in year_plans)
         
         # Вычисляем производные метрики
-        deviation = actual_sum - plan_sum  # Отклонение = Актуальное - План
+        deviation = plan_sum - actual_sum  # Отклонение = План - Актуальное
         percentage = (actual_sum / plan_sum * 100) if plan_sum > 0 else 0  # % выполнения
         
         trends["yearly"][year] = {
@@ -560,7 +560,7 @@ def prepare_trends_data(actual_values, plan_values, periods, years, month_start:
             plan_sum = sum(pv.value for pv in quarter_plans)
             
             # Вычисляем производные метрики
-            deviation = actual_sum - plan_sum  # Отклонение = Актуальное - План
+            deviation = plan_sum - actual_sum  # Отклонение = План - Актуальное
             percentage = (actual_sum / plan_sum * 100) if plan_sum > 0 else 0  # % выполнения
             
             trends["quarterly"][year][f"Q{quarter}"] = {
@@ -586,7 +586,7 @@ def prepare_trends_data(actual_values, plan_values, periods, years, month_start:
             plan_sum = sum(pv.value for pv in month_plans)
             
             # Вычисляем производные метрики
-            deviation = actual_sum - plan_sum  # Отклонение = Актуальное - План
+            deviation = plan_sum - actual_sum  # Отклонение = План - Актуальное
             percentage = (actual_sum / plan_sum * 100) if plan_sum > 0 else 0  # % выполнения
             
             trends["monthly"][year][month_names[month - 1]] = {
@@ -888,7 +888,7 @@ def prepare_plan_vs_actual_data(actual_values, plan_values, categories, shops, m
         plan_sum = sum(pv.value for pv in cat_plans)
         
         # Вычисляем производные метрики
-        deviation = actual_sum - plan_sum  # Отклонение = Актуальное - План
+        deviation = plan_sum - actual_sum  # Отклонение = План - Актуальное
         percentage = (actual_sum / plan_sum * 100) if plan_sum > 0 else 0  # % выполнения
         
         plan_vs_actual["categories"][category.name] = {
@@ -908,7 +908,7 @@ def prepare_plan_vs_actual_data(actual_values, plan_values, categories, shops, m
         plan_sum = sum(pv.value for pv in shop_plans)
         
         # Вычисляем производные метрики
-        deviation = actual_sum - plan_sum  # Отклонение = Актуальное - План
+        deviation = plan_sum - actual_sum  # Отклонение = План - Актуальное
         percentage = (actual_sum / plan_sum * 100) if plan_sum > 0 else 0  # % выполнения
         
         plan_vs_actual["shops"][shop.name] = {
@@ -928,7 +928,7 @@ def prepare_plan_vs_actual_data(actual_values, plan_values, categories, shops, m
         plan_sum = sum(pv.value for pv in metric_plans)
         
         # Вычисляем производные метрики
-        deviation = actual_sum - plan_sum  # Отклонение = Актуальное - План
+        deviation = plan_sum - actual_sum  # Отклонение = План - Актуальное
         percentage = (actual_sum / plan_sum * 100) if plan_sum > 0 else 0  # % выполнения
         
         plan_vs_actual["metrics"][metric.name] = {
@@ -944,7 +944,7 @@ def prepare_plan_vs_actual_stats(actual_values, plan_values):
     """Агрегированные метрики по разделу План vs Факт для всего набора фильтров."""
     total_plan = float(sum(pv.value for pv in plan_values))
     total_fact = float(sum(av.value for av in actual_values))
-    total_deviation = total_fact - total_plan
+    total_deviation = total_plan - total_fact
     total_percentage = (total_fact / total_plan * 100.0) if total_plan > 0 else 0.0
     return {
         "totalPlan": round(total_plan, 2),

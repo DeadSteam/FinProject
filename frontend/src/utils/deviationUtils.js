@@ -1,6 +1,6 @@
 export const calculateDeviationPercent = (plan, fact) => {
   if (!plan || plan === 0) return 0;
-  return ((fact - plan) / plan * 100).toFixed(1);
+  return ((plan - fact) / plan * 100).toFixed(1);
 };
 
 export const calculateVariance = (plan, fact) => {

@@ -4,7 +4,8 @@
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     background: white;
-    overflow: visible;
+    overflow: hidden !important;
+    max-height: none !important;
 }
 
 .finance-table-container .table-header {
@@ -51,6 +52,52 @@
     font-size: 16px;
 }
 
+/* Переопределяем ограничения DataTable для отчетов */
+.finance-table-container .tableContainer {
+    overflow: hidden !important;
+    max-height: none !important;
+}
+
+/* Убираем все возможные источники прокрутки */
+.finance-table-container * {
+    overflow: hidden !important;
+    overflow-x: hidden !important;
+    overflow-y: hidden !important;
+}
+
+.finance-table-container .dataTable {
+    overflow: hidden !important;
+}
+
+.finance-table-container .dataTable tbody {
+    overflow: hidden !important;
+}
+
+.finance-table-container .dataTable tr {
+    overflow: hidden !important;
+}
+
+.finance-table-container .dataTable td {
+    overflow: hidden !important;
+}
+
+/* Глобальное отключение прокрутки для всех размеров экрана */
+@media (max-width: 1200px) {
+    .finance-table-container * {
+        overflow: hidden !important;
+        overflow-x: hidden !important;
+        overflow-y: hidden !important;
+    }
+}
+
+@media (max-width: 992px) {
+    .finance-table-container * {
+        overflow: hidden !important;
+        overflow-x: hidden !important;
+        overflow-y: hidden !important;
+    }
+}
+
 /* Адаптивность */
 @media (max-width: 768px) {
     .finance-table-container .table-header {
@@ -59,5 +106,20 @@
     
     .finance-table-container .table-title {
         font-size: 16px;
+    }
+    
+    /* Переопределяем медиа-запрос DataTable */
+    .finance-table-container .tableContainer {
+        max-height: none !important;
+        overflow: hidden !important;
+        overflow-x: hidden !important;
+        overflow-y: hidden !important;
+    }
+    
+    /* Принудительно убираем прокрутку на мобильных */
+    .finance-table-container * {
+        overflow: hidden !important;
+        overflow-x: hidden !important;
+        overflow-y: hidden !important;
     }
 }

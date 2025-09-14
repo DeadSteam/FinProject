@@ -96,7 +96,7 @@ class ReportsService {
                         label: `Q${quarter}`,
                         plan: data.plan || 0,
                         fact: data.actual || 0,
-                        deviation: (data.actual || 0) - (data.plan || 0)
+                        deviation: (data.plan || 0) - (data.actual || 0)
                     }));
             } else if (periodType === 'months' && periods.months) {
                 periodData = Object.entries(periods.months)
@@ -105,14 +105,14 @@ class ReportsService {
                         label: this.getMonthName(parseInt(month)),
                         plan: data.plan || 0,
                         fact: data.actual || 0,
-                        deviation: (data.actual || 0) - (data.plan || 0)
+                        deviation: (data.plan || 0) - (data.actual || 0)
                     }));
             } else if (periodType === 'year' && periods.year) {
                 periodData = [{
                     label: 'Год',
                     plan: periods.year.plan || 0,
                     fact: periods.year.actual || 0,
-                    deviation: (periods.year.actual || 0) - (periods.year.plan || 0)
+                    deviation: (periods.year.plan || 0) - (periods.year.actual || 0)
                 }];
             } else {
                 
@@ -124,7 +124,7 @@ class ReportsService {
                             label: `Q${quarter}`,
                             plan: data.plan || 0,
                             fact: data.actual || 0,
-                            deviation: (data.actual || 0) - (data.plan || 0)
+                            deviation: (data.plan || 0) - (data.actual || 0)
                         }));
                 }
             }
@@ -176,16 +176,16 @@ class ReportsService {
                     period: `Q${quarter}`,
                     plan: data.plan || 0,
                     fact: data.actual || 0,
-                    deviation: (data.actual || 0) - (data.plan || 0),
-                    deviationPercent: data.plan ? (((data.actual || 0) - (data.plan || 0)) / data.plan * 100) : 0
+                    deviation: (data.plan || 0) - (data.actual || 0),
+                    deviationPercent: data.plan ? (((data.plan || 0) - (data.actual || 0)) / data.plan * 100) : 0
                 }));
             } else if (periodType === 'months' && periods.months) {
                 periodData = Object.entries(periods.months).map(([month, data]) => ({
                     period: this.getMonthName(parseInt(month)),
                     plan: data.plan || 0,
                     fact: data.actual || 0,
-                    deviation: (data.actual || 0) - (data.plan || 0),
-                    deviationPercent: data.plan ? (((data.actual || 0) - (data.plan || 0)) / data.plan * 100) : 0
+                    deviation: (data.plan || 0) - (data.actual || 0),
+                    deviationPercent: data.plan ? (((data.plan || 0) - (data.actual || 0)) / data.plan * 100) : 0
                 }));
             }
 

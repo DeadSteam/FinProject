@@ -95,7 +95,7 @@ export const prepareCategoryData = (planVsActualData) => {
         label: categoryName,
         plan: toSafeNumber(data.plan || 0),
         actual: toSafeNumber(data.actual || 0),
-        deviation: toSafeNumber(data.deviation ?? (toSafeNumber(data.actual) - toSafeNumber(data.plan))),
+        deviation: toSafeNumber(data.deviation ?? (toSafeNumber(data.plan) - toSafeNumber(data.actual))),
         percentage: toSafeNumber(data.percentage ?? (toSafeNumber(data.plan) > 0 ? ((toSafeNumber(data.actual) / toSafeNumber(data.plan)) * 100) : 0))
     }));
 };
@@ -110,7 +110,7 @@ export const prepareShopData = (planVsActualData) => {
         label: shopName,
         plan: toSafeNumber(data.plan || 0),
         actual: toSafeNumber(data.actual || 0),
-        deviation: toSafeNumber(data.deviation ?? (toSafeNumber(data.actual) - toSafeNumber(data.plan))),
+        deviation: toSafeNumber(data.deviation ?? (toSafeNumber(data.plan) - toSafeNumber(data.actual))),
         percentage: toSafeNumber(data.percentage ?? (toSafeNumber(data.plan) > 0 ? ((toSafeNumber(data.actual) / toSafeNumber(data.plan)) * 100) : 0))
     }));
 };
@@ -125,7 +125,7 @@ export const prepareMetricsData = (planVsActualData) => {
         label: metricName,
         plan: toSafeNumber(data.plan || 0),
         actual: toSafeNumber(data.actual || 0),
-        deviation: toSafeNumber(data.deviation ?? (toSafeNumber(data.actual) - toSafeNumber(data.plan))),
+        deviation: toSafeNumber(data.deviation ?? (toSafeNumber(data.plan) - toSafeNumber(data.actual))),
         percentage: toSafeNumber(data.percentage ?? (toSafeNumber(data.plan) > 0 ? ((toSafeNumber(data.actual) / toSafeNumber(data.plan)) * 100) : 0))
     }));
 };
@@ -144,7 +144,7 @@ export const prepareYearlyData = (comparisonData, filters) => {
                 label: year.toString(),
                 plan: toSafeNumber(yearData.plan || 0),
                 actual: toSafeNumber(yearData.actual || yearData.fact || 0),
-                deviation: toSafeNumber(yearData.deviation ?? (toSafeNumber(yearData.actual || yearData.fact) - toSafeNumber(yearData.plan))),
+                deviation: toSafeNumber(yearData.deviation ?? (toSafeNumber(yearData.plan) - toSafeNumber(yearData.actual || yearData.fact))),
                 percentage: toSafeNumber(yearData.percentage ?? (toSafeNumber(yearData.plan) > 0 ? ((toSafeNumber(yearData.actual || yearData.fact) / toSafeNumber(yearData.plan)) * 100) : 0))
             };
         });
@@ -247,7 +247,7 @@ export const prepareQuarterlyData = (analyticsData, filters) => {
                 } else if (metric === 'deviation') {
                     const planVal = getValueByAliases(yearData, ['plan', 'план'], 0);
                     const factVal = getValueByAliases(yearData, ['fact', 'actual', 'факт'], 0);
-                    value = getValueByAliases(yearData, ['deviation', 'difference', 'отклон'], factVal - planVal);
+                    value = getValueByAliases(yearData, ['deviation', 'difference', 'отклон'], planVal - factVal);
                 } else if (metric === 'percentage') {
                     value = getValueByAliases(yearData, ['percentage', 'percent', '%', 'процент'], 0);
                 } else {

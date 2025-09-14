@@ -376,8 +376,9 @@ export const ReportDataProvider = ({ children }) => {
                             const q = periodsValue.quarters?.[key] || {};
                             const plan = Number(q.plan ?? 0) || 0;
                             const actual = Number(q.actual ?? q.fact ?? 0) || 0;
-                            const deviation = Number(q.deviation ?? q.difference ?? (actual - plan)) || 0;
-                            return { label: labels[index], plan, actual, deviation, percentage: plan ? (actual / plan) * 100 : 0 };
+                            const deviation = Number(q.deviation ?? q.difference ?? 0) || 0;
+                            const percentage = Number(q.percentage ?? 0) || 0;
+                            return { label: labels[index], plan, actual, deviation, percentage };
                         });
                     };
 
@@ -388,8 +389,9 @@ export const ReportDataProvider = ({ children }) => {
                             const m = periodsValue.months?.[key] || {};
                             const plan = Number(m.plan ?? 0) || 0;
                             const actual = Number(m.actual ?? m.fact ?? 0) || 0;
-                            const deviation = Number(m.deviation ?? m.difference ?? (actual - plan)) || 0;
-                            return { label: labels[index], plan, actual, deviation, percentage: plan ? (actual / plan) * 100 : 0 };
+                            const deviation = Number(m.deviation ?? m.difference ?? 0) || 0;
+                            const percentage = Number(m.percentage ?? 0) || 0;
+                            return { label: labels[index], plan, actual, deviation, percentage };
                         });
                     };
 
@@ -434,8 +436,9 @@ export const ReportDataProvider = ({ children }) => {
                     const q = periodsValue.quarters?.[key] || {};
                     const plan = Number(q.plan ?? 0) || 0;
                     const actual = Number(q.actual ?? q.fact ?? 0) || 0;
-                    const deviation = Number(q.deviation ?? q.difference ?? (actual - plan)) || 0;
-                    return { label: labels[index], plan, actual, deviation, percentage: plan ? (actual / plan) * 100 : 0 };
+                    const deviation = Number(q.deviation ?? q.difference ?? 0) || 0;
+                    const percentage = Number(q.percentage ?? 0) || 0;
+                    return { label: labels[index], plan, actual, deviation, percentage };
                 });
             };
 
@@ -446,8 +449,9 @@ export const ReportDataProvider = ({ children }) => {
                     const m = periodsValue.months?.[key] || {};
                     const plan = Number(m.plan ?? 0) || 0;
                     const actual = Number(m.actual ?? m.fact ?? 0) || 0;
-                    const deviation = Number(m.deviation ?? m.difference ?? (actual - plan)) || 0;
-                    return { label: labels[index], plan, actual, deviation, percentage: plan ? (actual / plan) * 100 : 0 };
+                    const deviation = Number(m.deviation ?? m.difference ?? 0) || 0;
+                    const percentage = Number(m.percentage ?? 0) || 0;
+                    return { label: labels[index], plan, actual, deviation, percentage };
                 });
             };
 
@@ -632,12 +636,14 @@ export const ReportDataProvider = ({ children }) => {
                     comparisonType: filters.comparisonType || 'period'
                 };
             } else if (slideTypeStr.includes('trends')) {
-                // Загружаем данные для анализа трендов
-                const data = await loadFinanceData(filters);
-                return {
-                    ...data,
-                    trends: generateTrendsAnalysis(data)
-                };
+                // Переиспользуем тот же API, что и аналитика
+                const analytics = await analyticsService.getAnalytics({
+                    years: filters.years,
+                    categories: filters.categories,
+                    shops: filters.shops,
+                    metrics: filters.metrics
+                });
+                return { ...analytics };
             } else if (slideTypeStr.includes('plan-vs-actual')) {
                 // Загружаем данные для сравнения план vs факт
                 console.log('[ReportDataProvider] Загружаем данные для plan-vs-actual, filters:', filters);
@@ -749,8 +755,8 @@ export const ReportDataProvider = ({ children }) => {
                 Object.entries(planVsActualData.categories).forEach(([categoryName, categoryData]) => {
                     const plan = categoryData.plan || 0;
                     const actual = categoryData.actual || categoryData.fact || 0;
-                    const deviation = actual - plan;
-                    const percentage = plan > 0 ? (actual / plan) * 100 : 0;
+                    const deviation = categoryData.deviation || 0;
+                    const percentage = categoryData.percentage || 0;
 
                     planVsActual.categories[categoryName] = {
                         plan,
@@ -769,8 +775,8 @@ export const ReportDataProvider = ({ children }) => {
                 Object.entries(planVsActualData.shops).forEach(([shopName, shopData]) => {
                     const plan = shopData.plan || 0;
                     const actual = shopData.actual || shopData.fact || 0;
-                    const deviation = actual - plan;
-                    const percentage = plan > 0 ? (actual / plan) * 100 : 0;
+                    const deviation = shopData.deviation || 0;
+                    const percentage = shopData.percentage || 0;
 
                     planVsActual.shops[shopName] = {
                         plan,
@@ -786,8 +792,8 @@ export const ReportDataProvider = ({ children }) => {
                 Object.entries(planVsActualData.metrics).forEach(([metricName, metricData]) => {
                     const plan = metricData.plan || 0;
                     const actual = metricData.actual || metricData.fact || 0;
-                    const deviation = actual - plan;
-                    const percentage = plan > 0 ? (actual / plan) * 100 : 0;
+                    const deviation = metricData.deviation || 0;
+                    const percentage = metricData.percentage || 0;
 
                     planVsActual.metrics[metricName] = {
                         plan,
@@ -799,10 +805,9 @@ export const ReportDataProvider = ({ children }) => {
             }
         }
 
-        // Рассчитываем общие показатели
-        planVsActual.summary.totalDeviation = planVsActual.summary.totalActual - planVsActual.summary.totalPlan;
-        planVsActual.summary.averagePercentage = planVsActual.summary.totalPlan > 0 ? 
-            (planVsActual.summary.totalActual / planVsActual.summary.totalPlan) * 100 : 0;
+        // Используем данные из backend
+        planVsActual.summary.totalDeviation = analytics.planVsActualStats?.totalDeviation || 0;
+        planVsActual.summary.averagePercentage = analytics.planVsActualStats?.totalPercentage || 0;
 
         console.log('[ReportDataProvider] generatePlanVsActualAnalysis финальный результат:', planVsActual);
         return planVsActual;
@@ -924,11 +929,10 @@ export const ReportDataProvider = ({ children }) => {
                     item.actual = Math.abs(metric.actual || metric.fact_value || metric.fact || 0);
                 }
                 if (metrics.includes('deviation')) {
-                    item.deviation = metric.deviation || (metric.actual || metric.fact_value || metric.fact || 0) - (metric.plan_value || metric.plan || 0);
+                    item.deviation = metric.deviation || 0;
                 }
                 if (metrics.includes('percentage')) {
-                    item.percentage = metric.plan_value || metric.plan ? 
-                        ((metric.actual || metric.fact_value || metric.fact || 0) / (metric.plan_value || metric.plan)) * 100 : 0;
+                    item.percentage = metric.percentage || 0;
                 }
                 
                 return item;
@@ -954,8 +958,7 @@ export const ReportDataProvider = ({ children }) => {
             fallback.deviation = data.summary?.deviation || 0;
         }
         if (metrics.includes('percentage')) {
-            fallback.percentage = data.summary?.plan || data.summary?.totalPlan ? 
-                ((data.summary?.totalExpense || data.summary?.totalFact || 0) / (data.summary?.plan || data.summary?.totalPlan)) * 100 : 0;
+            fallback.percentage = data.summary?.percentage || 0;
         }
         
         return [fallback];
@@ -1065,8 +1068,8 @@ export const ReportDataProvider = ({ children }) => {
         }
         
         if (metrics.includes('deviation')) {
-            const currentDeviation = currentAnalytics - currentFinance;
-            const previousDeviation = previousAnalytics - previousFinance;
+            const currentDeviation = data.comparison?.current?.deviation || 0;
+            const previousDeviation = data.comparison?.previous?.deviation || 0;
             
             if (result.length === 0) {
                 result.push({
@@ -1086,8 +1089,8 @@ export const ReportDataProvider = ({ children }) => {
         }
         
         if (metrics.includes('percentage')) {
-            const currentPercentage = currentFinance ? (currentAnalytics / currentFinance) * 100 : 0;
-            const previousPercentage = previousFinance ? (previousAnalytics / previousFinance) * 100 : 0;
+            const currentPercentage = data.comparison?.current?.percentage || 0;
+            const previousPercentage = data.comparison?.previous?.percentage || 0;
             
             if (result.length === 0) {
                 result.push({
@@ -1163,8 +1166,8 @@ export const ReportDataProvider = ({ children }) => {
                     period: label,
                     plan: item.plan ?? 0,
                     actual: item.actual ?? item.fact ?? 0,
-                    deviation: item.deviation ?? ((item.actual ?? item.fact ?? 0) - (item.plan ?? 0)),
-                    percentage: item.percentage ?? ((item.plan ?? 0) ? (((item.actual ?? item.fact ?? 0) / (item.plan ?? 0)) * 100) : 0)
+                    deviation: item.deviation ?? 0,
+                    percentage: item.percentage ?? 0
                 });
             });
 

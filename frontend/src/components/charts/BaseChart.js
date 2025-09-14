@@ -101,7 +101,7 @@ const BaseChart = ({
             label: key,
             plan: toSafeNumber(itemData.plan || 0),
             actual: toSafeNumber(itemData.actual || itemData.fact || 0),
-            deviation: toSafeNumber(itemData.deviation ?? (toSafeNumber(itemData.actual || itemData.fact || 0) - toSafeNumber(itemData.plan || 0))),
+            deviation: toSafeNumber(itemData.deviation ?? (toSafeNumber(itemData.plan || 0) - toSafeNumber(itemData.actual || itemData.fact || 0))),
             percentage: toSafeNumber(itemData.percentage ?? (toSafeNumber(itemData.plan || 0) > 0 ? ((toSafeNumber(itemData.actual || itemData.fact || 0) / toSafeNumber(itemData.plan || 0)) * 100) : 0)),
             // Дополнительные поля
             ...itemData
@@ -124,7 +124,7 @@ const BaseChart = ({
         if (showForecast && preparedData.length > 0) {
             // Добавляем прогноз только один раз для всех метрик
             const forecastData = [...preparedData];
-            const forecastPeriods = 1; // Прогноз на следующий год
+            const forecastPeriods = 1; // Прогноз
             
             // Вычисляем прогноз для каждой метрики
             selectedMetrics.forEach(metric => {
@@ -153,7 +153,7 @@ const BaseChart = ({
                             
                             if (!forecastData[forecastIndex]) {
                                 forecastData[forecastIndex] = {
-                                    label: `Прогноз на следующий год`,
+                                    label: `Прогноз`,
                                     isForecast: true,
                                     plan: 0,
                                     actual: 0,

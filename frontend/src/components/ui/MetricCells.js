@@ -142,8 +142,8 @@ const MetricCells = ({ row, metric, hasAdminRights, onEditValue, visibleColumns 
                     <div className={styles.deviationValue}>
                         <div className={styles.deviationAmount}>
                             {(() => {
-                                const diff = factValue - planValue;
-                                    const sign = diff > 0 ? '+' : '';
+                                const diff = planValue - factValue;
+                                    const sign = diff > 0 ? '' : '-';
                                 return `${sign}${formatNumber(Math.abs(diff))} ${metric.unit}`;
                             })()}
                         </div>
@@ -157,9 +157,9 @@ const MetricCells = ({ row, metric, hasAdminRights, onEditValue, visibleColumns 
                             <button
                                 className={
                                     `${styles.reasonBtn} ` +
-                                    ((factValue - planValue) > 0
+                                    ((planValue - factValue) > 0
                                         ? styles.reasonNegative
-                                        : (factValue - planValue) < 0
+                                        : (planValue - factValue) < 0
                                             ? styles.reasonPositive
                                             : '') +
                                     (reason ? ' ' + styles.hasReason : '')

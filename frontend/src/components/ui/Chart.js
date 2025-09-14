@@ -1,4 +1,4 @@
- import React, {useEffect, useRef, useState, useCallback} from 'react';
+ import React, {useEffect, useRef, useState, useCallback, useMemo} from 'react';
 
 import styles from '@styles/components/Chart.module.css';
 
@@ -17,6 +17,15 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [currentData, setCurrentData] = useState(data);
   const [forceRender, setForceRender] = useState(0);
+  
+  // Определяем, является ли график длинным (нужна горизонтальная прокрутка)
+  const isLongChart = useMemo(() => {
+    if (!currentData || !Array.isArray(currentData)) return false;
+    // Для столбчатых графиков считаем длинными графики с более чем 8 элементами
+    // Для линейных графиков - более чем 10 элементов
+    const threshold = type === 'bar' ? 8 : 10;
+    return currentData.length > threshold;
+  }, [currentData, type]);
 
   // Функция для принудительного перерендера графика
   const forceRerender = useCallback(() => {
@@ -171,7 +180,10 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
       
       // Создаем контейнер для столбцов
       const barContainer = document.createElement('div');
-      barContainer.className = styles.chartBarContainer;
+      // Добавляем класс для длинных графиков
+      barContainer.className = isLongChart ? 
+        `${styles.chartBarContainer} ${styles.chartBarContainerLong}` : 
+        styles.chartBarContainer;
       
       chartData.forEach((item) => {
         // Создаем группу для каждого периода
@@ -262,39 +274,62 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
           }
         });
         
-        // Создаем подпись
-        const label = document.createElement('div');
-        label.className = item.isForecast ? `${styles.chartLabel} ${styles.chartLabelForecast}` : styles.chartLabel;
+        // Создаем подпись (только для некоторых элементов на длинных графиках)
+        let shouldShowLabel = true;
         
-        // Добавляем атрибут data-period для стилизования
-        label.setAttribute('data-period', item.label || '');
+        if (isLongChart) {
+          // Для длинных столбчатых графиков показываем подписи только для каждого N-го элемента
+          let step;
+          if (chartData.length > 24) {
+            step = 6; // Для очень длинных графиков - каждый 6-й элемент
+          } else if (chartData.length > 12) {
+            step = 4; // Для длинных графиков - каждый 4-й элемент
+          } else {
+            step = 2; // Для средних графиков - каждый 2-й элемент
+          }
+          
+          // Показываем подпись только для каждого step-го элемента + первый и последний
+          shouldShowLabel = chartData.indexOf(item) % step === 0 || 
+                          chartData.indexOf(item) === 0 || 
+                          chartData.indexOf(item) === chartData.length - 1;
+        }
         
-        // Улучшенное отображение для кварталов и месяцев
-        if (item.label && (item.label.includes('Q') || item.label.includes('Январь') || item.label.includes('Февраль'))) {
-          // Для кварталов показываем полное название
-          if (item.label.includes('Q')) {
-            const quarterMatch = item.label.match(/Q(\d+)/);
-            if (quarterMatch) {
-              label.textContent = `Q${quarterMatch[1]}`;
+        if (shouldShowLabel) {
+          const label = document.createElement('div');
+          label.className = item.isForecast ? `${styles.chartLabel} ${styles.chartLabelForecast}` : styles.chartLabel;
+          
+          // Добавляем атрибут data-period для стилизования
+          label.setAttribute('data-period', item.label || '');
+          
+          // Улучшенное отображение для кварталов и месяцев
+          if (item.label && (item.label.includes('Q') || item.label.includes('Январь') || item.label.includes('Февраль'))) {
+            // Для кварталов показываем полное название
+            if (item.label.includes('Q')) {
+              const quarterMatch = item.label.match(/Q(\d+)/);
+              if (quarterMatch) {
+                label.textContent = `Q${quarterMatch[1]}`;
+              } else {
+                label.textContent = item.label;
+              }
             } else {
-              label.textContent = item.label;
+              // Для месяцев показываем короткое название
+              const monthMatch = item.label.match(/^(.{3})/);
+              if (monthMatch) {
+                label.textContent = monthMatch[1];
+              } else {
+                label.textContent = item.label;
+              }
             }
           } else {
-            // Для месяцев показываем короткое название
-            const monthMatch = item.label.match(/^(.{3})/);
-            if (monthMatch) {
-              label.textContent = monthMatch[1];
-            } else {
-              label.textContent = item.label;
-            }
+            label.textContent = item.label || '';
           }
-        } else {
-          label.textContent = item.label || '';
+          
+          // Добавляем подпись в группу
+          chartGroup.appendChild(label);
         }
         
         // Добавляем все в группу периода
         chartGroup.appendChild(barGroup);
-        chartGroup.appendChild(label);
         
         // Добавляем группу в контейнер
         barContainer.appendChild(chartGroup);
@@ -316,7 +351,13 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
           const {type} = e.target.dataset;
           const {period} = e.target.dataset;
           let formatted;
-          if (typeof raw === 'string') {
+          
+          // Специальная обработка для отклонения
+          if (type === 'Отклонение') {
+            const num = typeof raw === 'string' ? parseFloat(raw.replace(/\s/g, '').replace(',', '.')) : (Number.isFinite(raw) ? raw : 0);
+            const sign = num > 0 ? '' : '-';
+            formatted = `${sign}${Math.abs(num).toLocaleString('ru-RU')}`;
+          } else if (typeof raw === 'string') {
             if (raw.includes('%')) {
               formatted = raw;
             } else {
@@ -337,8 +378,10 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
         
         bar.addEventListener('mousemove', (e) => {
           const rect = chartRef.current.getBoundingClientRect();
-          tooltip.style.left = `${e.clientX - rect.left + 10}px`;
-          tooltip.style.top = `${e.clientY - rect.top - 40}px`;
+          const scrollLeft = chartRef.current.scrollLeft || 0;
+          const scrollTop = chartRef.current.scrollTop || 0;
+          tooltip.style.left = `${e.clientX - rect.left + scrollLeft + 10}px`;
+          tooltip.style.top = `${e.clientY - rect.top + scrollTop - 40}px`;
         });
         
         bar.addEventListener('mouseleave', () => {
@@ -373,18 +416,31 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
     function renderLineChart() {
       if (!chartRef.current) return;
       
-      const containerWidth = chartRef.current.offsetWidth || 800;
-      const width = Math.max(containerWidth - 40, containerWidth - 40); // Используем всю доступную ширину
       const height = 300;
+      const padding = 40;
+      const chartHeight = height - 2 * padding;
+      
+      // Используем тот же подход, что и у столбчатых графиков
+      // Рассчитываем ширину на основе количества данных
+      const minPointSpacing = 50; // Минимальное расстояние между точками
+      const calculatedWidth = Math.max(800, chartData.length * minPointSpacing);
       
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+      svg.setAttribute('viewBox', `0 0 ${calculatedWidth} ${height}`);
       svg.setAttribute('width', '100%');
-      svg.setAttribute('height', '100%');
+      svg.setAttribute('height', `${height}px`); // Фиксированная высота
       svg.style.maxHeight = `${height}px`;
-      const padding = 40;
-      const chartWidth = width - 2 * padding;
-      const chartHeight = height - 2 * padding;
+      svg.style.overflow = 'visible';
+      
+      // Для длинных графиков устанавливаем минимальную ширину для прокрутки
+      if (isLongChart) {
+        svg.style.minWidth = `${calculatedWidth}px`;
+      }
+      
+      // Простая функция для расчета X координат
+      const getXPosition = (index) => {
+        return padding + (index * (calculatedWidth - 2 * padding) / Math.max(chartData.length - 1, 1));
+      };
       
       // Создаем линии для всех выбранных метрик (Recharts подход)
       const metricsToRender = [
@@ -411,7 +467,7 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
         if ((selectedMetrics || []).includes(metric.key) || (metric.key === 'actual' && (selectedMetrics || []).includes('fact'))) {
           const points = [];
           chartData.forEach((item, index) => {
-            const x = padding + (index / (chartData.length - 1)) * chartWidth;
+            const x = getXPosition(index);
             const value = metric.getData(item);
             const y = height - padding - (value / maxValue) * chartHeight;
             points.push(`${x},${y}`);
@@ -429,7 +485,7 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
       
       // Добавляем точки для всех метрик и подписи годов
       chartData.forEach((item, index) => {
-        const x = padding + (index / (chartData.length - 1)) * chartWidth;
+        const x = getXPosition(index);
         
         // Создаем точки для всех выбранных метрик
         metricsToRender.forEach(metric => {
@@ -442,7 +498,7 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
             circle.setAttribute('cy', y);
             circle.setAttribute('r', '5');
             circle.setAttribute('fill', metric.color);
-            circle.setAttribute('stroke', metric.color);
+            circle.setAttribute('stroke', 'white');
             circle.setAttribute('stroke-width', '2');
             circle.setAttribute('class', styles.chartPoint);
             circle.dataset.value = value;
@@ -454,16 +510,54 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
           }
         });
         
-        // Добавляем подпись года снизу (только один раз)
-        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        label.setAttribute('x', x);
-        label.setAttribute('y', height - 10); 
-        label.setAttribute('text-anchor', 'middle');
-        label.setAttribute('fill', 'var(--text-secondary)');
-        label.setAttribute('font-size', '12');
-        label.setAttribute('data-period', item.label || '');
-        label.textContent = item.label || '';
-        svg.appendChild(label);
+        // Добавляем подпись года снизу (только для некоторых точек на длинных графиках)
+        let shouldShowLabel = true;
+        
+        if (isLongChart) {
+          // Для длинных графиков показываем подписи только для каждого N-го элемента
+          let step;
+          if (chartData.length > 36) {
+            step = 6; // Для очень длинных графиков (более 3 лет) - каждый 6-й месяц
+          } else if (chartData.length > 24) {
+            step = 4; // Для длинных графиков (2-3 года) - каждый 4-й месяц
+          } else if (chartData.length > 12) {
+            step = 3; // Для годовых графиков - каждый 3-й месяц
+          } else {
+            step = 2; // Для квартальных графиков - каждый 2-й квартал
+          }
+          
+          // Показываем подпись только для каждого step-го элемента + первый и последний
+          shouldShowLabel = index % step === 0 || index === 0 || index === chartData.length - 1;
+        }
+        
+        if (shouldShowLabel) {
+          const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          label.setAttribute('x', x);
+          label.setAttribute('y', height - 10); 
+          label.setAttribute('text-anchor', 'middle');
+          label.setAttribute('fill', 'var(--text-secondary)');
+          // Уменьшаем размер шрифта для длинных графиков
+          const fontSize = isLongChart ? '10' : '12';
+          label.setAttribute('font-size', fontSize);
+          label.setAttribute('data-period', item.label || '');
+          
+          // Для длинных графиков показываем сокращенные подписи
+          let labelText = item.label || '';
+          if (isLongChart && labelText.length > 6) {
+            // Сокращаем длинные подписи (например, "Январь 2024" -> "Янв 24")
+            if (labelText.includes(' ')) {
+              const parts = labelText.split(' ');
+              if (parts.length >= 2) {
+                labelText = parts[0].substring(0, 3) + ' ' + parts[1].substring(2);
+              }
+            } else {
+              labelText = labelText.substring(0, 6);
+            }
+          }
+          
+          label.textContent = labelText;
+          svg.appendChild(label);
+        }
       });
       
       // Линии уже добавлены в цикле выше - убираем старый код
@@ -483,9 +577,18 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
       const elements = container.querySelectorAll(`.${styles.chartPoint}`);
       elements.forEach(element => {
         element.addEventListener('mouseenter', (e) => {
-          const value = parseInt(e.target.dataset.value).toLocaleString();
+          const rawValue = parseInt(e.target.dataset.value);
           const {type} = e.target.dataset;
           const {period} = e.target.dataset;
+          
+          // Специальная обработка для отклонения
+          let value;
+          if (type === 'Отклонение') {
+            const sign = rawValue > 0 ? '' : '-';
+            value = `${sign}${Math.abs(rawValue).toLocaleString()}`;
+          } else {
+            value = rawValue.toLocaleString();
+          }
           
           tooltip.innerHTML = `
             <div class="${styles.tooltipPeriod}">${period}</div>
@@ -496,8 +599,10 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
         
         element.addEventListener('mousemove', (e) => {
           const rect = container.getBoundingClientRect();
-          tooltip.style.left = `${e.clientX - rect.left + 10}px`;
-          tooltip.style.top = `${e.clientY - rect.top - 40}px`;
+          const scrollLeft = container.scrollLeft || 0;
+          const scrollTop = container.scrollTop || 0;
+          tooltip.style.left = `${e.clientX - rect.left + scrollLeft + 10}px`;
+          tooltip.style.top = `${e.clientY - rect.top + scrollTop - 40}px`;
         });
         
         element.addEventListener('mouseleave', () => {
@@ -581,7 +686,7 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
   }
 
   return (
-    <div className={`${styles.chartContainer} ${noMargins ? styles.noMargins : ''} ${disableAnimations ? `${styles.noAnimations} export-mode` : ''}`}>
+    <div className={`${styles.chartContainer} ${noMargins ? styles.noMargins : ''} ${disableAnimations ? `${styles.noAnimations} export-mode` : ''} ${isLongChart ? styles.longChart : ''}`}>
       <div className={styles.chartHeader}>
         <div className={styles.chartTitle}>{title || 'График'}</div>
         <div className={styles.chartLegend}>
@@ -634,8 +739,13 @@ const Chart = React.memo(({ data, title, isFiltering = false, type = 'bar', sele
             })}
         </div>
       </div>
-      <div className={styles.chart} ref={chartRef}>
+      <div className={`${styles.chart} ${isLongChart ? styles.chartLong : ''}`} ref={chartRef}>
         {/* График будет создан динамически */}
+        {isLongChart && (
+          <div className={styles.scrollHint}>
+            <span>← Прокрутите для просмотра всех данных →</span>
+          </div>
+        )}
       </div>
     </div>
   );

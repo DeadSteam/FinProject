@@ -41,6 +41,7 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    width: 100%;
 }
 
 .title-slide-preview .slide-title {
@@ -93,15 +94,15 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    width: 100%;
 }
 
 .chart-container {
-    flex: 1;
-    
-    display: flex;
-    align-items: center;
-    justify-content: stretch;
-    width: 100%;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: stretch;
+  width: 100%;
 }
 
 .chart-full-width {
@@ -175,11 +176,11 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    width: 100%;
 }
 
 .table-container {
     flex: 1;
-    padding: var(--spacing-lg);
     overflow: visible;
 }
 
@@ -214,11 +215,19 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    width: 100%;
+}
+
+/* Таблица сравнения */
+.comparison-table-slide-preview {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
 }
 
 .comparison-container {
     flex: 1;
-    padding: var(--spacing-lg);
     display: flex;
     align-items: center;
     justify-content: stretch;
@@ -393,11 +402,11 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    width: 100%;
 }
 
 .trends-container {
     flex: 1;
-    padding: var(--spacing-lg);
     display: flex;
     flex-direction: column;
     gap: var(--spacing-lg);
@@ -536,6 +545,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    width: 100%;
 }
 
 .default-content {
@@ -860,6 +870,25 @@
     max-width: none !important;
     min-width: 0 !important;
     flex: 1 !important;
+}
+
+/* Полная ширина для контейнера предпросмотра (второй блок) */
+#root > div > main > div > div:nth-child(2) > div > div > div.editor-panel > div > div > div.card-body > div > div {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+}
+
+/* Улучшаем отображение графиков трендов */
+.chart-full-width {
+    width: 100% !important;
+    overflow: visible !important;
+}
+
+.chart-full-width svg {
+    width: 100% !important;
+    height: auto !important;
+    max-width: none !important;
 }
 
 /* Стиль заголовка как у нижнего контейнера */

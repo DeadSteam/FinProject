@@ -59,7 +59,7 @@ export const exportFinanceDataToExcel = (metrics, periods, selectedYear, selecte
                 
                 const plan = planValue?.value || 0;
                 const fact = actualValue?.value || 0;
-                const deviation = plan > 0 ? ((fact - plan) / plan * 100).toFixed(1) : '0';
+                const deviation = plan > 0 ? ((plan - fact) / plan * 100).toFixed(1) : '0';
                 
                 rowData.push(
                     formatNumber(plan),
@@ -85,7 +85,7 @@ export const exportFinanceDataToExcel = (metrics, periods, selectedYear, selecte
                 totalFact += actualValue?.value || 0;
             });
             
-            const totalDeviation = totalPlan > 0 ? ((totalFact - totalPlan) / totalPlan * 100).toFixed(1) : '0';
+            const totalDeviation = totalPlan > 0 ? ((totalPlan - totalFact) / totalPlan * 100).toFixed(1) : '0';
             
             totalRow.push(
                 formatNumber(totalPlan),

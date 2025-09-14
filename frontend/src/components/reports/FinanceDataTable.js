@@ -12,8 +12,8 @@ const FinanceDataTable = ({
     title = "Финансовые данные",
     isLoading = false,
     className = "",
-    maxHeight = "400px",
-    selectedMetrics = [] // Добавляем поддержку выбранных метрик
+    selectedMetrics = [], // Типы колонок ['plan', 'actual', 'deviation', 'percentage']
+    selectedMetric = 'all' // Конкретная выбранная метрика (ID или 'all')
 }) => {
     if (isLoading) {
         return (
@@ -37,53 +37,32 @@ const FinanceDataTable = ({
     }
 
     // Преобразуем данные из формата отчетов в формат DataTable
-    if (process.env.NODE_ENV === 'development') {
-        console.log('[FinanceDataTable] input data:', data);
-        console.log('[FinanceDataTable] data[0] structure:', data[0]);
-        console.log('[FinanceDataTable] data[0].periods_value:', data[0]?.periods_value);
-        console.log('[FinanceDataTable] data[0].periods_value.quarters:', data[0]?.periods_value?.quarters);
-        console.log('[FinanceDataTable] data[0].periods_value.months:', data[0]?.periods_value?.months);
-    }
     const { metrics, periods } = transformDataForDataTable(data, columns);
-    if (process.env.NODE_ENV === 'development') {
-        console.log('[FinanceDataTable] transformed metrics:', metrics);
-        console.log('[FinanceDataTable] transformed periods:', periods);
-    }
-
-    // Фильтруем метрики по выбранным
-    const filteredMetrics = selectedMetrics.length > 0 
-        ? metrics.filter(metric => selectedMetrics.includes(metric.id) || selectedMetrics.includes(metric.name))
+    
+    // Фильтруем метрики по выбранной конкретной метрике
+    const filteredMetrics = selectedMetric && selectedMetric !== 'all' 
+        ? metrics.filter(metric => metric.id === selectedMetric || metric.name === selectedMetric)
         : metrics;
 
-    if (process.env.NODE_ENV === 'development') {
-        console.log('[FinanceDataTable] passing to DataTable:', {
-            metrics: filteredMetrics,
-            periods: periods,
-            metricsLength: filteredMetrics.length
-        });
-    }
 
     return (
-        <div className={`finance-table-container ${className}`} style={{ maxHeight, overflow: 'auto' }}>
-            {title && (
-                <div className="table-header">
-                    <h5 className="table-title">{title}</h5>
-                </div>
-            )}
-            <DataTable 
-                metrics={filteredMetrics}
-                periods={periods}
-                view="quarters"
-                hasAdminRights={false} // В отчетах редактирование отключено
-                isFiltering={false}
-                showQuarters={true}
-                visibleColumns={{
-                    plan: true,
-                    fact: true,
-                    deviation: true,
-                    percentage: false // В отчетах обычно не показываем процент
-                }}
-            />
+        <div className={`finance-table-container ${className}`} style={{ overflow: 'hidden' }}>
+            <div style={{ overflow: 'hidden', maxHeight: 'none' }}>
+                <DataTable 
+                    metrics={filteredMetrics}
+                    periods={periods}
+                    view="quarters"
+                    hasAdminRights={false} // В отчетах редактирование отключено
+                    isFiltering={false}
+                    showQuarters={true}
+                    visibleColumns={{
+                        plan: selectedMetrics.includes('plan'),
+                        fact: selectedMetrics.includes('actual'),
+                        deviation: selectedMetrics.includes('deviation'),
+                        percentage: selectedMetrics.includes('percentage')
+                    }}
+                />
+            </div>
         </div>
     );
 };
@@ -124,8 +103,8 @@ const transformDataForDataTable = (data, columns) => {
             const period = row.period || row.label || `Период ${index + 1}`;
             const plan = parseFloat(row.plan || 0);
             const actual = parseFloat(row.actual || row.fact || 0);
-            const deviation = parseFloat(row.deviation || (actual - plan));
-            const percentage = parseFloat(row.percentage || (plan ? (actual / plan) * 100 : 0));
+            const deviation = parseFloat(row.deviation || 0);
+            const percentage = parseFloat(row.percentage || 0);
 
             // Определяем, это квартал или месяц
             const isQuarter = period.includes('квартал') || period.includes('I ') || period.includes('II ') || 

@@ -434,7 +434,7 @@ class MetricService(BaseService[Metric, MetricSchema, MetricCreate, MetricUpdate
         total_actual = sum(av.value for av in actual_values)
         
         # Рассчитываем отклонение
-        deviation = total_actual - total_plan
+        deviation = total_plan - total_actual
         deviation_percent = (deviation / total_plan * 100) if total_plan != 0 else 0
         
         # Группируем данные по категориям
@@ -495,7 +495,7 @@ class MetricService(BaseService[Metric, MetricSchema, MetricCreate, MetricUpdate
             
         # Рассчитываем отклонения для категорий
         for category_id, stats in category_stats.items():
-            stats["deviation"] = stats["actual"] - stats["plan"]
+            stats["deviation"] = stats["plan"] - stats["actual"]
             stats["deviation_percent"] = (stats["deviation"] / stats["plan"] * 100) if stats["plan"] != 0 else 0
             
         # Формируем итоговую статистику

@@ -389,6 +389,7 @@ const SlideFilters = ({
 
     // Фильтры для трендов (переиспользуем ComparisonFilters)
     const renderTrendsFilters = () => {
+        // Полное переиспользование тех же фильтров, что и у сравнения
         return (
             <ComparisonFilters
                 filters={localFilters}

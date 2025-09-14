@@ -302,7 +302,8 @@ const ReportConstructor = ({
                                                     {slide.type === 'finance-chart' && 'Финансовый график'}
                                                     {slide.type === 'analytics-table' && 'Таблица аналитики'}
                                                     {slide.type === 'finance-table' && 'Финансовая таблица'}
-                                                    {slide.type === 'comparison' && 'Сравнение'}
+                                                    {slide.type === 'comparison' && 'График сравнения'}
+                                                    {slide.type === 'comparison-table' && 'Таблица сравнения'}
                                                     {slide.type === 'trends' && 'Тренды'}
                                                     {slide.type === 'plan-vs-actual' && 'План vs Факт'}
                                                 </div>
