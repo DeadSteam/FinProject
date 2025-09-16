@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
+import ChartWrapper from './common/ChartWrapper';
 import BaseChart from './BaseChart';
-import { prepareChartData, calculateStatistics, normalizeMetric } from './utils/chartDataUtils';
+import { useChartData } from './hooks/useChartData';
+import { normalizeMetric } from './utils/chartDataUtils';
 import AnalyticsTable from '../analytics/AnalyticsTable';
 
 /**
@@ -25,21 +27,16 @@ const ComparisonChart = ({
     onDataChange,
     onFilterChange
 }) => {
-    
-    // Определяем тип группировки на основе фильтров
-    const actualGroupBy = useMemo(() => {
-        const pt = filters?.periodType;
-        if (pt === 'months') return 'monthly';
-        if (pt === 'quarters') return 'quarterly';
-        return groupBy;
-    }, [filters?.periodType, groupBy]);
-    
-    // Подготавливаем данные для графика
-    const chartData = useMemo(() => {
-        return prepareChartData(analyticsData, actualGroupBy, filters);
-    }, [analyticsData, actualGroupBy, filters]);
+    // Используем хук для работы с данными
+    const { chartData, statistics, actualGroupBy, hasData, hasSelectedMetrics } = useChartData({
+        analyticsData,
+        filters,
+        groupBy,
+        selectedMetrics,
+        isLoading
+    });
 
-    // Поворотная таблица для месячных/квартальных режимов: одна таблица на все метрики
+    // Поворотная таблица для месячных/квартальных режимов
     const { pivotColumns, pivotRows } = useMemo(() => {
         if (!chartData || (actualGroupBy !== 'monthly' && actualGroupBy !== 'quarterly')) {
             return { pivotColumns: null, pivotRows: null };
@@ -48,7 +45,7 @@ const ComparisonChart = ({
         const metrics = (filters.metrics || ['plan', 'actual']).map(m => normalizeMetric(m));
         const years = (filters.years || []).map(y => String(y));
 
-        // Берем первую метрику, чтобы получить список периодов/длину
+        // Берем первую метрику, чтобы получить список периодов
         const firstMetricKey = metrics[0];
         const firstMetricSeries = chartData[firstMetricKey] || [];
         if (!Array.isArray(firstMetricSeries) || firstMetricSeries.length === 0) {
@@ -95,23 +92,7 @@ const ComparisonChart = ({
 
         return { pivotColumns: columns, pivotRows: rows };
     }, [chartData, actualGroupBy, filters.metrics, filters.years]);
-    
-    // Вычисляем статистику
-    const statistics = useMemo(() => {
-        // Для месячных/квартальных данных chartData - это объект, а не массив
-        if (actualGroupBy === 'monthly' || actualGroupBy === 'quarterly') {
-            // Для месячных/квартальных данных статистика не нужна в сводке
-            return null;
-        }
-        
-        // Для обычных данных chartData - это массив
-        if (Array.isArray(chartData)) {
-            return calculateStatistics(chartData);
-        }
-        
-        return null;
-    }, [chartData, actualGroupBy]);
-    
+
     // Для месячных/квартальных данных показываем отдельные графики для каждой метрики
     const renderMultipleCharts = () => {
         if (actualGroupBy !== 'monthly' && actualGroupBy !== 'quarterly') {
@@ -119,16 +100,7 @@ const ComparisonChart = ({
         }
         
         if (!filters.metrics || filters.metrics.length === 0) {
-            return (
-                <div className="card mb-4">
-                    <div className="card-body">
-                        <div className="text-center p-4 text-muted">
-                            <h5>Выберите показатели</h5>
-                            <p>Для просмотра графиков выберите показатели в фильтрах</p>
-                        </div>
-                    </div>
-                </div>
-            );
+            return null; // ChartWrapper покажет сообщение о выборе показателей
         }
         
         return filters.metrics.map(metricRaw => {
@@ -145,22 +117,30 @@ const ComparisonChart = ({
             
             return (
                 <div key={normalized} className="mb-4">
-                    <BaseChart
-                        data={metricData}
-                        chartType={chartType}
-                        viewMode={'chart'}
-                        selectedMetrics={(filters.years || []).map(year => String(year))}
-                        title={`${metricTitles[normalized] || normalized} ${actualGroupBy === 'monthly' ? 'по месяцам' : 'по кварталам'}`}
+                    <ChartWrapper
+                        analyticsData={analyticsData}
+                        chartData={metricData}
+                        filters={filters}
+                        isLoading={isLoading}
+                        hasData={Array.isArray(metricData) && metricData.length > 0}
+                        hasSelectedMetrics={true}
                         showHeader={false}
                         showTable={false}
                         showSummary={false}
+                        showControls={false}
+                        chartType={chartType}
+                        viewMode={'chart'}
+                        groupBy={groupBy}
+                        selectedMetrics={(filters.years || []).map(year => String(year))}
+                        title={`${metricTitles[normalized] || normalized} ${actualGroupBy === 'monthly' ? 'по месяцам' : 'по кварталам'}`}
                         disableAnimations={disableAnimations}
+                        className="comparison-metric-chart"
                     />
                 </div>
             );
         });
     };
-    
+
     // Для обычных режимов показываем один график
     const renderSingleChart = () => {
         if (actualGroupBy === 'monthly' || actualGroupBy === 'quarterly') {
@@ -168,56 +148,30 @@ const ComparisonChart = ({
         }
         
         return (
-            <div style={{ width: '100%' }}>
-                {chartData && chartData.length > 0 ? (
-                    <BaseChart
-                        data={chartData}
-                        chartType={chartType}
-                        viewMode={viewMode}
-                        selectedMetrics={(filters.metrics || ['plan', 'fact']).map(m => (m?.value ?? m?.id ?? m))}
-                        title={title}
-                        showHeader={false}
-                        showTable={showTable || viewMode === 'table' || viewMode === 'both'}
-                        showSummary={false}
-                        disableAnimations={disableAnimations}
-                    />
-                ) : (
-                    <div className="d-flex align-items-center justify-content-center h-100 text-muted">
-                        Нет данных для отображения
-                    </div>
-                )}
-            </div>
+            <BaseChart
+                analyticsData={analyticsData}
+                filters={filters}
+                isLoading={isLoading}
+                showHeader={false}
+                showTable={showTable || viewMode === 'table' || viewMode === 'both'}
+                showSummary={false}
+                showControls={showControls}
+                chartType={chartType}
+                viewMode={viewMode}
+                groupBy={groupBy}
+                selectedMetrics={(filters.metrics || ['plan', 'fact']).map(m => (m?.value ?? m?.id ?? m))}
+                title={title}
+                disableAnimations={disableAnimations}
+                className="comparison-single-chart"
+                smoothing={filters?.smoothing === true}
+                showForecast={filters?.showForecast === true}
+            />
         );
     };
-    
-    if (isLoading) {
-        return (
-            <div className="text-center p-4">
-                <div className="spinner-border text-primary" role="status">
-                    <span className="sr-only">Загрузка...</span>
-                </div>
-                <p className="mt-2">Загрузка данных для сравнения...</p>
-            </div>
-        );
-    }
-    
-    if (!analyticsData || !chartData) {
-        return (
-            <div className="text-center p-4 text-muted">
-                <div className="mb-3">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="48" height="48">
-                        <path d="M3 3v18h18"/>
-                        <path d="M18.7 8l-5.1 5.1-2.8-2.8L7 14.1"/>
-                    </svg>
-                </div>
-                <h5>Нет данных для сравнения</h5>
-                <p>Выберите фильтры для отображения сравнительной аналитики</p>
-            </div>
-        );
-    }
-    
+
     return (
         <div className={`comparison-chart ${className}`}>
+            {/* Заголовок */}
             {showHeader && (
                 <div className="row mb-4">
                     <div className="col-12">
@@ -227,18 +181,17 @@ const ComparisonChart = ({
                 </div>
             )}
             
-            {/* График */}
+            {/* Графики */}
             {(viewMode === 'chart' || viewMode === 'both') && (
                 <>
-                    {/* Только графики для monthly/quarterly */}
+                    {/* Множественные графики для monthly/quarterly */}
                     {renderMultipleCharts()}
+                    {/* Одиночный график для обычных режимов */}
+                    {renderSingleChart()}
                 </>
             )}
 
-            {/* Для годового режима всегда рендерим BaseChart, он сам покажет таблицу/график по viewMode */}
-            {renderSingleChart()}
-
-            {/* Таблица для месячных/квартальных режимов — одна сводная таблица */}
+            {/* Таблица для месячных/квартальных режимов */}
             {(viewMode === 'table' || viewMode === 'both') && (actualGroupBy === 'monthly' || actualGroupBy === 'quarterly') && pivotRows && pivotColumns && (
                 <div className="mt-3">
                     <AnalyticsTable

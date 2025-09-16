@@ -1,17 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNotifications } from '../../hooks';
 import { useAnalyticsService } from '../../services/index.js';
-import reportsService from '../../services/reportsService';
-
-// Безопасное определение development режима
-const isDevelopment = () => {
-    if (typeof window !== 'undefined') {
-        return window.location.hostname === 'localhost' && ['3000', '3001'].includes(window.location.port);
-    }
-    return false;
-};
-
-const dev = isDevelopment();
+import { getMonthKey, buildPlanVsActualTable } from '../charts/utils/chartDataUtils';
+import { dev } from '../../utils/env';
 
 // Контекст для данных отчетов
 const ReportDataContext = createContext();
@@ -39,7 +30,6 @@ export const ReportDataProvider = ({ children }) => {
     
     // Кэш данных для оптимизации - используем useRef для предотвращения сбросов
     const dataCache = useRef(new Map());
-    const lastFetchTime = useRef(new Map());
     const pendingRequests = useRef(new Map()); // Дедупликация запросов
     /**
      * Загрузка справочных списков (годы/категории/магазины)
@@ -94,23 +84,7 @@ export const ReportDataProvider = ({ children }) => {
         }
     }, []);
 
-    // Загрузка подкатегорий по выбранной категории
-    const loadSubcategories = useCallback(async (categoryId) => {
-        if (!categoryId || categoryId === 'all') {
-            setAvailableLists(prev => ({ ...prev, subcategories: [] }));
-            return;
-        }
-        try {
-            const token = localStorage.getItem('authToken');
-            const headers = { 'Authorization': `Bearer ${token}` };
-            const resp = await fetch(`/api/v1/finance/categories/${categoryId}/subcategories`, { headers });
-            if (!resp.ok) return;
-            const data = await resp.json();
-            setAvailableLists(prev => ({ ...prev, subcategories: Array.isArray(data) ? data : (data?.items || []) }));
-        } catch (e) {
-            if (dev) console.warn('Не удалось загрузить подкатегории:', e);
-        }
-    }, []);
+    // Загрузка подкатегорий больше не требуется — используем единый список категорий
 
     // Инициализационная загрузка справочников (только один раз)
     useEffect(() => {
@@ -125,7 +99,27 @@ export const ReportDataProvider = ({ children }) => {
      * Загрузка данных аналитики с дедупликацией запросов
      */
     const loadAnalyticsData = useCallback(async (filters = {}) => {
-        const cacheKey = `analytics_${JSON.stringify(filters)}`;
+        const normalized = {
+            startDate: filters.startDate,
+            endDate: filters.endDate,
+            years: Array.isArray(filters.years) ? filters.years.map(y => (y?.value ?? y?.id ?? y)) : [],
+            categories: Array.isArray(filters.categories) ? filters.categories.map(c => (c?.value ?? c?.id ?? c)) : [],
+            shops: Array.isArray(filters.shops) ? filters.shops.map(s => (s?.value ?? s?.id ?? s)) : [],
+            metrics: Array.isArray(filters.metrics) ? filters.metrics.map(m => (m?.value ?? m?.id ?? m)) : [],
+            periodType: filters.periodType || 'years'
+        };
+        
+        // Добавляем поддержку прямых UUID из SlideEditor
+        if (filters.category && !normalized.categories.includes(filters.category)) {
+            normalized.categories.push(filters.category);
+        }
+        if (filters.shop && !normalized.shops.includes(filters.shop)) {
+            normalized.shops.push(filters.shop);
+        }
+        if (filters.year && !normalized.years.includes(filters.year)) {
+            normalized.years.push(filters.year);
+        }
+        const cacheKey = `analytics_${JSON.stringify(normalized)}`;
         
         // Проверяем кэш
         if (dataCache.current.has(cacheKey)) {
@@ -146,10 +140,7 @@ export const ReportDataProvider = ({ children }) => {
         const requestPromise = (async () => {
             try {
                 // Используем правильную функцию аналитики  
-                const data = await analyticsService.getAnalytics({
-                    startDate: filters.startDate,
-                    endDate: filters.endDate
-                });
+                const data = await analyticsService.getAnalytics(normalized);
                 
                 // Кэшируем данные
                 dataCache.current.set(cacheKey, {
@@ -217,6 +208,14 @@ export const ReportDataProvider = ({ children }) => {
                 const years = Array.isArray(filters.years) ? filters.years.map(y => (y?.value ?? y?.id ?? y)) : [];
                 const categories = Array.isArray(filters.categories) ? filters.categories.map(c => (c?.value ?? c?.id ?? c)) : [];
                 const shops = Array.isArray(filters.shops) ? filters.shops.map(s => (s?.value ?? s?.id ?? s)) : [];
+                
+                // Добавляем поддержку прямых UUID из SlideEditor
+                if (filters.category && !categories.includes(filters.category)) {
+                    categories.push(filters.category);
+                }
+                if (filters.shop && !shops.includes(filters.shop)) {
+                    shops.push(filters.shop);
+                }
                 const metrics = Array.isArray(filters.metrics) ? filters.metrics.map(m => (m?.value ?? m?.id ?? m)) : [];
                 const subcategory = filters.subcategory ?? (Array.isArray(filters.subcategories) ? filters.subcategories[0] : undefined);
 
@@ -297,50 +296,41 @@ export const ReportDataProvider = ({ children }) => {
     /**
      * Преобразует название месяца в ключ для periods_value
      */
-    const getMonthKey = (monthName) => {
-        const monthMap = {
-            'Январь': 'январь',
-            'Февраль': 'февраль',
-            'Март': 'март',
-            'Апрель': 'апрель',
-            'Май': 'май',
-            'Июнь': 'июнь',
-            'Июль': 'июль',
-            'Август': 'август',
-            'Сентябрь': 'сентябрь',
-            'Октябрь': 'октябрь',
-            'Ноябрь': 'ноябрь',
-            'Декабрь': 'декабрь',
-            'Янв': 'январь',
-            'Фев': 'февраль',
-            'Мар': 'март',
-            'Апр': 'апрель',
-            'Июн': 'июнь',
-            'Июл': 'июль',
-            'Авг': 'август',
-            'Сен': 'сентябрь',
-            'Окт': 'октябрь',
-            'Ноя': 'ноябрь',
-            'Дек': 'декабрь'
-        };
-
-        return monthMap[monthName] || monthName.toLowerCase();
-    };
+    // перенесено в utils/chartDataUtils
 
     /**
      * Детальные финансовые метрики для FinanceDetails-подобных графиков
      */
     const loadFinanceDetails = async (filters = {}) => {
         try {
-            const categoryId = filters.category || filters.categoryId || (Array.isArray(filters.categories) ? filters.categories[0] : undefined);
-            const shopId = filters.shop || filters.shopId || (Array.isArray(filters.shops) ? filters.shops[0] : undefined);
-            const year = (filters.year || (Array.isArray(filters.years) ? filters.years[0] : undefined)) ?? new Date().getFullYear();
+            // Улучшенная логика извлечения UUID из фильтров
+            let categoryId = filters.category || filters.categoryId;
+            let shopId = filters.shop || filters.shopId;
+            
+            // Если categoryId/shopId не найдены, пробуем извлечь из массивов
+            if (!categoryId && Array.isArray(filters.categories) && filters.categories.length > 0) {
+                categoryId = filters.categories[0]?.value ?? filters.categories[0]?.id ?? filters.categories[0];
+            }
+            if (!shopId && Array.isArray(filters.shops) && filters.shops.length > 0) {
+                shopId = filters.shops[0]?.value ?? filters.shops[0]?.id ?? filters.shops[0];
+            }
+            
+            const year = (filters.year || (Array.isArray(filters.years) ? (filters.years[0]?.value ?? filters.years[0]?.id ?? filters.years[0]) : undefined)) ?? new Date().getFullYear();
 
-            if (dev) console.log('[ReportDataProvider] loadFinanceDetails filters:', { categoryId, shopId, year });
 
             if (!categoryId || !shopId) {
-                if (dev) console.log('[ReportDataProvider] loadFinanceDetails: missing categoryId or shopId');
+                if (dev) console.log('[ReportDataProvider] loadFinanceDetails: missing categoryId or shopId', { categoryId, shopId });
                 return null;
+            }
+
+            // Дедупликация и кэширование детальных метрик
+            const normalized = { categoryId, shopId, year, periodType: filters.periodType || 'quarters', metric: filters.metric || 'all' };
+            const cacheKey = `finance_details_${JSON.stringify(normalized)}`;
+            if (dataCache.current.has(cacheKey)) {
+                const cached = dataCache.current.get(cacheKey);
+                if (Date.now() - cached.timestamp < 5 * 60 * 1000) {
+                    return cached.data;
+                }
             }
 
             // Используем тот же сервис, что и FinanceDetails
@@ -398,123 +388,21 @@ export const ReportDataProvider = ({ children }) => {
                     chartData = periodType === 'months' ? buildMonthData() : buildQuarterData();
                 }
 
-                return {
+                const result = {
                     metrics: transformedMetrics,
                     periods: [], // Для FinanceDataTable periods не нужны
                     categoryName: details.category_name || 'Финансовые данные',
                     chartData, // Добавляем chartData для графиков
                     isFinanceData: true // Флаг для определения типа данных
                 };
+                dataCache.current.set(cacheKey, { data: result, timestamp: Date.now() });
+                return result;
             }
             
-            // Находим конкретную метрику по ID, если указана
-            let metric = null;
-            if (filters.metric && filters.metric !== 'all' && Array.isArray(details?.metrics)) {
-                // Пробуем найти метрику по разным полям
-                metric = details.metrics.find(m => 
-                    m.id === filters.metric || 
-                    m.value === filters.metric || 
-                    m.metric_id === filters.metric ||
-                    m.metricId === filters.metric
-                );
-            }
-            
-            // Если метрика не найдена или не указана, берем первую доступную
-            if (!metric && Array.isArray(details?.metrics) && details.metrics.length > 0) {
-                metric = details.metrics[0];
-            }
-            
-            const periodsValue = metric?.periods_value || {};
-            
-
-            const periodType = filters.periodType === 'months' ? 'months' : 'quarters';
-
-            const buildQuarterData = () => {
-                const labels = ['I квартал', 'II квартал', 'III квартал', 'IV квартал'];
-                const keys = ['I квартал', 'II квартал', 'III квартал', 'IV квартал'];
-                return keys.map((key, index) => {
-                    const q = periodsValue.quarters?.[key] || {};
-                    const plan = Number(q.plan ?? 0) || 0;
-                    const actual = Number(q.actual ?? q.fact ?? 0) || 0;
-                    const deviation = Number(q.deviation ?? q.difference ?? 0) || 0;
-                    const percentage = Number(q.percentage ?? 0) || 0;
-                    return { label: labels[index], plan, actual, deviation, percentage };
-                });
-            };
-
-            const buildMonthData = () => {
-                const labels = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
-                const keys = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'];
-                return keys.map((key, index) => {
-                    const m = periodsValue.months?.[key] || {};
-                    const plan = Number(m.plan ?? 0) || 0;
-                    const actual = Number(m.actual ?? m.fact ?? 0) || 0;
-                    const deviation = Number(m.deviation ?? m.difference ?? 0) || 0;
-                    const percentage = Number(m.percentage ?? 0) || 0;
-                    return { label: labels[index], plan, actual, deviation, percentage };
-                });
-            };
-
-            const chartData = periodType === 'months' ? buildMonthData() : buildQuarterData();
-
-            // Если есть метрика, возвращаем её в формате DataTable
-            if (metric) {
-                return {
-                    metrics: [metric],
-                    periods: [],
-                    categoryName: details.categoryName || 'Финансовые данные',
-                    chartData,
-                    isFinanceData: true
-                };
-            }
-
-            // Если нет детальных метрик, но есть данные, создаем фиктивную метрику
-            if (chartData && chartData.length > 0) {
-                const fallbackMetric = {
-                    id: 1,
-                    name: 'Финансовые показатели',
-                    unit: 'руб.',
-                    periods_value: {
-                        quarters: {},
-                        months: {}
-                    }
-                };
-
-                // Заполняем periods_value из chartData
-                chartData.forEach((item, index) => {
-                    const isQuarter = item.label.includes('квартал');
-                    if (isQuarter) {
-                        fallbackMetric.periods_value.quarters[item.label] = {
-                            plan: item.plan || 0,
-                            actual: item.actual || 0,
-                            deviation: item.deviation || 0,
-                            procent: item.percentage || 0
-                        };
-                    } else {
-                        const monthKey = getMonthKey(item.label);
-                        fallbackMetric.periods_value.months[monthKey] = {
-                            plan: item.plan || 0,
-                            actual: item.actual || 0,
-                            deviation: item.deviation || 0,
-                            procent: item.percentage || 0
-                        };
-                    }
-                });
-
-                return {
-                    metrics: [fallbackMetric],
-                    periods: [],
-                    categoryName: details.categoryName || 'Финансовые данные',
-                    chartData,
-                    isFinanceData: true
-                };
-            }
-
-            if (dev) console.log('[ReportDataProvider] loadFinanceDetails: no data found');
-            return { chartData: [] };
+            // Возвращаем результат с правильной структурой данных
+            return result;
         } catch (error) {
-            if (dev) console.error('Error loading finance details:', error);
-            showError('Ошибка загрузки финансовых метрик');
+            if (dev) console.error('[ReportDataProvider] loadFinanceDetails error:', error);
             return null;
         }
     };
@@ -527,7 +415,7 @@ export const ReportDataProvider = ({ children }) => {
             // Убеждаемся, что slideType - это строка
             const slideTypeStr = String(slideType || '');
             
-            if (slideTypeStr.includes('analytics')) {
+            if (slideTypeStr.includes('analytics-chart') || slideTypeStr.includes('analytics-table')) {
                 const analyticsData = await loadAnalyticsData(filters);
                 
                 // Если данные не загрузились, возвращаем пустой результат
@@ -539,7 +427,9 @@ export const ReportDataProvider = ({ children }) => {
                 }
                 
                 return analyticsData;
-            } else if (slideTypeStr.includes('finance')) {
+            }
+
+            if (slideTypeStr.includes('finance-chart') || slideTypeStr.includes('finance-table')) {
                 // Для финансовых слайдов используем детальные метрики в формате DataTable
                 const details = await loadFinanceDetails(filters);
                 if (details && details.isFinanceData) {
@@ -562,99 +452,45 @@ export const ReportDataProvider = ({ children }) => {
                 const pva = generatePlanVsActualAnalysis(financeData);
                 const { tableData, tableColumns } = buildPlanVsActualTable(pva);
                 return { ...financeData, tableData, tableColumns };
-            } else if (slideTypeStr.includes('comparison')) {
-                // Загружаем данные для сравнения
+            }
+
+            if (slideTypeStr.includes('comparison')) {
+                // Загружаем данные для сравнения (без подставных данных)
                 const [analyticsData, financeData] = await Promise.all([
                     loadAnalyticsData(filters),
                     loadFinanceData(filters)
                 ]);
                 
-                // Создаем данные в формате, ожидаемом AnalyticsComparison
-                const comparisonData = {
-                    yearly: {
-                        [new Date().getFullYear()]: {
-                            plan: 1000000,
-                            actual: 950000,
-                            deviation: -50000,
-                            percentage: 95
-                        },
-                        [new Date().getFullYear() - 1]: {
-                            plan: 900000,
-                            actual: 850000,
-                            deviation: -50000,
-                            percentage: 94.4
-                        }
-                    },
-                    categories: {
-                        'Электроника': {
-                            plan: 300000,
-                            actual: 280000,
-                            deviation: -20000,
-                            percentage: 93.3
-                        },
-                        'Одежда': {
-                            plan: 200000,
-                            actual: 190000,
-                            deviation: -10000,
-                            percentage: 95
-                        },
-                        'Продукты': {
-                            plan: 150000,
-                            actual: 160000,
-                            deviation: 10000,
-                            percentage: 106.7
-                        }
-                    },
-                    shops: {
-                        'Центральный': {
-                            plan: 400000,
-                            actual: 380000,
-                            deviation: -20000,
-                            percentage: 95
-                        },
-                        'Северный': {
-                            plan: 300000,
-                            actual: 290000,
-                            deviation: -10000,
-                            percentage: 96.7
-                        },
-                        'Южный': {
-                            plan: 200000,
-                            actual: 210000,
-                            deviation: 10000,
-                            percentage: 105
-                        }
-                    }
-                };
-                
                 return {
-                    analytics: {
-                        ...financeData?.analytics,
-                        comparison: comparisonData
-                    },
-                    finance: financeData,
+                    analytics: analyticsData || null,
+                    finance: financeData || null,
                     comparisonType: filters.comparisonType || 'period'
                 };
-            } else if (slideTypeStr.includes('trends')) {
-                // Переиспользуем тот же API, что и аналитика
+            }
+
+            if (slideTypeStr.includes('trends')) {
+                // Отдаём данные в формате, ожидаемом TrendsChart/ BaseChart
                 const analytics = await analyticsService.getAnalytics({
                     years: filters.years,
                     categories: filters.categories,
                     shops: filters.shops,
-                    metrics: filters.metrics
+                    metrics: filters.metrics,
+                    periodType: filters.periodType
                 });
-                return { ...analytics };
-            } else if (slideTypeStr.includes('plan-vs-actual')) {
+                return analytics;
+            }
+
+            if (slideTypeStr.includes('plan-vs-actual')) {
                 // Загружаем данные для сравнения план vs факт
-                console.log('[ReportDataProvider] Загружаем данные для plan-vs-actual, filters:', filters);
+                if (dev) console.log('[ReportDataProvider] plan-vs-actual: загрузка данных');
                 const data = await loadFinanceData(filters);
-                console.log('[ReportDataProvider] Данные loadFinanceData:', data);
+                if (dev) console.log('[ReportDataProvider] plan-vs-actual: данные получены');
                 
                 const result = {
                     ...data,
                     planVsActual: generatePlanVsActualAnalysis(data)
                 };
-                console.log('[ReportDataProvider] Результат для plan-vs-actual:', result);
+                if (dev) console.log('[ReportDataProvider] plan-vs-actual: результат готов');
                 return result;
             }
             
@@ -666,72 +502,22 @@ export const ReportDataProvider = ({ children }) => {
         }
     };
 
-    /**
-     * Генерация анализа трендов
-     */
-    const generateTrendsAnalysis = (data) => {
-        if (!data || !data.transactions) return {};
-
-        const transactions = data.transactions;
-        
-        // Группируем транзакции по месяцам
-        const monthlyData = {};
-        transactions.forEach(transaction => {
-            const date = new Date(transaction.created_at || transaction.date);
-            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-            
-            if (!monthlyData[monthKey]) {
-                monthlyData[monthKey] = {
-                    income: 0,
-                    expense: 0,
-                    count: 0
-                };
-            }
-            
-            if (transaction.amount > 0) {
-                monthlyData[monthKey].income += transaction.amount;
-            } else {
-                monthlyData[monthKey].expense += Math.abs(transaction.amount);
-            }
-            monthlyData[monthKey].count += 1;
-        });
-
-        // Преобразуем в массив для графиков
-        const trends = Object.entries(monthlyData)
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([month, data]) => ({
-                label: month,
-                income: data.income,
-                expense: data.expense,
-                profit: data.income - data.expense,
-                transactions: data.count
-            }));
-
-        return {
-            monthly: trends,
-            summary: {
-                totalIncome: trends.reduce((sum, item) => sum + item.income, 0),
-                totalExpense: trends.reduce((sum, item) => sum + item.expense, 0),
-                averageProfit: trends.reduce((sum, item) => sum + item.profit, 0) / trends.length || 0
-            }
-        };
-    };
+    // Генерация трендов больше не требуется на клиенте (используется готовая аналитика)
 
     /**
      * Генерация анализа план vs факт
      */
     const generatePlanVsActualAnalysis = (data) => {
-        console.log('[ReportDataProvider] generatePlanVsActualAnalysis входные данные:', data);
+        if (dev) console.log('[ReportDataProvider] generatePlanVsActualAnalysis входные данные');
         
         if (!data || !data.analytics) {
-            console.log('[ReportDataProvider] generatePlanVsActualAnalysis: нет данных или analytics');
+            if (dev) console.log('[ReportDataProvider] generatePlanVsActualAnalysis: нет данных или analytics');
             return {};
         }
 
         // Используем данные из аналитики для создания план vs факт
         const analytics = data.analytics;
-        console.log('[ReportDataProvider] generatePlanVsActualAnalysis analytics:', analytics);
-        console.log('[ReportDataProvider] generatePlanVsActualAnalysis analytics.planVsActual:', analytics.planVsActual);
+        if (dev) console.log('[ReportDataProvider] generatePlanVsActualAnalysis analytics готовы');
         
         // Создаем структуру данных для план vs факт
         const planVsActual = {
@@ -809,373 +595,11 @@ export const ReportDataProvider = ({ children }) => {
         planVsActual.summary.totalDeviation = analytics.planVsActualStats?.totalDeviation || 0;
         planVsActual.summary.averagePercentage = analytics.planVsActualStats?.totalPercentage || 0;
 
-        console.log('[ReportDataProvider] generatePlanVsActualAnalysis финальный результат:', planVsActual);
+        if (dev) console.log('[ReportDataProvider] generatePlanVsActualAnalysis финальный результат готов');
         return planVsActual;
     };
 
-    /**
-     * Преобразование данных для использования в графиках
-     */
-    const transformDataForChart = (rawData, slideType, selectedMetrics = []) => {
-        if (!rawData) {
-            return [];
-        }
-
-
-        let result = [];
-        
-        switch (slideType) {
-            case 'analytics-chart':
-            case 'analytics-table':
-                result = transformAnalyticsData(rawData, selectedMetrics);
-                break;
-                
-            case 'finance-chart':
-            case 'finance-table':
-                result = transformFinanceData(rawData, selectedMetrics);
-                break;
-                
-            case 'comparison':
-                result = transformComparisonData(rawData, selectedMetrics);
-                break;
-                
-            case 'trends':
-                result = transformTrendsData(rawData, selectedMetrics);
-                break;
-                
-            case 'plan-vs-actual':
-                result = transformPlanVsActualData(rawData, selectedMetrics);
-                break;
-                
-            default:
-                result = [];
-        }
-        
-        
-        return result;
-    };
-
-    const transformAnalyticsData = (data, metrics) => {
-        if (!data.metrics) return [];
-        
-        return data.metrics.map(item => ({
-            label: item.period || item.name,
-            value: item.value || 0,
-            metric: item.metric || '',
-            ...item
-        }));
-    };
-
-    /**
-     * Фильтрация данных по выбранным метрикам
-     */
-    const filterDataByMetrics = (data, metrics) => {
-        if (!Array.isArray(data) || !metrics || metrics.length === 0) {
-            return data;
-        }
-        
-        return data.map(item => {
-            const filteredItem = {
-                label: item.label,
-                type: item.type
-            };
-            
-            // Добавляем только выбранные метрики
-            if (metrics.includes('plan') && item.plan !== undefined) {
-                filteredItem.plan = item.plan;
-            }
-            if (metrics.includes('actual') && (item.actual !== undefined || item.fact !== undefined)) {
-                filteredItem.actual = item.actual || item.fact;
-            }
-            if (metrics.includes('deviation') && item.deviation !== undefined) {
-                filteredItem.deviation = item.deviation;
-            }
-            if (metrics.includes('percentage') && item.percentage !== undefined) {
-                filteredItem.percentage = item.percentage;
-            }
-            
-            // Сохраняем другие свойства (например, isForecast)
-            Object.keys(item).forEach(key => {
-                if (!['plan', 'actual', 'fact', 'deviation', 'percentage', 'label', 'type'].includes(key)) {
-                    filteredItem[key] = item[key];
-                }
-            });
-            
-            return filteredItem;
-        });
-    };
-
-    const transformFinanceData = (data, metrics) => {
-        
-        // Если данные уже в правильном формате (из loadFinanceDetails)
-        if (data.chartData && Array.isArray(data.chartData)) {
-            // Фильтруем существующие данные по выбранным метрикам
-            return filterDataByMetrics(data.chartData, metrics);
-        }
-        
-        // Данные по метрикам (подкатегориям) или общие расходы
-        if (data.metrics && Array.isArray(data.metrics) && data.metrics.length > 0) {
-            const transformed = data.metrics.map(metric => {
-                const item = {
-                    label: metric.name || metric.metric_name || 'Без названия',
-                    type: 'expense' // Пока только расходы
-                };
-                
-                // Добавляем только выбранные метрики
-                if (metrics.includes('plan')) {
-                    item.plan = Math.abs(metric.plan_value || metric.plan || 0);
-                }
-                if (metrics.includes('actual')) {
-                    item.actual = Math.abs(metric.actual || metric.fact_value || metric.fact || 0);
-                }
-                if (metrics.includes('deviation')) {
-                    item.deviation = metric.deviation || 0;
-                }
-                if (metrics.includes('percentage')) {
-                    item.percentage = metric.percentage || 0;
-                }
-                
-                return item;
-            });
-            
-            return transformed;
-        }
-        
-        // Если нет детальных метрик - показываем общие данные
-        const fallback = {
-            label: 'Общие расходы', 
-            type: 'expense'
-        };
-        
-        // Добавляем только выбранные метрики
-        if (metrics.includes('plan')) {
-            fallback.plan = Math.abs(data.summary?.plan || data.summary?.totalPlan || 0);
-        }
-        if (metrics.includes('actual')) {
-            fallback.actual = Math.abs(data.summary?.totalExpense || data.summary?.totalFact || 0);
-        }
-        if (metrics.includes('deviation')) {
-            fallback.deviation = data.summary?.deviation || 0;
-        }
-        if (metrics.includes('percentage')) {
-            fallback.percentage = data.summary?.percentage || 0;
-        }
-        
-        return [fallback];
-    };
-
-    const transformComparisonData = (data, metrics) => {
-        if (!data.analytics && !data.finance) return [];
-        
-        // Если у нас есть данные comparison, используем их
-        if (data.analytics?.comparison) {
-            const comparisonData = data.analytics.comparison;
-            const result = [];
-            
-            // Преобразуем данные по годам
-            if (comparisonData.yearly) {
-                Object.entries(comparisonData.yearly).forEach(([year, yearData]) => {
-                    const item = {
-                        label: year,
-                        type: 'comparison'
-                    };
-                    
-                    if (yearData.plan !== undefined) item.plan = yearData.plan;
-                    if (yearData.actual !== undefined) item.fact = yearData.actual;
-                    if (yearData.deviation !== undefined) item.deviation = yearData.deviation;
-                    if (yearData.percentage !== undefined) item.percentage = yearData.percentage;
-                    
-                    result.push(item);
-                });
-            }
-            
-            // Преобразуем данные по категориям
-            if (comparisonData.categories) {
-                Object.entries(comparisonData.categories).forEach(([category, categoryData]) => {
-                    const item = {
-                        label: category,
-                        type: 'comparison'
-                    };
-                    
-                    if (categoryData.plan !== undefined) item.plan = categoryData.plan;
-                    if (categoryData.actual !== undefined) item.fact = categoryData.actual;
-                    if (categoryData.deviation !== undefined) item.deviation = categoryData.deviation;
-                    if (categoryData.percentage !== undefined) item.percentage = categoryData.percentage;
-                    
-                    result.push(item);
-                });
-            }
-            
-            // Преобразуем данные по магазинам
-            if (comparisonData.shops) {
-                Object.entries(comparisonData.shops).forEach(([shop, shopData]) => {
-                    const item = {
-                        label: shop,
-                        type: 'comparison'
-                    };
-                    
-                    if (shopData.plan !== undefined) item.plan = shopData.plan;
-                    if (shopData.actual !== undefined) item.fact = shopData.actual;
-                    if (shopData.deviation !== undefined) item.deviation = shopData.deviation;
-                    if (shopData.percentage !== undefined) item.percentage = shopData.percentage;
-                    
-                    result.push(item);
-                });
-            }
-            
-            
-            return result;
-        }
-        
-        // Fallback на старую логику
-        const currentAnalytics = data.analytics?.summary?.value || 0;
-        const currentFinance = data.finance?.summary?.totalIncome || 0;
-        const previousAnalytics = currentAnalytics * 0.9;
-        const previousFinance = currentFinance * 0.95;
-        
-        const result = [];
-        
-        // Добавляем данные в зависимости от выбранных метрик
-        if (metrics.includes('plan')) {
-            result.push({
-                label: 'Текущий период',
-                plan: currentFinance,
-                type: 'comparison'
-            });
-            result.push({
-                label: 'Предыдущий период', 
-                plan: previousFinance,
-                type: 'comparison'
-            });
-        }
-        
-        if (metrics.includes('actual')) {
-            if (result.length === 0) {
-                result.push({
-                    label: 'Текущий период',
-                    actual: currentAnalytics,
-                    type: 'comparison'
-                });
-                result.push({
-                    label: 'Предыдущий период',
-                    actual: previousAnalytics,
-                    type: 'comparison'
-                });
-            } else {
-                result[0].actual = currentAnalytics;
-                result[1].actual = previousAnalytics;
-            }
-        }
-        
-        if (metrics.includes('deviation')) {
-            const currentDeviation = data.comparison?.current?.deviation || 0;
-            const previousDeviation = data.comparison?.previous?.deviation || 0;
-            
-            if (result.length === 0) {
-                result.push({
-                    label: 'Текущий период',
-                    deviation: currentDeviation,
-                    type: 'comparison'
-                });
-                result.push({
-                    label: 'Предыдущий период',
-                    deviation: previousDeviation,
-                    type: 'comparison'
-                });
-            } else {
-                result[0].deviation = currentDeviation;
-                result[1].deviation = previousDeviation;
-            }
-        }
-        
-        if (metrics.includes('percentage')) {
-            const currentPercentage = data.comparison?.current?.percentage || 0;
-            const previousPercentage = data.comparison?.previous?.percentage || 0;
-            
-            if (result.length === 0) {
-                result.push({
-                    label: 'Текущий период',
-                    percentage: currentPercentage,
-                    type: 'comparison'
-                });
-                result.push({
-                    label: 'Предыдущий период',
-                    percentage: previousPercentage,
-                    type: 'comparison'
-                });
-            } else {
-                result[0].percentage = currentPercentage;
-                result[1].percentage = previousPercentage;
-            }
-        }
-        
-        // Если нет выбранных метрик, показываем план и факт по умолчанию
-        if (result.length === 0) {
-            result.push({
-                label: 'Текущий период',
-                plan: currentFinance,
-                fact: currentAnalytics,
-                type: 'comparison'
-            });
-            result.push({
-                label: 'Предыдущий период',
-                plan: previousFinance,
-                fact: previousAnalytics,
-                type: 'comparison'
-            });
-        }
-        
-        
-        return result;
-    };
-
-    const transformTrendsData = (data, metrics) => {
-        if (!data.trends || !data.trends.monthly) return [];
-        
-        return data.trends.monthly;
-    };
-
-    const transformPlanVsActualData = (data, metrics) => {
-        if (!data.planVsActual || !data.planVsActual.quarters) return [];
-        
-        return data.planVsActual.quarters;
-    };
-
-    // Строим универсальную таблицу для план vs факт
-    const buildPlanVsActualTable = (planVsActual) => {
-        try {
-            const cols = [
-                { key: 'period', header: 'Период', sticky: true, align: 'left', width: '220px' },
-                { key: 'plan', header: 'План', align: 'right', width: '120px' },
-                { key: 'actual', header: 'Факт', align: 'right', width: '120px' },
-                { key: 'deviation', header: 'Отклонение', align: 'right', width: '120px' },
-                { key: 'percentage', header: '% выполнения', align: 'right', width: '120px' }
-            ];
-
-            const rows = [];
-
-            // Приоритет: категории → магазины → метрики
-            const source = planVsActual?.categories && Object.keys(planVsActual.categories).length
-                ? planVsActual.categories
-                : planVsActual?.shops && Object.keys(planVsActual.shops).length
-                ? planVsActual.shops
-                : planVsActual?.metrics || {};
-
-            Object.entries(source).forEach(([label, item]) => {
-                rows.push({
-                    period: label,
-                    plan: item.plan ?? 0,
-                    actual: item.actual ?? item.fact ?? 0,
-                    deviation: item.deviation ?? 0,
-                    percentage: item.percentage ?? 0
-                });
-            });
-
-            return { tableData: rows, tableColumns: cols };
-        } catch (e) {
-            return { tableData: [], tableColumns: [] };
-        }
-    };
+    // Подготовка данных выполняется в компонентах графиков и utils
 
     /**
      * Очистка кэша данных
@@ -1209,9 +633,6 @@ export const ReportDataProvider = ({ children }) => {
         loadFinanceData,
         loadSlideData,
         
-        // Преобразование данных
-        transformDataForChart,
-        
         // Утилиты
         clearCache
     }), [
@@ -1223,7 +644,6 @@ export const ReportDataProvider = ({ children }) => {
         loadAnalyticsData,
         loadFinanceData,
         loadSlideData,
-        transformDataForChart,
         clearCache
     ]);
 

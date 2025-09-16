@@ -1,29 +1,25 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNotifications } from '../../hooks';
 import { useReportData } from './ReportDataProvider';
-import { hasDataToDisplay, createSafeFilters, hasSelectedFilters } from './utils/filterUtils';
+import { hasDataToDisplay, createSafeFilters, hasSelectedFilters } from '../../utils/filterUtils';
 import SlideRenderer from './SlideRenderer';
-import AnalyticsComparison from '../analytics/AnalyticsComparison';
+import ComparisonChart from '../charts/ComparisonChart';
+import BaseChart from '../charts/BaseChart';
 import './SlidePreview.css';
+import './reports-common.css';
+import './reports-layout.css';
 
 // Импортируем EmptySlidePlaceholder из SlideRenderer
 import { EmptySlidePlaceholder } from './SlideRenderer';
-
-// Безопасное определение development режима
-const isDevelopment = () => {
-    if (typeof window !== 'undefined') {
-        return window.location.hostname === 'localhost' && ['3000', '3001'].includes(window.location.port);
-    }
-    return false;
-};
-
-const dev = isDevelopment();
+import { dev } from '../../utils/env';
+import { getProcessedSlideData } from './utils/slideDataLoader';
 
 
 /**
  * Компонент таблицы сравнения с фильтрами аналитики
  */
 const ComparisonTableSlide = ({ title, description, filters: externalFilters = {}, onGoToSettings }) => {
+    const { loadSlideData } = useReportData();
     const [analyticsData, setAnalyticsData] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -32,43 +28,18 @@ const ComparisonTableSlide = ({ title, description, filters: externalFilters = {
         const loadAnalyticsData = async () => {
             try {
                 setIsLoading(true);
-                
-                const token = localStorage.getItem('authToken');
-                const headers = {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                };
 
-                // Используем переданные фильтры или пустые значения
                 const safeFilters = createSafeFilters(externalFilters);
-                
+
                 // Если нет выбранных фильтров, не загружаем данные
                 if (!hasSelectedFilters(safeFilters)) {
                     setAnalyticsData(null);
                     return;
                 }
 
-                const params = new URLSearchParams();
-                if (safeFilters.years.length > 0) {
-                    params.append('years', safeFilters.years.join(','));
-                }
-                if (safeFilters.categories.length > 0) {
-                    params.append('categories', safeFilters.categories.join(','));
-                }
-                if (safeFilters.shops.length > 0) {
-                    params.append('shops', safeFilters.shops.join(','));
-                }
-                if (safeFilters.metrics.length > 0) {
-                    params.append('metrics', safeFilters.metrics.join(','));
-                }
-
-                const url = `/api/v1/finance/analytics/comprehensive?${params}`;
-                const response = await fetch(url, { headers });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    setAnalyticsData(data);
-                }
+                // Переиспользуем общий провайдер данных
+                const data = await loadSlideData('comparison', safeFilters, {});
+                setAnalyticsData(data?.analytics || data || null);
             } catch (error) {
                 console.error('Ошибка загрузки аналитических данных:', error);
             } finally {
@@ -81,7 +52,7 @@ const ComparisonTableSlide = ({ title, description, filters: externalFilters = {
 
     // Фильтры: используем только переданные из настроек слайда
     const safeExternal = createSafeFilters(externalFilters || {});
-    const effectiveFilters = { ...safeExternal, viewMode: 'table' };
+    const effectiveFilters = { ...safeExternal };
 
     return (
         <div className="comparison-table-slide-preview">
@@ -90,19 +61,37 @@ const ComparisonTableSlide = ({ title, description, filters: externalFilters = {
                 {description && <p className="slide-description">{description}</p>}
             </div>
             
-            <div className="comparison-table-content">
+            <div className="comparison-table-content reports-table-container">
                 {/* Таблица сравнения */}
-                <div className="table-section">
+                <div className="table-section reports-full-width">
                     {hasSelectedFilters(effectiveFilters) && analyticsData ? (
-                    <AnalyticsComparison
-                        analyticsData={analyticsData}
-                        filters={effectiveFilters}
-                        isLoading={isLoading}
-                        showTable={true}
-                        showControls={false}
-                        showSummary={false}
-                        showHeader={false}
-                    />
+                        // Для годовых данных используем BaseChart, для квартальных - ComparisonChart
+                        effectiveFilters.years && effectiveFilters.years.length > 1 ? (
+                            <BaseChart
+                                analyticsData={analyticsData}
+                                filters={effectiveFilters}
+                                isLoading={isLoading}
+                                showTable={true}
+                                showControls={false}
+                                showSummary={false}
+                                showHeader={false}
+                                viewMode="table"
+                                groupBy="years"
+                                chartType="bar"
+                            />
+                        ) : (
+                            <ComparisonChart
+                                analyticsData={analyticsData}
+                                filters={effectiveFilters}
+                                isLoading={isLoading}
+                                showTable={true}
+                                showControls={false}
+                                showSummary={false}
+                                showHeader={false}
+                                viewMode="table"
+                                groupBy="quarterly"
+                            />
+                        )
                     ) : (
                         <EmptySlidePlaceholder 
                             type="table"
@@ -134,7 +123,7 @@ const SlidePreview = ({
     disableAnimations = false
 }) => {
     const { showError } = useNotifications();
-    const { loadSlideData, transformDataForChart } = useReportData();
+    const { loadSlideData } = useReportData();
     
     const [data, setData] = useState(previewData);
     const [loading, setLoading] = useState(isLoading);
@@ -156,57 +145,9 @@ const SlidePreview = ({
         setLoading(true);
         
         try {
-            let normalizedFilters = {
-                ...filters,
-                years: (filters?.years || []).map((y) => (y?.value ?? y?.id ?? y)),
-                categories: (filters?.categories || []).map((c) => (c?.value ?? c?.id ?? c)),
-                shops: (filters?.shops || []).map((s) => (s?.value ?? s?.id ?? s)),
-                metrics: (filters?.metrics || []).map((m) => (m?.value ?? m?.id ?? m)),
-                periodType: filters?.periodType || 'years'
-            };
-
-            // Для слайда трендов используем только переданные фильтры
-            if (slideType === 'trends') {
-                // Не устанавливаем дефолтные фильтры
-            }
-
-            if (dev) console.log('[SlidePreview] loadData()', { slideType, normalizedFilters, settings });
-            const slideData = await loadSlideData(slideType, normalizedFilters, settings);
-            
-            if (slideData) {
-                if (dev) console.log('[SlidePreview] raw slideData:', {
-                    keys: Object.keys(slideData || {}),
-                    chartDataLen: Array.isArray(slideData.chartData) ? slideData.chartData.length : 'n/a',
-                    metricsLen: Array.isArray(slideData.metrics) ? slideData.metrics.length : 'n/a',
-                    periodsLen: Array.isArray(slideData.periods) ? slideData.periods.length : 'n/a',
-                    tableDataLen: Array.isArray(slideData.tableData) ? slideData.tableData.length : 'n/a'
-                });
-                // Определяем метрики для отображения
-                let selectedMetrics = ['plan', 'actual']; // По умолчанию
-                if (filters?.metrics && filters.metrics.length > 0) {
-                    // Используем выбранные пользователем метрики
-                    selectedMetrics = filters.metrics.map(m => m?.value ?? m?.id ?? m);
-                }
-                
-                
-                const transformedData = transformDataForChart(
-                    slideData, 
-                    slideType, 
-                    selectedMetrics
-                );
-                
-                const prepared = {
-                    ...slideData,
-                    chartData: transformedData,
-                    tableData: slideData.tableData || slideData.metrics || []
-                };
-                if (dev) console.log('[SlidePreview] prepared data for render:', {
-                    chartDataLen: Array.isArray(prepared.chartData) ? prepared.chartData.length : 'n/a',
-                    metricsLen: Array.isArray(prepared.metrics) ? prepared.metrics.length : 'n/a',
-                    periodsLen: Array.isArray(prepared.periods) ? prepared.periods.length : 'n/a',
-                    tableDataLen: Array.isArray(prepared.tableData) ? prepared.tableData.length : 'n/a'
-                });
-                setData(prepared);
+            const processed = await getProcessedSlideData({ type: slideType, content: { filters, settings } }, loadSlideData);
+            if (processed) {
+                setData(processed);
             } else {
                 setData(null);
             }
@@ -217,7 +158,34 @@ const SlidePreview = ({
         } finally {
             setLoading(false);
         }
-    }, [slideType, filters, settings, loadSlideData, transformDataForChart, showError]);
+    }, [slideType, filters, settings, loadSlideData, showError]);
+
+    // Проверка фильтров для финансовых слайдов
+    const isFinanceSlide = slideType.includes('finance');
+    const hasRequiredFilters = isFinanceSlide ? 
+        (filters.category && filters.category !== 'all' && filters.shop && filters.shop !== 'all') : 
+        true;
+    
+    if (!hasRequiredFilters && isFinanceSlide) {
+        return (
+            <div className="slide-preview-container">
+                <div className="alert alert-warning">
+                    <i className="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Необходимо настроить фильтры</strong>
+                    <p className="mb-0 mt-2">
+                        Для отображения финансового графика необходимо выбрать конкретную категорию и магазин.
+                    </p>
+                    <button 
+                        className="btn btn-primary btn-sm mt-2"
+                        onClick={onGoToSettings}
+                    >
+                        <i className="fas fa-cog me-1"></i>
+                        Настроить фильтры
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     // Специальная обработка для comparison-table
     if (slideType === 'comparison-table') {
@@ -249,3 +217,4 @@ const SlidePreview = ({
 };
 
 export default SlidePreview;
+export { ComparisonTableSlide };

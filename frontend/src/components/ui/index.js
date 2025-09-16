@@ -10,5 +10,5 @@ export { default as SearchableSelect } from './SearchableSelect';
 
 // Существующие компоненты (для обратной совместимости)
 export { default as Card } from './Card';
-export { default as Chart } from './Chart';
+// Chart moved to components/charts
 export { default as DataTable } from './DataTable'; 

@@ -2511,3 +2511,38 @@ button.btn svg {
         color: inherit;
     }
 }
+
+/* ==============================================
+   ОТКЛЮЧЕНИЕ HOVER ЭФФЕКТОВ ПРИ ОТКРЫТОМ МОДАЛЬНОМ ОКНЕ
+   ============================================== */
+
+/* Более точное отключение hover эффектов на фоновых элементах */
+body.modal-open {
+    /* Отключаем pointer-events для body */
+    pointer-events: none;
+}
+
+/* Восстанавливаем pointer-events для модальных окон */
+body.modal-open [class*="modal"],
+body.modal-open [class*="Modal"],
+body.modal-open div[role="dialog"] {
+    pointer-events: auto !important;
+}
+
+/* Дополнительно отключаем hover эффекты только на фоновых элементах */
+body.modal-open *:not([class*="modal"]):not([class*="Modal"]):not([role="dialog"]):not([role="dialog"] *):hover {
+    /* Отключаем все hover эффекты */
+    background-color: inherit !important;
+    border-color: inherit !important;
+    box-shadow: inherit !important;
+    transform: inherit !important;
+    opacity: inherit !important;
+    color: inherit !important;
+    text-decoration: inherit !important;
+}
+
+/* Отключаем transition эффекты только на фоновых элементах */
+body.modal-open *:not([class*="modal"]):not([class*="Modal"]):not([role="dialog"]):not([role="dialog"] *) {
+    transition: none !important;
+    animation: none !important;
+}

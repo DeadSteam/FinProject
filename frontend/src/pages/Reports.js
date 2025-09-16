@@ -10,7 +10,7 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 // Ленивая загрузка компонентов отчетов
 const ReportConstructor = lazy(() => import('../components/reports/ReportConstructor'));
 const ReportPreview = lazy(() => import('../components/reports/ReportPreview'));
-const ReportExporter = lazy(() => import('../components/reports/ReportExporter'));
+// Экспортер отчетов удален
 
 // Импортируем ReportDataProvider напрямую (не lazy, так как это провайдер контекста)
 import ReportDataProvider from '../components/reports/ReportDataProvider';
@@ -27,8 +27,8 @@ const dev = isDevelopment();
 
 /**
  * Страница создания отчетов и презентаций.
- * Позволяет создавать презентации и PDF файлы с данными из аналитики и финансовых деталей.
- * Включает конструктор слайдов, предпросмотр и экспорт в различные форматы.
+ * Позволяет создавать презентации с данными из аналитики и финансовых деталей.
+ * Включает конструктор слайдов и предпросмотр.
  */
 const Reports = () => {
     const navigate = useNavigate();
@@ -60,8 +60,7 @@ const Reports = () => {
     const [previewMode, setPreviewMode] = useState(false);
     const [selectedSlideIndex, setSelectedSlideIndex] = useState(0);
     
-    // Состояние экспорта
-    const [showExporter, setShowExporter] = useState(false);
+    // Экспорт удален
 
     // Проверка авторизации
     useEffect(() => {
@@ -104,21 +103,7 @@ const Reports = () => {
         setSelectedSlideIndex(slideIndex);
     };
 
-    const handleExportToPDF = useCallback(() => {
-        if (currentReport.slides.length === 0) {
-            showError('Добавьте хотя бы один слайд для экспорта');
-            return;
-        }
-        setShowExporter(true);
-    }, [currentReport.slides.length, showError]);
-
-    const handleExportToPPTX = useCallback(() => {
-        if (currentReport.slides.length === 0) {
-            showError('Добавьте хотя бы один слайд для экспорта');
-            return;
-        }
-        setShowExporter(true);
-    }, [currentReport.slides.length, showError]);
+    // Экспорт в PPTX удален
 
     // Создание нового отчета
     const handleNewReport = useCallback(() => {
@@ -244,16 +229,7 @@ const Reports = () => {
                             </Suspense>
                         </div>
 
-                        {/* Модальное окно экспорта */}
-                        {showExporter && (
-                            <Suspense fallback={<LoadingSpinner />}>
-                                <ReportExporter
-                                    report={currentReport}
-                                    isOpen={showExporter}
-                                    onClose={() => setShowExporter(false)}
-                                />
-                            </Suspense>
-                        )}
+                        {/* Экспорт отчета удален */}
                     </div>
             </ReportDataProvider>
         </ErrorBoundary>

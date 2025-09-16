@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import Modal from '../modals/Modal';
 import './SlideTypeModal.css';
 
 /**
@@ -90,75 +91,75 @@ const SlideTypeModal = ({
         setSelectedType(null);
     };
 
-    if (!isOpen) return null;
+    const modalFooter = (
+        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+            <button 
+                className="btn btn-secondary" 
+                onClick={handleClose}
+            >
+                Отмена
+            </button>
+            <button 
+                className="btn btn-primary" 
+                onClick={handleConfirm} 
+                disabled={!selectedType}
+            >
+                Создать слайд
+            </button>
+        </div>
+    );
 
     return (
-        <div className="modal active" onClick={handleClose}>
-            <div className="modal-content modal-xl" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-header">
-                    <h5 className="modal-title">Выберите тип слайда</h5>
-                    <button 
-                        className="modal-close" 
-                        onClick={handleClose}
-                        title="Закрыть"
-                    >
-                        <i className="fas fa-times"></i>
-                    </button>
+        <Modal
+            isOpen={isOpen}
+            onClose={handleClose}
+            title="Выберите тип слайда"
+            size="xl"
+            footer={modalFooter}
+            closeOnBackdrop={true}
+            closeOnEscape={true}
+            preventBodyScroll={true}
+        >
+            <div className="slide-types-container">
+                {/* Вкладки */}
+                <div className="type-tabs">
+                    {tabs.map(tab => (
+                        <button
+                            key={tab}
+                            className={`tab-btn ${activeTab === tab ? 'active' : ''}`}
+                            onClick={() => setActiveTab(tab)}
+                        >
+                            {tab}
+                        </button>
+                    ))}
                 </div>
-                
-                <div className="modal-body">
-                    <div className="slide-types-container">
-                        {/* Вкладки */}
-                        <div className="type-tabs">
-                            {tabs.map(tab => (
-                                <button
-                                    key={tab}
-                                    className={`tab-btn ${activeTab === tab ? 'active' : ''}`}
-                                    onClick={() => setActiveTab(tab)}
-                                >
-                                    {tab}
-                                </button>
-                            ))}
-                        </div>
 
-                        {/* Список типов без иконок, как в макете */}
-                        <div className="slide-types-grid">
-                            {slideTypes
-                                .filter(t => activeTab === 'Все типы' ||
-                                    (activeTab === 'Базовые' && t.category === 'Основные') ||
-                                    (activeTab === 'Аналитика' && (t.category === 'Аналитика' || t.id === 'trends' || t.id === 'analytics-table')) ||
-                                    (activeTab === 'Финансы' && (t.category === 'Финансы' || t.id === 'finance-chart' || t.id === 'finance-table')) ||
-                                    (activeTab === 'Сравнения' && (t.category === 'Сравнения' || t.id === 'comparison' || t.id === 'plan-vs-actual')) ||
-                                    (activeTab === 'Таблица сравнения' && t.id === 'comparison-table')
-                                )
-                                .map(type => (
-                                <div
-                                    key={type.id}
-                                    className={`slide-type-card ${selectedType?.id === type.id ? 'selected' : ''}`}
-                                    onClick={() => handleSelectType(type)}
-                                >
-                                    <div className="slide-type-texts">
-                                        <div className="slide-type-name">{type.name}</div>
-                                        <div className="slide-type-description">{type.description}</div>
-                                    </div>
-                                    <div className="slide-type-chevron">›</div>
-                                </div>
-                            ))}
+                {/* Список типов без иконок, как в макете */}
+                <div className="slide-types-grid">
+                    {slideTypes
+                        .filter(t => activeTab === 'Все типы' ||
+                            (activeTab === 'Базовые' && t.category === 'Основные') ||
+                            (activeTab === 'Аналитика' && (t.category === 'Аналитика' || t.id === 'trends' || t.id === 'analytics-table')) ||
+                            (activeTab === 'Финансы' && (t.category === 'Финансы' || t.id === 'finance-chart' || t.id === 'finance-table')) ||
+                            (activeTab === 'Сравнения' && (t.category === 'Сравнения' || t.id === 'comparison' || t.id === 'plan-vs-actual')) ||
+                            (activeTab === 'Таблица сравнения' && t.id === 'comparison-table')
+                        )
+                        .map(type => (
+                        <div
+                            key={type.id}
+                            className={`slide-type-card ${selectedType?.id === type.id ? 'selected' : ''}`}
+                            onClick={() => handleSelectType(type)}
+                        >
+                            <div className="slide-type-texts">
+                                <div className="slide-type-name">{type.name}</div>
+                                <div className="slide-type-description">{type.description}</div>
+                            </div>
+                            <div className="slide-type-chevron">›</div>
                         </div>
-                    </div>
-                </div>
-                
-                <div className="modal-footer">
-                    <button 
-                        className="btn btn-secondary" 
-                        onClick={handleClose}
-                    >
-                        Отмена
-                    </button>
-                    <button className="btn btn-primary" onClick={handleConfirm} disabled={!selectedType}>Создать слайд</button>
+                    ))}
                 </div>
             </div>
-        </div>
+        </Modal>
     );
 };
 

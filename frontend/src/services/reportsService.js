@@ -1,12 +1,36 @@
 import { ApiClient } from './http/ApiClient';
-import jsPDF from 'jspdf';
-import PptxGenJS from 'pptxgenjs';
-import html2canvas from 'html2canvas';
-import * as htmlToImage from 'html-to-image';
+// PPTX экспорт удален
+import { promisePool, mapToTasks } from '../components/charts/utils/promisePool';
 
 class ReportsService {
     constructor() {
         this.apiClient = new ApiClient();
+    }
+
+    // Склейка двух dataURL PNG в одно изображение 2x1
+    async mergeImagesSideBySide(leftDataUrl, rightDataUrl) {
+        const leftImg = await this.loadImage(leftDataUrl);
+        const rightImg = await this.loadImage(rightDataUrl);
+        const width = leftImg.width + rightImg.width;
+        const height = Math.max(leftImg.height, rightImg.height);
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(leftImg, 0, 0);
+        ctx.drawImage(rightImg, leftImg.width, 0);
+        return canvas.toDataURL('image/png', 1.0);
+    }
+
+    loadImage(dataUrl) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = dataUrl;
+        });
     }
 
     async getMetricsForCategory(categoryId) {
@@ -15,15 +39,9 @@ class ReportsService {
             if (categoryId && categoryId !== 'all') {
                 params.append('category_id', categoryId);
             }
-            
             const url = `/finance/metrics?${params}`;
-            
             const response = await this.apiClient.get(url);
-            
-            // API возвращает массив напрямую, а не в поле data
             const metrics = Array.isArray(response) ? response : (response.data || []);
-            
-            
             return metrics;
         } catch (error) {
             console.error('❌ ReportsService: Ошибка загрузки метрик:', error);
@@ -142,10 +160,10 @@ class ReportsService {
         // Если нет данных, создаем тестовые данные для демонстрации
         if (chartData.length === 0) {
             chartData.push(
-                { label: 'Q1', plan: 100, fact: 120, deviation: 20 },
-                { label: 'Q2', plan: 150, fact: 140, deviation: -10 },
-                { label: 'Q3', plan: 200, fact: 180, deviation: -20 },
-                { label: 'Q4', plan: 180, fact: 200, deviation: 20 }
+                { label: 'I квартал', plan: 100, fact: 120, deviation: 20 },
+                { label: 'II квартал', plan: 150, fact: 140, deviation: -10 },
+                { label: 'III квартал', plan: 200, fact: 180, deviation: -20 },
+                { label: 'IV квартал', plan: 180, fact: 200, deviation: 20 }
             );
         }
         
@@ -366,64 +384,8 @@ class ReportsService {
                 // График может быть не полностью готов, но продолжаем захват (таймаут)
             }
             
-            // Сначала пробуем html2canvas - он лучше работает с динамическим контентом
-            try {
-                const canvas = await html2canvas(chartElement, {
-                    backgroundColor: options.backgroundColor || '#ffffff',
-                    scale: options.scale || 3,
-                    useCORS: true,
-                    allowTaint: true,
-                    logging: false,
-                    width: chartElement.offsetWidth,
-                    height: chartElement.offsetHeight,
-                    ignoreElements: (element) => {
-                        return element.classList?.contains('spinner-border') || 
-                               element.classList?.contains('loading') ||
-                               element.classList?.contains('tooltip') ||
-                               element.classList?.contains('popover');
-                    }
-                });
-                
-                const html2canvasDataURL = canvas.toDataURL('image/png', 1.0);
-                
-                // Проверяем, что изображение не пустое
-                if (html2canvasDataURL && html2canvasDataURL.length > 1000) {
-                    return html2canvasDataURL;
-                } else {
-                    console.warn('⚠️ html2canvas вернул слишком маленькое изображение, пробуем html-to-image...');
-                }
-            } catch (html2canvasError) {
-                console.warn('⚠️ html2canvas не сработал, пробуем html-to-image:', html2canvasError);
-            }
-
-            // Запасной вариант - html-to-image
-            const dataURL = await htmlToImage.toPng(chartElement, {
-                backgroundColor: options.backgroundColor || '#ffffff',
-                pixelRatio: options.scale || 3,
-                quality: 1.0,
-                cacheBust: true,
-                skipFonts: true,           // Пропускаем внешние шрифты для избежания SecurityError
-                useCORS: true,             // Включаем CORS
-                allowTaint: true,          // Разрешаем "загрязненные" изображения
-                skipDefaultFonts: false,   // Оставляем системные шрифты
-                preferredFontFormat: 'woff2',
-                filter: (node) => {
-                    // Игнорируем элементы, которые могут мешать захвату
-                    return !node.classList?.contains('spinner-border') && 
-                           !node.classList?.contains('loading') &&
-                           !node.classList?.contains('tooltip') &&
-                           !node.classList?.contains('popover');
-                }
-            });
-
-            
-            // Проверяем, что это действительно PNG изображение
-            if (dataURL.startsWith('data:image/png;base64,')) {
-                return dataURL;
-            } else {
-                console.warn('⚠️ Неожиданный формат изображения:', dataURL.substring(0, 50));
-                return dataURL; // Все равно пробуем использовать
-            }
+            // Удалено: html-to-image/html2canvas больше не используются
+            return null;
 
         } catch (error) {
             console.error('Error capturing chart with html-to-image:', error);
@@ -471,78 +433,8 @@ class ReportsService {
             // Ждем еще немного, чтобы убедиться, что все анимации завершены
             await new Promise(resolve => setTimeout(resolve, 200));
 
-            const canvas = await html2canvas(chartElement, {
-                backgroundColor: options.backgroundColor || '#ffffff',
-                scale: options.scale || 3, // Увеличиваем масштаб для лучшего качества
-                useCORS: true,
-                allowTaint: true,
-                logging: true, // Включаем логирование для отладки
-                width: options.width || chartElement.offsetWidth,
-                height: options.height || chartElement.offsetHeight,
-                windowWidth: chartElement.scrollWidth,
-                windowHeight: chartElement.scrollHeight,
-                // Дополнительные опции для лучшего захвата
-                ignoreElements: (element) => {
-                    // Игнорируем элементы, которые могут мешать захвату
-                    return element.classList.contains('spinner-border') || 
-                           element.classList.contains('loading') ||
-                           element.classList.contains('tooltip') ||
-                           element.classList.contains('popover');
-                },
-                onclone: (clonedDoc) => {
-                    // Улучшаем клонированный документ для лучшего захвата
-                    const clonedElement = clonedDoc.querySelector(`[data-slide-id="${chartElement.getAttribute('data-slide-id')}"]`);
-                    if (clonedElement) {
-                        // Убираем все анимации и переходы
-                        const style = clonedDoc.createElement('style');
-                        style.textContent = `
-                            * {
-                                animation: none !important;
-                                transition: none !important;
-                                transform: none !important;
-                            }
-                            svg {
-                                display: block !important;
-                                visibility: visible !important;
-                                width: 100% !important;
-                                height: 100% !important;
-                            }
-                            .chart-container {
-                                width: 100% !important;
-                                height: 100% !important;
-                            }
-                        `;
-                        clonedDoc.head.appendChild(style);
-                        
-                        // Принудительно устанавливаем размеры для SVG
-                        const svgElements = clonedElement.querySelectorAll('svg');
-                        svgElements.forEach(svg => {
-                            if (!svg.getAttribute('width')) {
-                                svg.setAttribute('width', '100%');
-                            }
-                            if (!svg.getAttribute('height')) {
-                                svg.setAttribute('height', '100%');
-                            }
-                        });
-                    }
-                }
-            });
-
-            // Проверяем, что canvas не пустой
-            if (canvas.width === 0 || canvas.height === 0) {
-                console.warn('Captured canvas is empty');
-                return null;
-            }
-
-            const dataURL = canvas.toDataURL('image/png', 1.0);
-            
-            // Проверяем, что dataURL валидный
-            if (!dataURL || dataURL === 'data:,') {
-                console.warn('Invalid data URL generated');
-                return null;
-            }
-
-            return dataURL;
+            // Удалено: html2canvas больше не используется
+            return null;
         } catch (error) {
             console.error('Error capturing chart as image:', error);
             return null;
@@ -550,86 +442,108 @@ class ReportsService {
     }
 
     /**
-     * Захват всех графиков в отчете
+     * Захват всех графиков в отчете (через AG Charts API)
      */
     async captureAllCharts(report) {
         const chartImages = new Map();
-        
-        // АКТИВИРУЕМ РЕЖИМ ЭКСПОРТА В DOM для отключения всех анимаций
-        document.body.classList.add('export-mode');
-        const mainContainer = document.querySelector('#root, .App, main');
-        if (mainContainer) {
-            mainContainer.classList.add('export-mode');
-        }
-        
-        // Ждем применения стилей отключения анимаций
-        await new Promise(resolve => setTimeout(resolve, 200));
-        
-        // Ждем, чтобы все графики успели отрендериться БЕЗ АНИМАЦИЙ
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        
-        for (let i = 0; i < report.slides.length; i++) {
-            const slide = report.slides[i];
-            if (this.isChartSlide(slide.type)) {
-                try {
-                    // Переключаемся на конкретный слайд перед захватом
-                    const thumbnails = document.querySelectorAll('.thumbnail-item');
-                    if (thumbnails[i]) {
-                        thumbnails[i].click();
-                        await new Promise(resolve => setTimeout(resolve, 1500));
-                        
-                        // Ждем пока график станет видимым
-                        let attempts = 0;
-                        while (attempts < 10) {
-                            const visibleChart = document.querySelector('.slide-container [class*="Chart"], .slide-container .chart-container, .slide-container canvas, .slide-container svg');
-                            if (visibleChart && visibleChart.offsetWidth > 0 && visibleChart.offsetHeight > 0) {
-                                break;
-                            }
-                            await new Promise(resolve => setTimeout(resolve, 200));
-                            attempts++;
-                        }
-                    }
-                    
-                    // Ищем элемент графика
-                    let chartElement = this.findChartElement(slide.id);
-                    
-                    if (chartElement) {
-                        // Ждем, пока график полностью отрендерится
-                        await this.waitForChartToRender(chartElement);
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                        
-                        // Захватываем график
-                        let imageData = await this.captureChartAsImageWithHtmlToImage(chartElement, {
-                            scale: 3,
-                            backgroundColor: '#ffffff'
-                        });
-                        
-                        if (!imageData) {
-                            imageData = await this.captureChartAsImage(chartElement, {
-                                scale: 3,
-                                backgroundColor: '#ffffff'
-                            });
-                        }
-                        
-                        if (imageData) {
-                            chartImages.set(slide.id, imageData);
-                        }
-                    }
-                } catch (error) {
-                    // Тихо игнорируем ошибки
-                }
+        // Порядок берем из миниатюр, если они есть (включая части __partN)
+        const thumbEls = Array.from(document.querySelectorAll('.thumbnails-list .thumbnail-item[data-slide-id]'));
+        const orderedIds = thumbEls.map((el) => el.getAttribute('data-slide-id')).filter(Boolean);
+        const baseSlides = (report.slides || []).filter((s) => this.isChartSlide(s.type));
+        const slides = orderedIds.length
+            ? orderedIds.map((id) => ({ id, type: (baseSlides.find(b => id === b.id || id.startsWith(`${b.id}__part`))?.type) || 'analytics-chart', title: baseSlides.find(b => id === b.id || id.startsWith(`${b.id}__part`))?.title }))
+            : baseSlides;
+
+        const toPngDataUrl = (canvas) => {
+            // Принудительно рисуем на белом фоне для корректного экспорта
+            const tmp = document.createElement('canvas');
+            tmp.width = canvas.width;
+            tmp.height = canvas.height;
+            const ctx = tmp.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, tmp.width, tmp.height);
+            ctx.drawImage(canvas, 0, 0);
+            return tmp.toDataURL('image/png', 1.0);
+        };
+
+        const clickThumbnailAndWait = async (slideId) => {
+            const thumb = document.querySelector(`.thumbnails-list .thumbnail-item[data-slide-id="${slideId}"]`);
+            if (thumb) {
+                thumb.click();
+                await new Promise(r => setTimeout(r, 50));
             }
-        }
-        
-        // ОТКЛЮЧАЕМ РЕЖИМ ЭКСПОРТА
-        document.body.classList.remove('export-mode');
-        const mainContainerForCleanup = document.querySelector('#root, .App, main');
-        if (mainContainerForCleanup) {
-            mainContainerForCleanup.classList.remove('export-mode');
-        }
-        
-        return chartImages;
+            // ждём пока основной контейнер перерисуется под нужный slideId
+            const deadline = Date.now() + 2500;
+            let main = null;
+            do {
+                main = document.querySelector(`.main-slide-area .slide-container[data-slide-id="${slideId}"]`);
+                if (main) break;
+                await new Promise(r => setTimeout(r, 100));
+            } while (Date.now() < deadline);
+
+            if (!main) main = document.querySelector('.main-slide-area .slide-container');
+            if (main) {
+                await this.waitForChartToRender(main, 2000);
+                await new Promise(r => setTimeout(r, 200));
+            } else {
+                await new Promise(r => setTimeout(r, 300));
+            }
+        };
+
+        const tasks = mapToTasks(slides, async (slide) => {
+            try {
+                // Активируем нужный слайд в UI, чтобы графики точно отрендерились
+                await clickThumbnailAndWait(slide.id);
+
+                const root = this.findChartElement(slide.id);
+                if (!root) return;
+
+                // Собираем все canvas внутри root (AG Charts и возможные обёртки)
+                let canvases = Array.from(
+                    root.querySelectorAll('.ag-chart-container canvas, canvas')
+                ).filter((c) => c.width > 0 && c.height > 0);
+
+                // Если по какой-то причине ничего не нашли, пробуем искать по самому slideId
+                if (canvases.length === 0) {
+                    const scope = document.querySelector(`[data-slide-id="${slide.id}"]`) || root;
+                    canvases = Array.from(scope.querySelectorAll('canvas')).filter((c) => c.width > 0 && c.height > 0);
+                }
+
+                // Сортируем сверху-вниз, слева-направо, чтобы сохранить порядок
+                canvases = canvases
+                    .map((c) => ({ c, r: c.getBoundingClientRect() }))
+                    .sort((a, b) => (a.r.top - b.r.top) || (a.r.left - b.r.left))
+                    .map(({ c }) => c);
+
+                if (canvases.length === 0) return;
+
+                // Ожидаем, пока графики стабилизируются
+                await this.waitForChartToRender(root, 1800);
+
+                // Преобразуем и удаляем дубликаты по содержимому
+                const seen = new Set();
+                const images = [];
+                for (const c of canvases) {
+                    try {
+                        const data = toPngDataUrl(c);
+                        if (!seen.has(data)) {
+                            seen.add(data);
+                            images.push(data);
+                        }
+                    } catch (_) {}
+                }
+
+                if (images.length > 0) {
+                    chartImages.set(slide.id, images);
+                }
+            } catch (e) {
+                console.warn('capture slide failed', slide.id, e);
+            }
+        });
+
+        await promisePool(tasks, 4);
+        // Возвращаем карту и порядок
+        return { imagesBySlide: chartImages, order: slides.map(s => s.id) };
     }
 
 
@@ -637,33 +551,23 @@ class ReportsService {
      * Поиск элемента графика с расширенными селекторами
      */
     findChartElement(slideId) {
-        // ПРИОРИТЕТ: ищем в preview области (видимый график после переключения)
-        const previewSelectors = [
-            // Точный селектор графика
-            `#root > div > main > div > div:nth-child(2) > div > div.preview-layout > div.main-slide-area > div.slide-container > div > div > div > div`,
-            // Запасные варианты для графика
-            `.slide-container .chart-container`,
-            `.slide-container .chart-full-width`,
-            `.slide-container .comparison-full-width`,
-            `.slide-container [class*="Chart-module"]`,
-            `.slide-container canvas`,
-            `.slide-container svg`,
-            // Если не найдем график, берем весь слайд
-            `.slide-container`,
-            `.main-slide-area .slide-container`
-        ];
-        
-        for (const selector of previewSelectors) {
-            const element = document.querySelector(selector);
-            if (element && element.offsetWidth > 0 && element.offsetHeight > 0) {
-                const textContent = element.textContent || '';
-                const hasChartData = textContent.includes('квартал') || textContent.includes('План') || textContent.includes('Факт') || textContent.includes('График');
-                
-                return element;
+        // 0) Сначала ищем активный основной контейнер конкретного слайда по data-slide-id
+        const mainExact = document.querySelector(`.main-slide-area .slide-container[data-slide-id="${slideId}"]`);
+        if (mainExact && mainExact.offsetWidth > 0 && mainExact.offsetHeight > 0) {
+            // Внутри него пытаемся найти специфичные контейнеры графиков (comparison, reports charts)
+            const deepSelectors = [
+                '.comparison-container.reports-chart-container > div > div',
+                '.reports-chart-container .ag-chart-container',
+                '.chart-container .ag-chart-container',
+                '.chart-container',
+            ];
+            for (const sel of deepSelectors) {
+                const el = mainExact.querySelector(sel);
+                if (el && el.offsetWidth > 0 && el.offsetHeight > 0) return el;
             }
+            return mainExact;
         }
-
-        // FALLBACK: ищем в export контейнере
+        // 1) СНАЧАЛА: ищем в export контейнере (скрытый рендер всех слайдов)
         const exportContainer = document.getElementById('export-slides-container');
         if (exportContainer) {
             
@@ -687,6 +591,26 @@ class ReportsService {
                     
                     return element;
                 }
+            }
+        }
+
+        // 2) ПРИОРИТЕТ 2: ищем в preview области (видимый график после переключения)
+        const previewSelectors = [
+            `.main-slide-area .slide-container[data-slide-id="${slideId}"] .comparison-container.reports-chart-container > div > div`,
+            `.main-slide-area .slide-container[data-slide-id="${slideId}"] .reports-chart-container .ag-chart-container`,
+            `.main-slide-area .slide-container[data-slide-id="${slideId}"] .chart-container .ag-chart-container`,
+            `.main-slide-area .slide-container[data-slide-id="${slideId}"] .chart-container`,
+            `.main-slide-area .slide-container[data-slide-id="${slideId}"]`,
+            `.slide-container[data-slide-id="${slideId}"]`,
+            `#root [data-slide-id="${slideId}"] .comparison-container.reports-chart-container > div > div`,
+            `#root [data-slide-id="${slideId}"] .reports-chart-container .ag-chart-container`,
+            `#root [data-slide-id="${slideId}"] .chart-container`,
+            `#root [data-slide-id="${slideId}"]`,
+        ];
+        for (const selector of previewSelectors) {
+            const element = document.querySelector(selector);
+            if (element && element.offsetWidth > 0 && element.offsetHeight > 0) {
+                return element;
             }
         }
 
@@ -894,370 +818,16 @@ class ReportsService {
         return ['analytics-chart', 'finance-chart', 'trends', 'plan-vs-actual', 'comparison'].includes(slideType);
     }
 
-    /**
-     * Генерация PDF отчета на клиенте
-     */
-    async generateClientPDF(report, options = {}) {
-        try {
-            // Ждем, чтобы все графики успели отрендериться
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // Сначала захватываем все графики как изображения
-            const chartImages = await this.captureAllCharts(report);
-            
-            // Проверяем, что графики действительно захвачены
-            if (chartImages.size === 0) {
-                console.warn('⚠️ Не удалось захватить ни одного графика');
-            }
-            
-            const pdf = new jsPDF({
-                orientation: options.orientation || 'landscape',
-                unit: 'mm',
-                format: options.format || 'a4'
-            });
+    // Генерация PDF удалена
 
-            // Настройки по умолчанию
-            const pageWidth = pdf.internal.pageSize.getWidth();
-            const pageHeight = pdf.internal.pageSize.getHeight();
-            const margin = 20;
-            const contentWidth = pageWidth - (margin * 2);
-            const contentHeight = pageHeight - (margin * 2);
+    // Генерация PowerPoint удалена
 
-            let currentY = margin;
-
-            // Добавляем заголовок отчета
-            pdf.setFontSize(20);
-            pdf.setFont('helvetica', 'bold');
-            pdf.text(report.title || 'Отчет', margin, currentY);
-            currentY += 15;
-
-            // Добавляем описание, если есть
-            if (report.description) {
-                pdf.setFontSize(12);
-                pdf.setFont('helvetica', 'normal');
-                pdf.text(report.description, margin, currentY);
-                currentY += 10;
-            }
-
-            // Добавляем дату создания
-            const createdDate = new Date(report.createdAt).toLocaleDateString('ru-RU');
-            pdf.setFontSize(10);
-            pdf.setFont('helvetica', 'italic');
-            pdf.text(`Создан: ${createdDate}`, margin, currentY);
-            currentY += 15;
-
-            // Добавляем слайды
-            for (let i = 0; i < report.slides.length; i++) {
-                const slide = report.slides[i];
-                
-                // Проверяем, нужна ли новая страница
-                if (currentY > pageHeight - 50) {
-                    pdf.addPage();
-                    currentY = margin;
-                }
-
-                // Заголовок слайда
-                pdf.setFontSize(16);
-                pdf.setFont('helvetica', 'bold');
-                pdf.text(`${i + 1}. ${slide.title}`, margin, currentY);
-                currentY += 10;
-
-                // Тип слайда
-                pdf.setFontSize(12);
-                pdf.setFont('helvetica', 'normal');
-                const slideTypeNames = {
-                    'title': 'Титульный слайд',
-                    'analytics-chart': 'График аналитики',
-                    'finance-chart': 'Финансовый график',
-                    'analytics-table': 'Таблица аналитики',
-                    'finance-table': 'Финансовая таблица',
-                    'comparison': 'Сравнение',
-                    'trends': 'Тренды',
-                    'plan-vs-actual': 'План vs Факт'
-                };
-                pdf.text(`Тип: ${slideTypeNames[slide.type] || slide.type}`, margin, currentY);
-                currentY += 8;
-
-                // Если это график и у нас есть изображение, добавляем его
-                if (this.isChartSlide(slide.type) && chartImages.has(slide.id)) {
-                    try {
-                        const imageData = chartImages.get(slide.id);
-                        
-                        // Проверяем, что imageData валидный
-                        if (!imageData || imageData === 'data:,') {
-                            console.warn(`⚠️ Невалидные данные изображения для слайда ${slide.id}`);
-                            currentY += 10;
-                            continue;
-                        }
-                        
-                        const imgWidth = contentWidth;
-                        const imgHeight = Math.min(imgWidth * 0.6, 120); // Увеличиваем высоту
-                        
-                        // Проверяем, поместится ли изображение на странице
-                        if (currentY + imgHeight > pageHeight - margin) {
-                            pdf.addPage();
-                            currentY = margin;
-                        }
-                        
-                        // Добавляем изображение с правильными параметрами
-                        pdf.addImage(imageData, 'PNG', margin, currentY, imgWidth, imgHeight, `chart_${slide.id}`, 'FAST');
-                        currentY += imgHeight + 10;
-                        
-                    } catch (error) {
-                        console.error(`❌ Ошибка добавления графика для слайда ${slide.id}:`, error);
-                        currentY += 10;
-                    }
-                } else if (this.isChartSlide(slide.type)) {
-                    console.warn(`⚠️ График для слайда ${slide.id} не найден в chartImages`);
-                    currentY += 10;
-                }
-
-                // Описание слайда, если есть
-                if (slide.content?.description) {
-                    pdf.setFontSize(10);
-                    pdf.text(slide.content.description, margin, currentY);
-                    currentY += 6;
-                }
-
-                // Добавляем информацию о фильтрах, если есть
-                if (slide.content?.filters) {
-                    const filters = slide.content.filters;
-                    pdf.setFontSize(9);
-                    pdf.setFont('helvetica', 'italic');
-                    
-                    const filterInfo = [];
-                    if (filters.years && filters.years.length > 0) {
-                        filterInfo.push(`Годы: ${filters.years.join(', ')}`);
-                    }
-                    if (filters.categories && filters.categories.length > 0) {
-                        filterInfo.push(`Категории: ${filters.categories.length}`);
-                    }
-                    if (filters.shops && filters.shops.length > 0) {
-                        filterInfo.push(`Магазины: ${filters.shops.length}`);
-                    }
-                    if (filters.metrics && filters.metrics.length > 0) {
-                        filterInfo.push(`Метрики: ${filters.metrics.length}`);
-                    }
-
-                    if (filterInfo.length > 0) {
-                        pdf.text(`Фильтры: ${filterInfo.join('; ')}`, margin, currentY);
-                        currentY += 6;
-                    }
-                }
-
-                currentY += 15; // Отступ между слайдами
-            }
-
-            return pdf;
-
-        } catch (error) {
-            console.error('❌ ReportsService: Ошибка генерации PDF:', error);
-            throw new Error('Ошибка генерации PDF: ' + error.message);
-        }
-    }
-
-    /**
-     * Генерация PowerPoint презентации на клиенте
-     */
-    async generateClientPPTX(report, options = {}) {
-        try {
-            // Ждем, чтобы все графики успели отрендериться
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // Сначала захватываем все графики как изображения
-            const chartImages = await this.captureAllCharts(report);
-            
-            // Проверяем, что графики действительно захвачены
-            if (chartImages.size === 0) {
-                console.warn('⚠️ Не удалось захватить ни одного графика для PowerPoint');
-            }
-            
-            const pptx = new PptxGenJS();
-
-            // Настройки презентации
-            pptx.defineLayout({ name: 'A4', width: 10, height: 7.5 });
-            pptx.layout = 'A4';
-
-            // Добавляем слайды
-            for (let i = 0; i < report.slides.length; i++) {
-                const slide = report.slides[i];
-                const pptxSlide = pptx.addSlide();
-
-                // Заголовок слайда
-                pptxSlide.addText(slide.title, {
-                    x: 0.5,
-                    y: 0.5,
-                    w: 9,
-                    h: 0.8,
-                    fontSize: 24,
-                    bold: true,
-                    color: '1f4e79',
-                    align: 'center'
-                });
-
-                // Тип слайда
-                const slideTypeNames = {
-                    'title': 'Титульный слайд',
-                    'analytics-chart': 'График аналитики',
-                    'finance-chart': 'Финансовый график',
-                    'analytics-table': 'Таблица аналитики',
-                    'finance-table': 'Финансовая таблица',
-                    'comparison': 'Сравнение',
-                    'trends': 'Тренды',
-                    'plan-vs-actual': 'План vs Факт'
-                };
-
-                pptxSlide.addText(`Тип: ${slideTypeNames[slide.type] || slide.type}`, {
-                    x: 0.5,
-                    y: 1.5,
-                    w: 9,
-                    h: 0.4,
-                    fontSize: 14,
-                    color: '666666',
-                    align: 'center'
-                });
-
-                // Если это график и у нас есть изображение, добавляем его
-                if (this.isChartSlide(slide.type) && chartImages.has(slide.id)) {
-                    try {
-                        const imageData = chartImages.get(slide.id);
-                        
-                        // Проверяем, что imageData валидный
-                        if (!imageData || imageData === 'data:,') {
-                            console.warn(`⚠️ Невалидные данные изображения для слайда ${slide.id} в PowerPoint`);
-                            console.warn(`⚠️ Данные изображения:`, imageData?.substring(0, 100));
-                        } else {
-                            
-                            // Добавляем изображение графика с правильными размерами
-                            try {
-                                pptxSlide.addImage({
-                                    data: imageData,
-                                    x: 0.5,    // позиция X в дюймах от левого края
-                                    y: 1.5,    // позиция Y в дюймах от верхнего края
-                                    w: 8.5,    // ширина в дюймах (почти вся ширина слайда)
-                                    h: 5.5     // высота в дюймах
-                                });
-                            } catch (addImageError) {
-                                console.error(`❌ Ошибка в pptxSlide.addImage() для слайда ${slide.id}:`, addImageError);
-                                console.error(`❌ Данные изображения (первые 100 символов):`, imageData?.substring(0, 100));
-                                
-                                // Пробуем альтернативный формат с процентными значениями
-                                try {
-                                    pptxSlide.addImage({
-                                        data: imageData,
-                                        x: '5%',
-                                        y: '15%', 
-                                        w: '90%',
-                                        h: '70%'
-                                    });
-                                } catch (altError) {
-                                    console.error(`❌ Альтернативный формат тоже не сработал:`, altError);
-                                }
-                            }
-                            
-                        }
-                    } catch (error) {
-                        console.error(`❌ Ошибка добавления графика для слайда ${slide.id} в PowerPoint:`, error);
-                    }
-                } else if (this.isChartSlide(slide.type)) {
-                    console.warn(`⚠️ График для слайда ${slide.id} не найден в chartImages для PowerPoint`);
-                } else {
-                    // Описание слайда, если есть
-                    if (slide.content?.description) {
-                        pptxSlide.addText(slide.content.description, {
-                            x: 0.5,
-                            y: 2.0,
-                            w: 9,
-                            h: 1.0,
-                            fontSize: 12,
-                            color: '333333',
-                            align: 'center'
-                        });
-                    }
-
-                    // Добавляем информацию о фильтрах, если есть
-                    if (slide.content?.filters) {
-                        const filters = slide.content.filters;
-                        const filterInfo = [];
-                        
-                        if (filters.years && filters.years.length > 0) {
-                            filterInfo.push(`Годы: ${filters.years.join(', ')}`);
-                        }
-                        if (filters.categories && filters.categories.length > 0) {
-                            filterInfo.push(`Категории: ${filters.categories.length}`);
-                        }
-                        if (filters.shops && filters.shops.length > 0) {
-                            filterInfo.push(`Магазины: ${filters.shops.length}`);
-                        }
-                        if (filters.metrics && filters.metrics.length > 0) {
-                            filterInfo.push(`Метрики: ${filters.metrics.length}`);
-                        }
-
-                        if (filterInfo.length > 0) {
-                            pptxSlide.addText(`Фильтры: ${filterInfo.join('; ')}`, {
-                                x: 0.5,
-                                y: 3.5,
-                                w: 9,
-                                h: 0.6,
-                                fontSize: 10,
-                                color: '666666',
-                                align: 'center'
-                            });
-                        }
-                    }
-                }
-
-                // Добавляем номер слайда
-                pptxSlide.addText(`${i + 1}`, {
-                    x: 8.5,
-                    y: 6.5,
-                    w: 1,
-                    h: 0.5,
-                    fontSize: 12,
-                    color: '999999',
-                    align: 'right'
-                });
-            }
-
-            return pptx;
-
-        } catch (error) {
-            console.error('❌ ReportsService: Ошибка генерации PowerPoint:', error);
-            throw new Error('Ошибка генерации PowerPoint: ' + error.message);
-        }
-    }
-
-    /**
-     * Экспорт в PDF через сервер
-     */
-    async exportToPDF(reportId, options = {}) {
-        try {
-            const response = await this.apiClient.post('/reports/export/pdf', {
-                report_id: reportId,
-                ...options
-            });
-            return response;
-        } catch (error) {
-            console.error('❌ ReportsService: Ошибка серверного экспорта PDF:', error);
-            throw error;
-        }
-    }
+    // Серверный экспорт PDF удален
 
     /**
      * Экспорт в PowerPoint через сервер
      */
-    async exportToPPTX(reportId, options = {}) {
-        try {
-            const response = await this.apiClient.post('/reports/export/pptx', {
-                report_id: reportId,
-                ...options
-            });
-            return response;
-        } catch (error) {
-            console.error('❌ ReportsService: Ошибка серверного экспорта PowerPoint:', error);
-            throw error;
-        }
-    }
+    // Серверный экспорт PowerPoint удален
 
     /**
      * Скачивание экспортированного файла

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComparisonChart } from '../charts';
+import ComparisonChart from '../charts/ComparisonChart';
 
 /**
  * Компонент для сравнительной аналитики.

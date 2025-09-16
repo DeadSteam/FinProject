@@ -14,6 +14,27 @@
   transition: backdrop-filter 0.3s ease-in-out;
 }
 
+/* Отключаем hover эффекты только на фоновых элементах (не внутри модального окна) */
+body.modal-open {
+  /* Отключаем pointer-events для body и всех его прямых детей, кроме модальных окон */
+  pointer-events: none;
+}
+
+body.modal-open .modal {
+  /* Восстанавливаем pointer-events для модального окна и всех его содержимого */
+  pointer-events: auto;
+}
+
+/* Дополнительно отключаем hover эффекты на фоновых элементах */
+body.modal-open *:not(.modal):not(.modal *):hover {
+  /* Отключаем все hover эффекты */
+  background-color: inherit !important;
+  border-color: inherit !important;
+  box-shadow: inherit !important;
+  transform: inherit !important;
+  opacity: inherit !important;
+}
+
 .modal.modalOpen {
   backdrop-filter: blur(4px);
 }

@@ -10,7 +10,7 @@ import {
     YearlyPlanModal 
 } from '../modals';
 import Button from '../ui/Button';
-import { BaseChart } from '../charts';
+import BaseChart from '../charts/BaseChart';
 import DataTable from '../ui/DataTable';
 
 import ChartControlPanel from './ChartControlPanel';

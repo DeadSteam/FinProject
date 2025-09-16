@@ -1,21 +1,13 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNotifications } from '../../hooks';
 import { useReportData } from './ReportDataProvider';
+import { getProcessedSlideData } from './utils/slideDataLoader';
 import DataSourceSelector from './DataSourceSelector';
 import SlideSettings from './SlideSettings';
 import SlidePreview from './SlidePreview';
 import SlideFilters from './SlideFilters';
 import './SlideEditor.css';
-
-// Безопасное определение development режима
-const isDevelopment = () => {
-    if (typeof window !== 'undefined') {
-        return window.location.hostname === 'localhost' && ['3000', '3001'].includes(window.location.port);
-    }
-    return false;
-};
-
-const dev = isDevelopment();
+import { dev } from '../../utils/env';
 
 /**
  * Компонент редактора слайдов.
@@ -30,20 +22,23 @@ const SlideEditor = ({
     isEditing = false 
 }) => {
     const { showSuccess, showError, showInfo } = useNotifications();
-    const { loadSlideData, transformDataForChart } = useReportData();
+    const { loadSlideData } = useReportData();
     
     // Локальное состояние слайда
-    const [localSlide, setLocalSlide] = useState(() => ({
-        id: slide?.id || Date.now().toString(),
-        type: slide?.type || 'title',
-        title: slide?.title || 'Новый слайд',
-        description: slide?.description || '',
-        content: {
-            settings: slide?.content?.settings || {},
-            filters: slide?.content?.filters || {}
-        },
-        ...slide
-    }));
+    const [localSlide, setLocalSlide] = useState(() => {
+        const initialState = {
+            id: slide?.id || Date.now().toString(),
+            type: slide?.type || 'title',
+            title: slide?.title || 'Новый слайд',
+            description: slide?.description || '',
+            content: {
+                settings: slide?.content?.settings || {},
+                filters: slide?.content?.filters || {}
+            },
+            ...slide
+        };
+        return initialState;
+    });
     
     // Состояние предпросмотра
     const [previewData, setPreviewData] = useState(null);
@@ -113,6 +108,7 @@ const SlideEditor = ({
         // Преобразуем поля showDeviation и showPercentage в массив metrics для финансовых слайдов
         let processedFilters = { ...newFilters };
         
+        
         if (localSlide.type === 'finance-chart' || localSlide.type === 'finance-table') {
             const metrics = [];
             
@@ -131,6 +127,32 @@ const SlideEditor = ({
             }
             
             processedFilters.metrics = metrics;
+            
+            // Преобразуем фильтры в формат, ожидаемый ReportDataProvider
+            if (newFilters.category && newFilters.category !== 'all') {
+                // Правильно обрабатываем UUID категории
+                processedFilters.category = newFilters.category;
+                processedFilters.categoryId = newFilters.category;
+                // Добавляем в массив для совместимости с ReportDataProvider
+                processedFilters.categories = [newFilters.category];
+            }
+            if (newFilters.shop && newFilters.shop !== 'all') {
+                // Правильно обрабатываем UUID магазина
+                processedFilters.shop = newFilters.shop;
+                processedFilters.shopId = newFilters.shop;
+                // Добавляем в массив для совместимости с ReportDataProvider
+                processedFilters.shops = [newFilters.shop];
+            }
+            if (newFilters.year) {
+                processedFilters.year = newFilters.year;
+                // Добавляем в массив для совместимости с ReportDataProvider
+                processedFilters.years = [newFilters.year];
+            }
+            
+            // Добавляем метрики по умолчанию, если не выбраны
+            if (processedFilters.metrics.length === 0) {
+                processedFilters.metrics = ['plan', 'actual'];
+            }
             
         }
         
@@ -169,32 +191,20 @@ const SlideEditor = ({
         setIsLoadingPreview(true);
         
         try {
-            const data = await loadSlideData(
-                localSlide.type, 
-                localSlide.content.filters, 
-                localSlide.content.settings
+            const processed = await getProcessedSlideData(
+                { type: localSlide.type, content: { filters: localSlide.content.filters, settings: localSlide.content.settings } },
+                loadSlideData
             );
-            
-            if (data) {
-                const transformedData = transformDataForChart(
-                    data, 
-                    localSlide.type, 
-                    localSlide.content.filters?.metrics || ['plan', 'actual']
-                );
-                
-                const previewData = {
-                    ...data,
-                    chartData: transformedData,
-                    tableData: data.tableData || data.metrics || []
+            if (processed) {
+                const normalized = {
+                    ...processed,
+                    tableData: processed.tableData || processed.metrics || []
                 };
-                
-                // Кэшируем данные
                 previewCache.current.set(cacheKey, {
-                    data: previewData,
+                    data: normalized,
                     timestamp: Date.now()
                 });
-                
-                setPreviewData(previewData);
+                setPreviewData(normalized);
             } else {
                 setPreviewData(null);
             }
@@ -205,7 +215,7 @@ const SlideEditor = ({
         } finally {
             setIsLoadingPreview(false);
         }
-    }, [localSlide.type, localSlide.content.filters, localSlide.content.settings, loadSlideData, transformDataForChart, showError]);
+    }, [localSlide.type, localSlide.content.filters, localSlide.content.settings, loadSlideData, showError]);
 
     // Автоматическая загрузка данных при изменении фильтров с умной дебаунсинг логикой
     useEffect(() => {
@@ -392,17 +402,17 @@ const SlideEditor = ({
 
                     {activeTab === 'preview' && (
                         <SlidePreview
-                            slideType={localSlide.type}
-                            title={localSlide.title}
-                            description={localSlide.description}
-                            settings={localSlide.content.settings}
-                            filters={localSlide.content.filters}
-                            previewData={previewData}
-                            isLoading={isLoadingPreview}
-                            availableData={availableData}
-                            onRefreshData={loadPreviewData}
-                            onGoToSettings={() => setActiveTab('settings')}
-                        />
+                                slideType={localSlide.type}
+                                title={localSlide.title}
+                                description={localSlide.description}
+                                settings={localSlide.content.settings}
+                                filters={localSlide.content.filters}
+                                previewData={previewData}
+                                isLoading={isLoadingPreview}
+                                availableData={availableData}
+                                onRefreshData={loadPreviewData}
+                                onGoToSettings={() => setActiveTab('settings')}
+                            />
                     )}
                 </div>
             </div>

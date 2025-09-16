@@ -34,11 +34,12 @@ const Modal = forwardRef(({
         }
     }, [closeOnEscape, persistent, onClose]);
 
-    // Управление scroll body
+    // Управление scroll body и отключение hover эффектов
     useEffect(() => {
         if (isOpen && preventBodyScroll) {
             previousActiveElement.current = document.activeElement;
             document.body.style.overflow = 'hidden';
+            document.body.classList.add('modal-open');
             
             // Focus trap
             if (ref && ref.current) {
@@ -46,6 +47,7 @@ const Modal = forwardRef(({
             }
         } else {
             document.body.style.overflow = '';
+            document.body.classList.remove('modal-open');
             
             // Restore focus
             if (previousActiveElement.current) {
@@ -55,6 +57,7 @@ const Modal = forwardRef(({
 
         return () => {
             document.body.style.overflow = '';
+            document.body.classList.remove('modal-open');
         };
     }, [isOpen, preventBodyScroll, ref]);
 

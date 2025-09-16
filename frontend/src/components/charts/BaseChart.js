@@ -1,8 +1,9 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import Chart from '../ui/Chart';
+import AGChartWrapper from './AGChartWrapper';
 import LoadingSpinner from '../common/LoadingSpinner';
 import AnalyticsDataTable from '../ui/AnalyticsDataTable';
 import AnalyticsTable from '../analytics/AnalyticsTable';
+import { prepareChartData, calculateStatistics as calcStats, formatTableData, getDefaultTableColumns, toSafeNumber } from './utils/chartDataUtils';
 
 /**
  * Базовый универсальный компонент для всех типов графиков
@@ -44,6 +45,7 @@ const BaseChart = ({
     disableAnimations = false,
     className = '',
     showForecast = false,
+    smoothing = false,
     
     // Callbacks
     onDataChange,
@@ -74,39 +76,7 @@ const BaseChart = ({
         return () => clearTimeout(timer);
     }, [showForecast, chartType]); // Убираем data и selectedMetrics
     
-    // Вспомогательная функция безопасного преобразования чисел
-    const toSafeNumber = (value) => {
-        const num = typeof value === 'string' ? parseFloat(String(value).replace(/\s/g, '').replace(',', '.')) : value;
-        return Number.isFinite(num) ? num : 0;
-    };
-
-
-    // Универсальные функции подготовки данных
-    const prepareDataByGroup = (sourceData, groupType) => {
-        if (!sourceData) return [];
-        
-        const dataMap = {
-            categories: sourceData.categories || sourceData.planVsActual?.categories,
-            shops: sourceData.shops || sourceData.planVsActual?.shops,
-            metrics: sourceData.metrics || sourceData.planVsActual?.metrics,
-            years: sourceData.yearly || sourceData.comparison?.yearly,
-            monthly: sourceData.monthly || sourceData.trends?.monthly,
-            quarterly: sourceData.quarterly || sourceData.trends?.quarterly
-        };
-        
-        const groupData = dataMap[groupType];
-        if (!groupData) return [];
-        
-        return Object.entries(groupData).map(([key, itemData]) => ({
-            label: key,
-            plan: toSafeNumber(itemData.plan || 0),
-            actual: toSafeNumber(itemData.actual || itemData.fact || 0),
-            deviation: toSafeNumber(itemData.deviation ?? (toSafeNumber(itemData.plan || 0) - toSafeNumber(itemData.actual || itemData.fact || 0))),
-            percentage: toSafeNumber(itemData.percentage ?? (toSafeNumber(itemData.plan || 0) > 0 ? ((toSafeNumber(itemData.actual || itemData.fact || 0) / toSafeNumber(itemData.plan || 0)) * 100) : 0)),
-            // Дополнительные поля
-            ...itemData
-        }));
-    };
+    // Унификация подготовки данных: используем utils/chartDataUtils
 
     // Подготовка данных для графика
     const chartData = useMemo(() => {
@@ -116,8 +86,8 @@ const BaseChart = ({
         if (data && Array.isArray(data)) {
             preparedData = data;
         } else if (analyticsData) {
-            // Иначе подготавливаем из analyticsData
-            preparedData = prepareDataByGroup(analyticsData, groupBy);
+            // Иначе подготавливаем из analyticsData единым методом
+            preparedData = prepareChartData(analyticsData, groupBy, filters);
         }
         
         // Если включен прогноз, добавляем прогнозные данные
@@ -171,37 +141,43 @@ const BaseChart = ({
             preparedData = forecastData;
         }
         
+        // Сглаживание (скользящее среднее) для план/факт, если включено
+        if (smoothing && preparedData.length > 0) {
+            const windowSize = 3;
+            const applySMA = (arr, key) => {
+                const res = [...arr];
+                for (let i = 0; i < arr.length; i++) {
+                    let sum = 0;
+                    let count = 0;
+                    for (let j = Math.max(0, i - windowSize + 1); j <= i; j++) {
+                        sum += toSafeNumber(arr[j]?.[key] ?? 0);
+                        count++;
+                    }
+                    res[i] = { ...res[i], [key]: count > 0 ? sum / count : 0 };
+                }
+                return res;
+            };
+            let smoothed = preparedData;
+            ['plan','actual','fact','deviation','percentage'].forEach((metric) => {
+                if (preparedData.some(it => typeof it[metric] !== 'undefined')) {
+                    smoothed = applySMA(smoothed, metric);
+                }
+            });
+            preparedData = smoothed;
+        }
+
         return preparedData;
-    }, [data, analyticsData, groupBy, showForecast, selectedMetrics]);
+    }, [data, analyticsData, groupBy, showForecast, smoothing, selectedMetrics]);
 
     // Подготовка данных для таблицы
     const preparedTableData = useMemo(() => {
         if (tableData) return tableData;
-        
-        return chartData.map(item => ({
-            period: item.label,
-            plan: item.plan,
-            actual: item.actual,
-            deviation: item.deviation,
-            percentage: item.percentage,
-            ...item
-        }));
+        if (!Array.isArray(chartData)) return [];
+        return formatTableData(chartData);
     }, [chartData, tableData]);
 
     // Стандартные колонки таблицы
-    const defaultTableColumns = [
-        { 
-            key: 'period', 
-            title: groupBy === 'categories' ? 'Категория' : 
-                   groupBy === 'shops' ? 'Магазин' : 
-                   groupBy === 'metrics' ? 'Показатель' : 'Период',
-            sortable: true 
-        },
-        { key: 'plan', title: 'План', sortable: true, format: 'number' },
-        { key: 'actual', title: 'Факт', sortable: true, format: 'number' },
-        { key: 'deviation', title: 'Отклонение', sortable: true, format: 'number' },
-        { key: 'percentage', title: '% выполнения', sortable: true, format: 'percent' }
-    ];
+    const defaultTableColumns = getDefaultTableColumns(groupBy);
 
     // Преобразуем колонки под формат AnalyticsTable (ожидает header)
     const normalizeColumns = (cols) => {
@@ -214,20 +190,7 @@ const BaseChart = ({
     // Статистика
     const statistics = useMemo(() => {
         if (!chartData || chartData.length === 0) return null;
-        
-        const totalPlan = chartData.reduce((sum, item) => sum + item.plan, 0);
-        const totalActual = chartData.reduce((sum, item) => sum + item.actual, 0);
-        const totalDeviation = chartData.reduce((sum, item) => sum + item.deviation, 0);
-        const avgPercentage = chartData.length > 0 ? 
-            chartData.reduce((sum, item) => sum + item.percentage, 0) / chartData.length : 0;
-        
-        return {
-            totalPlan,
-            totalActual,
-            totalDeviation,
-            avgPercentage,
-            itemsCount: chartData.length
-        };
+        return calcStats(chartData);
     }, [chartData]);
 
     // Состояния загрузки и ошибок
@@ -252,7 +215,7 @@ const BaseChart = ({
     return (
         <div className={`base-chart ${className}`}>
             {(viewMode === 'chart' || viewMode === 'both') && (
-                <Chart
+                <AGChartWrapper
                     key={animationKey}
                     type={chartType}
                     data={chartData}
@@ -260,6 +223,7 @@ const BaseChart = ({
                     title={showLegend ? title : undefined}
                     disableAnimations={disableAnimations}
                     noMargins={true}
+                    style={{ height: '100%' }}
                 />
             )}
 

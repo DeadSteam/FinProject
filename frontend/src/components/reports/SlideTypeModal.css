@@ -1,72 +1,4 @@
-/* SlideTypeModal.css */
-
-/* Предотвращение моргания модального окна */
-.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2000;
-    overflow: auto;
-    will-change: auto;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
-    /* Убираем моргание при движении курсора */
-    transition: none !important;
-    animation: none !important;
-    /* Полностью убираем фон */
-    background-color: transparent !important;
-    background: transparent !important;
-}
-
-/* Убираем все hover эффекты на overlay */
-.modal:hover {
-    background-color: transparent !important;
-    transform: translateZ(0) !important;
-}
-
-/* Убираем анимации при движении курсора */
-.modal * {
-    transition: none !important;
-    animation: none !important;
-}
-
-/* Быстрые переходы для карточек выбора типа слайда */
-.modal .slide-type-card {
-    transition: all 0.15s ease !important;
-    animation: none !important;
-}
-
-.modal .slide-type-card:hover {
-    border-color: var(--primary) !important;
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15) !important;
-    transform: translateY(-2px) !important;
-    background: var(--bg-primary) !important;
-}
-
-.modal .slide-type-card.selected {
-    border-color: var(--primary) !important;
-    background: rgba(79, 70, 229, 0.05) !important;
-    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1) !important;
-}
-
-.modal-content {
-    will-change: auto;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
-    max-height: 90vh;
-    overflow: auto;
-}
+/* SlideTypeModal.css - стили для контента модального окна */
 
 .slide-types-container {
     display: flex;
@@ -132,40 +64,24 @@
     border: 2px solid var(--border);
     border-radius: var(--border-radius);
     background: var(--bg-primary);
-    transition: none !important;
-    animation: none !important;
     cursor: pointer;
     text-align: center;
     position: relative;
     overflow: hidden;
-    will-change: auto;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
+    /* Простые, стабильные стили без анимаций */
+    transition: background-color 0.1s ease, border-color 0.1s ease;
 }
 
-/* без верхней полоски */
-
+/* Простые hover эффекты */
 .slide-type-card:hover {
-    border-color: var(--border);
-    box-shadow: none;
-    transform: none;
-    background: var(--bg-primary);
-}
-
-.slide-type-card:hover::before {
-    transform: scaleX(1);
+    border-color: var(--primary);
+    background-color: var(--bg-secondary);
 }
 
 .slide-type-card.selected {
     border-color: var(--primary);
     background: rgba(79, 70, 229, 0.05);
     box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
-}
-
-.slide-type-card.selected::before {
-    transform: scaleX(1);
 }
 
 /* Текстовый блок слева + стрелка справа (как на макете) */

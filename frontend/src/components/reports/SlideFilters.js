@@ -1,32 +1,23 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { debounce } from 'lodash';
 import { useNotifications } from '../../hooks';
-import { useReportData } from './ReportDataProvider';
-import ComparisonFilters from './ComparisonFilters';
+import reportsService from '../../services/reportsService';
+import AnalyticsFilters from '../../components/analytics/AnalyticsFilters';
 import './SlideFilters.css';
-
-// Безопасное определение development режима
-const isDevelopment = () => {
-    if (typeof window !== 'undefined') {
-        return window.location.hostname === 'localhost' && ['3000', '3001'].includes(window.location.port);
-    }
-    return false;
-};
-
-const dev = isDevelopment();
+import '../../styles/components/toggle.css';
+import { dev } from '../../utils/env';
 
 /**
  * Компонент фильтров для слайдов.
  * Предоставляет интерфейс для настройки фильтров в зависимости от типа слайда.
  */
-const SlideFilters = ({ 
-    slideType, 
-    filters = {}, 
-    availableData = {}, 
-    onFiltersChange 
+const SlideFilters = ({
+    slideType,
+    filters = {},
+    availableData = {},
+    onFiltersChange
 }) => {
     const { showError } = useNotifications();
-    const { loadSlideData } = useReportData();
     
     // Локальное состояние фильтров
     const [localFilters, setLocalFilters] = useState(filters);
@@ -44,6 +35,7 @@ const SlideFilters = ({
         }
     }, [availableData.metrics, localFilters.category]);
 
+
     // Состояние для метрик текущей категории
     const [categoryMetrics, setCategoryMetrics] = useState([]);
     const [loadingMetrics, setLoadingMetrics] = useState(false);
@@ -57,19 +49,8 @@ const SlideFilters = ({
 
         setLoadingMetrics(true);
         try {
-            const token = localStorage.getItem('authToken');
-            const headers = {
-                'Authorization': `Bearer ${token}`
-            };
-            
-            const response = await fetch(`/api/v1/finance/metrics/search?category_id=${categoryId}&limit=100`, { headers });
-            if (response.ok) {
-                const metrics = await response.json();
-                setCategoryMetrics(metrics);
-            } else {
-                // Если не удалось загрузить, показываем все метрики
-                setCategoryMetrics(availableData.metrics || []);
-            }
+            const metrics = await reportsService.getMetricsForCategory(categoryId);
+            setCategoryMetrics(Array.isArray(metrics) ? metrics : (availableData.metrics || []));
         } catch (e) {
             if (dev) console.warn('Не удалось загрузить метрики для категории:', e);
             setCategoryMetrics(availableData.metrics || []);
@@ -105,6 +86,18 @@ const SlideFilters = ({
         // Сбрасываем метрику при изменении категории
         if (filterKey === 'category') {
             newFilters.metric = 'all';
+            // Обновляем массив категорий для совместимости с ReportDataProvider
+            newFilters.categories = value !== 'all' ? [value] : [];
+        }
+        
+        // Обновляем массив магазинов для совместимости с ReportDataProvider
+        if (filterKey === 'shop') {
+            newFilters.shops = value !== 'all' ? [value] : [];
+        }
+        
+        // Обновляем массив годов для совместимости с ReportDataProvider
+        if (filterKey === 'year') {
+            newFilters.years = value ? [value] : [];
         }
         
         setLocalFilters(newFilters);
@@ -248,11 +241,12 @@ const SlideFilters = ({
                         
                         <div className="col-md-4">
                             <div className="mb-3">
-                                <label className="form-label">Магазин</label>
+                                <label className="form-label">Магазин {slideType.includes('finance') ? '*' : ''}</label>
                                 <select
                                     className="form-select"
                                     value={localFilters.shop || 'all'}
                                     onChange={(e) => handleFilterChange('shop', e.target.value)}
+                                    required={slideType.includes('finance')}
                                 >
                                     <option value="all">Все магазины</option>
                                     {(availableData.shops || []).map(shop => (
@@ -266,7 +260,7 @@ const SlideFilters = ({
                         
                         <div className="col-md-4">
                             <div className="mb-3">
-                                <label className="form-label">Категория</label>
+                                <label className="form-label">Категория {slideType.includes('finance') ? '*' : ''}</label>
                                 <select
                                     className="form-select"
                                     value={localFilters.category || 'all'}
@@ -274,6 +268,7 @@ const SlideFilters = ({
                                         const value = e.target.value;
                                         handleFilterChange('category', value);
                                     }}
+                                    required={slideType.includes('finance')}
                                 >
                                     <option value="all">Все категории</option>
                                     {(availableData.categories || []).map(category => (
@@ -379,11 +374,14 @@ const SlideFilters = ({
     // Фильтры для сравнения
     const renderComparisonFilters = () => {
         return (
-            <ComparisonFilters
-                filters={localFilters}
-                availableData={availableData}
-                onFiltersChange={handleMultipleFilterChange}
-            />
+            <div className="reports-filters-adapter">
+                <AnalyticsFilters
+                    filters={localFilters}
+                    onChange={handleMultipleFilterChange}
+                    availableData={availableData}
+                    isLoading={false}
+                />
+            </div>
         );
     };
 
@@ -391,22 +389,28 @@ const SlideFilters = ({
     const renderTrendsFilters = () => {
         // Полное переиспользование тех же фильтров, что и у сравнения
         return (
-            <ComparisonFilters
-                filters={localFilters}
-                availableData={availableData}
-                onFiltersChange={handleMultipleFilterChange}
-            />
+            <div className="reports-filters-adapter">
+                <AnalyticsFilters
+                    filters={localFilters}
+                    onChange={handleMultipleFilterChange}
+                    availableData={availableData}
+                    isLoading={false}
+                />
+            </div>
         );
     };
 
     // Фильтры для план vs факт (переиспользуем ComparisonFilters)
     const renderPlanVsActualFilters = () => {
         return (
-            <ComparisonFilters
-                filters={localFilters}
-                availableData={availableData}
-                onFiltersChange={handleMultipleFilterChange}
-            />
+            <div className="reports-filters-adapter">
+                <AnalyticsFilters
+                    filters={localFilters}
+                    onChange={handleMultipleFilterChange}
+                    availableData={availableData}
+                    isLoading={false}
+                />
+            </div>
         );
     };
 
@@ -418,3 +422,4 @@ const SlideFilters = ({
 };
 
 export default SlideFilters;
+

@@ -1,6 +1,8 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import SearchableSelect from '../ui/SearchableSelect';
 import styles from './AnalyticsFilters.module.css';
+import useFilters from '../../hooks/useFilters';
+import '../../styles/components/toggle.css';
 
 // Безопасное определение development режима
 const isDevelopment = () => {
@@ -19,7 +21,17 @@ const dev = isDevelopment();
 const AnalyticsFilters = ({ filters, onChange, availableData, isLoading }) => {
     const [isExpanded, setIsExpanded] = useState(true);
     const [hoveredMetric, setHoveredMetric] = useState(null);
-    
+    const { filters: localFilters, update, selection } = useFilters(filters, availableData);
+
+    // Пробрасываем изменения наверх при изменении локальных фильтров
+    const notifyParent = useCallback((next) => {
+        onChange?.(next);
+    }, [onChange]);
+
+    useMemo(() => {
+        notifyParent(localFilters);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [localFilters]);
 
     if (!availableData || !availableData.years) {
         if (dev) {
@@ -43,83 +55,44 @@ const AnalyticsFilters = ({ filters, onChange, availableData, isLoading }) => {
     }
 
     const handleYearsChange = useCallback((selectedYears) => {
-        onChange({
-            ...filters,
-            years: selectedYears
-        });
-    }, [filters, onChange]);
+        update({ years: selectedYears });
+    }, [update]);
 
     const handleCategoriesChange = useCallback((selectedCategories) => {
-        onChange({
-            ...filters,
-            categories: selectedCategories
-        });
-    }, [filters, onChange]);
+        update({ categories: selectedCategories });
+    }, [update]);
 
     const handleShopsChange = useCallback((selectedShops) => {
-        onChange({
-            ...filters,
-            shops: selectedShops
-        });
-    }, [filters, onChange]);
+        update({ shops: selectedShops });
+    }, [update]);
 
     const handleMetricsChange = useCallback((selectedMetrics) => {
-        onChange({
-            ...filters,
-            metrics: selectedMetrics
-        });
-    }, [filters, onChange]);
+        update({ metrics: selectedMetrics });
+    }, [update]);
 
 
-    const selectAllYears = useCallback(() => {
-        const allYears = availableData.years.map(year => year.id);
-        handleYearsChange(allYears);
-    }, [availableData.years, handleYearsChange]);
-
-    const clearAllYears = useCallback(() => {
-        handleYearsChange([]);
-    }, [handleYearsChange]);
-
-    const selectAllCategories = useCallback(() => {
-        const allCategories = availableData.categories.map(cat => cat.id);
-        handleCategoriesChange(allCategories);
-    }, [availableData.categories, handleCategoriesChange]);
-
-    const clearAllCategories = useCallback(() => {
-        handleCategoriesChange([]);
-    }, [handleCategoriesChange]);
-
-    const selectAllShops = useCallback(() => {
-        const allShops = availableData.shops.map(shop => shop.id);
-        handleShopsChange(allShops);
-    }, [availableData.shops, handleShopsChange]);
-
-    const clearAllShops = useCallback(() => {
-        handleShopsChange([]);
-    }, [handleShopsChange]);
-
-    const selectAllMetrics = useCallback(() => {
-        const allMetrics = availableData.metrics.map(metric => metric.id);
-        handleMetricsChange(allMetrics);
-    }, [availableData.metrics, handleMetricsChange]);
-
-    const clearAllMetrics = useCallback(() => {
-        handleMetricsChange([]);
-    }, [handleMetricsChange]);
+    const selectAllYears = useCallback(() => selection.selectAllYears(), [selection]);
+    const clearAllYears = useCallback(() => selection.clearAllYears(), [selection]);
+    const selectAllCategories = useCallback(() => selection.selectAllCategories(), [selection]);
+    const clearAllCategories = useCallback(() => selection.clearAllCategories(), [selection]);
+    const selectAllShops = useCallback(() => selection.selectAllShops(), [selection]);
+    const clearAllShops = useCallback(() => selection.clearAllShops(), [selection]);
+    const selectAllMetrics = useCallback(() => selection.selectAllMetrics(), [selection]);
+    const clearAllMetrics = useCallback(() => selection.clearAllMetrics(), [selection]);
 
     const toggleMetric = useCallback((metricId) => {
-        const currentMetrics = filters.metrics || [];
+        const currentMetrics = (localFilters.metrics || []);
         const newMetrics = currentMetrics.includes(metricId)
             ? currentMetrics.filter(id => id !== metricId)
             : [...currentMetrics, metricId];
         handleMetricsChange(newMetrics);
-    }, [filters.metrics, handleMetricsChange]);
+    }, [localFilters.metrics, handleMetricsChange]);
 
     // Мемоизированные вычисления
-    const selectedYearsCount = useMemo(() => filters.years?.length || 0, [filters.years]);
-    const selectedCategoriesCount = useMemo(() => filters.categories?.length || 0, [filters.categories]);
-    const selectedShopsCount = useMemo(() => filters.shops?.length || 0, [filters.shops]);
-    const selectedMetricsCount = useMemo(() => filters.metrics?.length || 0, [filters.metrics]);
+    const selectedYearsCount = useMemo(() => localFilters.years?.length || 0, [localFilters.years]);
+    const selectedCategoriesCount = useMemo(() => localFilters.categories?.length || 0, [localFilters.categories]);
+    const selectedShopsCount = useMemo(() => localFilters.shops?.length || 0, [localFilters.shops]);
+    const selectedMetricsCount = useMemo(() => localFilters.metrics?.length || 0, [localFilters.metrics]);
 
     const totalYears = useMemo(() => availableData.years?.length || 0, [availableData.years]);
     const totalCategories = useMemo(() => availableData.categories?.length || 0, [availableData.categories]);
@@ -129,10 +102,10 @@ const AnalyticsFilters = ({ filters, onChange, availableData, isLoading }) => {
     return (
         <div className={styles.analyticsFilters}>
             {/* Компактный заголовок */}
-            <div className={styles.filtersHeader}>
-                <h5 className={styles.filtersTitle}>
+            <div className={`card-header ${styles.filtersHeader}`}>
+                <h6 className="mb-0">
                     Фильтры данных
-                </h5>
+                </h6>
                 <small className={styles.filtersSummary}>
                     {selectedYearsCount}/{totalYears} лет, 
                     {selectedCategoriesCount}/{totalCategories} категорий, 
@@ -166,7 +139,7 @@ const AnalyticsFilters = ({ filters, onChange, availableData, isLoading }) => {
                         <div className={styles.filterCardBody}>
                             <SearchableSelect
                                 options={availableData.years}
-                                value={filters.years || []}
+                                value={localFilters.years || []}
                                 onChange={handleYearsChange}
                                 placeholder="Годы..."
                                 multiple={true}
@@ -176,9 +149,7 @@ const AnalyticsFilters = ({ filters, onChange, availableData, isLoading }) => {
                                 size="sm"
                             />
                             <div className={styles.filterCardFooter}>
-                                <span className={styles.filterCardFooterText}>
-                                    Выбрано: {filters.years?.length || 0}
-                                </span>
+                                <span className={styles.filterCardFooterText}>Выбрано: {localFilters.years?.length || 0}</span>
                             </div>
                         </div>
 
@@ -205,9 +176,9 @@ const AnalyticsFilters = ({ filters, onChange, availableData, isLoading }) => {
                             </div>
                         </div>
                         <div className={styles.filterCardBody}>
-                            <SearchableSelect
+                            <SearchableSelect 
                                 options={availableData.categories}
-                                value={filters.categories || []}
+                                value={localFilters.categories || []}
                                 onChange={handleCategoriesChange}
                                 placeholder="Категории..."
                                 multiple={true}
@@ -217,9 +188,7 @@ const AnalyticsFilters = ({ filters, onChange, availableData, isLoading }) => {
                                 size="sm"
                             />
                             <div className={styles.filterCardFooter}>
-                                <span className={styles.filterCardFooterText}>
-                                    Выбрано: {filters.categories?.length || 0}
-                                </span>
+                                <span className={styles.filterCardFooterText}>Выбрано: {localFilters.categories?.length || 0}</span>
                             </div>
                         </div>
 
@@ -246,9 +215,9 @@ const AnalyticsFilters = ({ filters, onChange, availableData, isLoading }) => {
                             </div>
                         </div>
                         <div className={styles.filterCardBody}>
-                            <SearchableSelect
+                            <SearchableSelect 
                                 options={availableData.shops}
-                                value={filters.shops || []}
+                                value={localFilters.shops || []}
                                 onChange={handleShopsChange}
                                 placeholder="Магазины..."
                                 multiple={true}
@@ -258,9 +227,7 @@ const AnalyticsFilters = ({ filters, onChange, availableData, isLoading }) => {
                                 size="sm"
                             />
                             <div className={styles.filterCardFooter}>
-                                <span className={styles.filterCardFooterText}>
-                                    Выбрано: {filters.shops?.length || 0}
-                                </span>
+                                <span className={styles.filterCardFooterText}>Выбрано: {localFilters.shops?.length || 0}</span>
                             </div>
                         </div>
 
@@ -290,53 +257,53 @@ const AnalyticsFilters = ({ filters, onChange, availableData, isLoading }) => {
                             <div className={styles.metricsToggles}>
                                 <div className={styles.toggleItem}>
                                     <span className={styles.toggleText}>Факт</span>
-                                    <label className={`${styles.toggleSwitch} ${filters.metrics?.includes('actual') ? styles.active : ''}`}>
+                                    <label className={`toggle-switch ${localFilters.metrics?.includes('actual') ? styles.active : ''}`}>
                                         <input
-                                            className={styles.toggleInput}
+                                            className="toggle-input"
                                             type="checkbox"
-                                            checked={filters.metrics?.includes('actual') || false}
+                                            checked={localFilters.metrics?.includes('actual') || false}
                                             onChange={() => toggleMetric('actual')}
                                         />
-                                        <span className={styles.toggleSlider}></span>
+                                        <span className="toggle-slider"></span>
                                     </label>
                                 </div>
                                 
                                 <div className={styles.toggleItem}>
                                     <span className={styles.toggleText}>План</span>
-                                    <label className={`${styles.toggleSwitch} ${filters.metrics?.includes('plan') ? styles.active : ''}`}>
+                                    <label className={`toggle-switch ${localFilters.metrics?.includes('plan') ? styles.active : ''}`}>
                                         <input
-                                            className={styles.toggleInput}
+                                            className="toggle-input"
                                             type="checkbox"
-                                            checked={filters.metrics?.includes('plan') || false}
+                                            checked={localFilters.metrics?.includes('plan') || false}
                                             onChange={() => toggleMetric('plan')}
                                         />
-                                        <span className={styles.toggleSlider}></span>
+                                        <span className="toggle-slider"></span>
                                     </label>
                                 </div>
                                 
                                 <div className={styles.toggleItem}>
                                     <span className={styles.toggleText}>Отклонение</span>
-                                    <label className={`${styles.toggleSwitch} ${filters.metrics?.includes('deviation') ? styles.active : ''}`}>
+                                    <label className={`toggle-switch ${localFilters.metrics?.includes('deviation') ? styles.active : ''}`}>
                                         <input
-                                            className={styles.toggleInput}
+                                            className="toggle-input"
                                             type="checkbox"
-                                            checked={filters.metrics?.includes('deviation') || false}
+                                            checked={localFilters.metrics?.includes('deviation') || false}
                                             onChange={() => toggleMetric('deviation')}
                                         />
-                                        <span className={styles.toggleSlider}></span>
+                                        <span className="toggle-slider"></span>
                                     </label>
                                 </div>
                                 
                                 <div className={styles.toggleItem}>
                                     <span className={styles.toggleText}>Процент</span>
-                                    <label className={`${styles.toggleSwitch} ${filters.metrics?.includes('percentage') ? styles.active : ''}`}>
+                                    <label className={`toggle-switch ${localFilters.metrics?.includes('percentage') ? styles.active : ''}`}>
                                         <input
-                                            className={styles.toggleInput}
+                                            className="toggle-input"
                                             type="checkbox"
-                                            checked={filters.metrics?.includes('percentage') || false}
+                                            checked={localFilters.metrics?.includes('percentage') || false}
                                             onChange={() => toggleMetric('percentage')}
                                         />
-                                        <span className={styles.toggleSlider}></span>
+                                        <span className="toggle-slider"></span>
                                     </label>
                                 </div>
                             </div>

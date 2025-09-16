@@ -1,10 +1,9 @@
 import React from 'react';
 import BaseChart from './BaseChart';
-import { prepareChartData, calculateStatistics } from './utils/chartDataUtils';
 
 /**
  * Специализированный компонент для графиков "План vs Факт"
- * Использует BaseChart с предустановленными настройками
+ * Использует унифицированный ChartWrapper
  */
 const PlanVsActualChart = ({
     analyticsData,
@@ -24,25 +23,17 @@ const PlanVsActualChart = ({
     onDataChange,
     onFilterChange
 }) => {
-    
-    // Подготавливаем данные для графика
-    const chartData = prepareChartData(analyticsData, groupBy, filters);
-    
-    // Вычисляем статистику
-    const statistics = calculateStatistics(chartData);
-    
     return (
         <BaseChart
-            data={chartData}
             analyticsData={analyticsData}
             filters={filters}
             isLoading={isLoading}
-            showControls={showControls}
-            viewMode={viewMode}
-            showTable={showTable || viewMode === 'table' || viewMode === 'both'}
-            showSummary={showSummary}
             showHeader={showHeader}
+            showTable={showTable}
+            showSummary={showSummary}
+            showControls={showControls}
             chartType={chartType}
+            viewMode={viewMode}
             groupBy={groupBy}
             selectedMetrics={selectedMetrics}
             title={title}
@@ -50,9 +41,10 @@ const PlanVsActualChart = ({
             className={`plan-vs-actual-chart ${className}`}
             onDataChange={onDataChange}
             onFilterChange={onFilterChange}
+            smoothing={filters?.smoothing === true}
+            showForecast={filters?.showForecast === true}
         />
     );
 };
 
 export default PlanVsActualChart;
-

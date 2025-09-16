@@ -1,0 +1,71 @@
+/* Базовая раскладка и неймспейс для страницы отчетов */
+.reports-root {
+    --reports-gap: 1rem;
+}
+
+.reports-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--card-border-radius, 12px);
+    box-shadow: var(--box-shadow, 0 1px 3px rgba(0,0,0,.08));
+}
+
+.reports-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--reports-gap);
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-secondary);
+}
+
+.reports-content {
+    padding: 1rem 1.25rem;
+}
+
+.reports-grid {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: var(--reports-gap);
+}
+
+.reports-aside {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+}
+
+.reports-main {
+    min-width: 0;
+}
+
+/* Унифицированные контейнеры контента */
+.reports-chart-container,
+.reports-table-container {
+    background: var(--bg-light);
+    border: 1px solid var(--border-light);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+}
+
+/* AG Charts: предсказуемое растяжение */
+.reports-chart-container .ag-chart-container,
+.slide-content .ag-chart-container {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+}
+
+/* Минимальные утилиты */
+.reports-full-width { width: 100% !important; }
+.reports-flex-1 { flex: 1 1 auto !important; min-width: 0; }
+.reports-hidden { visibility: hidden !important; }
+
+@media (max-width: 768px) {
+    .reports-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+

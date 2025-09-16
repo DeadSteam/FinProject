@@ -1,7 +1,6 @@
 /* Стили для SlideFilters - тумблеры и улучшенный дизайн */
 
 /* Максимально специфичный селектор для равномерного распределения */
-#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div > div.card-body > div.slide-filters > div > div.card-body > div:nth-child(2) > div.col-md-8 > div > div.metrics-toggles,
 .slide-filters .metrics-toggles {
     display: flex !important;
     flex-direction: row !important;
@@ -15,7 +14,6 @@
 }
 
 /* Максимально специфичный селектор для равномерного распределения элементов */
-#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div > div.card-body > div.slide-filters > div > div.card-body > div:nth-child(2) > div.col-md-8 > div > div > div.toggle-item,
 .slide-filters .toggle-item {
     display: flex !important;
     align-items: center !important;
@@ -34,7 +32,6 @@
 }
 
 /* Максимально специфичный селектор для минимального расстояния */
-#root > div > main > div > div:nth-child(3) > div > div > div.editor-panel > div > div > div.card-body > div.slide-filters > div > div.card-body > div:nth-child(2) > div.col-md-8 > div > div > div.toggle-item > span.toggle-text,
 .slide-filters .toggle-text {
     font-weight: 500;
     color: #262626;
@@ -51,14 +48,17 @@
     position: relative;
     width: 44px;
     height: 22px;
+    min-width: 44px;                /* фиксируем размер */
+    max-width: 44px;
     background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
     border-radius: 22px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex: 0 0 auto;                 /* не растягиваемся в flex */
     flex-shrink: 0;
+    display: inline-block;          /* не занимаем всю ширину */
     cursor: pointer;
-    min-width: 44px;
-    max-width: 44px;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;         /* корректная отрисовка границ */
 }
 
 .toggle-input {
@@ -79,6 +79,7 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 26px;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-clip: padding-box;   /* не даём фону «выползать» */
 }
 
 .toggle-slider:before {

@@ -219,6 +219,12 @@ module.exports = (env, argv) => {
             chunks: 'all',
             priority: 40,
           },
+          agCharts: {
+            test: /[\\/]node_modules[\\/](ag-charts-community|ag-charts-react)[\\/]/,
+            name: 'vendor-ag-charts',
+            chunks: 'all',
+            priority: 35,
+          },
           utils: {
             test: /[\\/]node_modules[\\/](xlsx|core-js)[\\/]/,
             name: 'vendor-utils',

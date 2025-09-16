@@ -1,11 +1,15 @@
 import React from 'react';
-import { TrendsChart } from '../charts';
-import PlanVsActualChart from './PlanVsActualChart';
-import Chart from '../ui/Chart';
-import AnalyticsComparison from '../analytics/AnalyticsComparison';
+import './reports-common.css';
+import TrendsChart from '../charts/TrendsChart';
+import PlanVsActualChart from '../charts/PlanVsActualChart';
+import AGChartWrapper from '../charts/AGChartWrapper';
+import BaseChart from '../charts/BaseChart';
+import ComparisonChart from '../charts/ComparisonChart';
 import AnalyticsDataTable from '../ui/AnalyticsDataTable';
 import FinanceDataTable from './FinanceDataTable';
-import { hasDataToDisplay, createSafeFilters } from './utils/filterUtils';
+import { ComparisonTableSlide } from './SlidePreview';
+import { hasDataToDisplay, createSafeFilters } from '../../utils/filterUtils';
+import ReportSlideHeader from './ReportSlideHeader';
 
 /**
  * Универсальный компонент для рендеринга слайдов
@@ -47,29 +51,31 @@ const SlideRenderer = ({
     // График
     const renderChartSlide = () => {
         const chartType = settings?.chartType || 'bar';
-        
-        let selectedMetrics = ['plan', 'actual'];
-        if (filters?.metrics && filters.metrics.length > 0) {
-            selectedMetrics = filters.metrics.map(m => m?.value ?? m?.id ?? m);
-        }
+        const safeFilters = createSafeFilters(filters || {});
+        const selectedMetrics = safeFilters.metrics.length > 0 ? safeFilters.metrics : ['plan', 'actual'];
         
         return (
             <div className="chart-slide-preview">
                 {showHeader && (
-                    <div className="slide-header">
-                        <h2 className="slide-title">{title || 'График'}</h2>
-                        {description && <p className="slide-description">{description}</p>}
-                    </div>
+                    <ReportSlideHeader title={title || 'График'} description={description} />
                 )}
-                <div className="chart-container">
+                <div className="chart-container reports-chart-container">
                     {hasDataToDisplay(data, filters) ? (
                         <div className="chart-full-width">
-                            <Chart
-                                type={chartType}
+                            <BaseChart
                                 data={data.chartData}
+                                analyticsData={data?.analytics}
+                                filters={filters}
+                                chartType={chartType}
                                 selectedMetrics={selectedMetrics}
                                 title={title}
                                 disableAnimations={disableAnimations}
+                                smoothing={filters?.smoothing === true}
+                                showForecast={filters?.showForecast === true}
+                                showHeader={false}
+                                showTable={false}
+                                showSummary={false}
+                                className="report-base-chart"
                             />
                         </div>
                     ) : (
@@ -90,20 +96,18 @@ const SlideRenderer = ({
         return (
             <div className="table-slide-preview">
                 {showHeader && (
-                    <div className="slide-header">
-                        <h2 className="slide-title">{title || 'Таблица данных'}</h2>
-                        {description && <p className="slide-description">{description}</p>}
-                    </div>
+                    <ReportSlideHeader title={title || 'Таблица данных'} description={description} />
                 )}
-                <div className="table-container">
+                <div className="table-container reports-table-container">
                     {hasDataToDisplay(data, filters) ? (
                         data.isFinanceData ? (
                             <FinanceDataTable
                                 data={data.metrics || data.tableData || []}
                                 columns={data.tableColumns}
                                 title={data.categoryName || title}
-                                selectedMetrics={filters?.metrics || []}
+                                selectedMetrics={createSafeFilters(filters || {}).metrics}
                                 selectedMetric={filters?.metric || 'all'}
+                                showQuarters={settings?.showQuarters !== false}
                             />
                         ) : (
                             <AnalyticsDataTable
@@ -132,22 +136,20 @@ const SlideRenderer = ({
         return (
             <div className="comparison-slide-preview">
                 {showHeader && (
-                    <div className="slide-header">
-                        <h2 className="slide-title">{title || 'Сравнительный анализ'}</h2>
-                        {description && <p className="slide-description">{description}</p>}
-                    </div>
+                    <ReportSlideHeader title={title || 'Сравнительный анализ'} description={description} />
                 )}
-                <div className="comparison-container">
+                <div className="comparison-container reports-chart-container">
                     {hasDataToDisplay(data, filters) ? (
                         <div className="comparison-full-width">
-                            <AnalyticsComparison
-                                analyticsData={data?.analytics || data || {}}
+                            <ComparisonChart
+                                analyticsData={data?.analytics || data?.finance?.analytics || {}}
                                 filters={safeFilters}
                                 isLoading={isLoading}
                                 showControls={false}
                                 showTable={false}
                                 showSummary={false}
                                 showHeader={false}
+                                chartType={settings?.chartType || 'bar'}
                             />
                         </div>
                     ) : (
@@ -165,41 +167,13 @@ const SlideRenderer = ({
 
     // Таблица сравнения
     const renderComparisonTableSlide = () => {
-        const safeFilters = createSafeFilters(filters);
-
         return (
-            <div className="comparison-table-slide-preview">
-                {showHeader && (
-                    <div className="slide-header">
-                        <h2 className="slide-title">{title || 'Таблица сравнения'}</h2>
-                        {description && <p className="slide-description">{description}</p>}
-                    </div>
-                )}
-                <div className="comparison-container">
-                    {hasDataToDisplay(data, filters) ? (
-                        <div className="comparison-full-width">
-                            <AnalyticsComparison
-                                analyticsData={data?.analytics || data || {}}
-                                filters={{ ...safeFilters, viewMode: 'table' }}
-                                isLoading={isLoading}
-                                showControls={false}
-                                showTable={true}
-                                showSummary={false}
-                                showHeader={false}
-                                title={title || 'Таблица сравнения'}
-                                description={description}
-                            />
-                        </div>
-                    ) : (
-                        <EmptySlidePlaceholder 
-                            type="table"
-                            title="Нет данных для отображения"
-                            description="Выберите параметры фильтрации или загрузите данные для создания таблицы сравнения"
-                            onGoToSettings={onGoToSettings}
-                        />
-                    )}
-                </div>
-            </div>
+            <ComparisonTableSlide
+                title={title}
+                description={description}
+                filters={filters}
+                onGoToSettings={onGoToSettings}
+            />
         );
     };
 
@@ -212,12 +186,9 @@ const SlideRenderer = ({
         return (
             <div className="trends-slide-preview">
                 {showHeader && (
-                    <div className="slide-header">
-                        <h2 className="slide-title">{title || 'Анализ трендов'}</h2>
-                        {description && <p className="slide-description">{description}</p>}
-                    </div>
+                    <ReportSlideHeader title={title || 'Анализ трендов'} description={description} />
                 )}
-                <div className="trends-container" style={{ width: '100%' }}>
+                <div className="trends-container reports-chart-container" style={{ width: '100%' }}>
                     {canShow ? (
                         <div className="chart-full-width" style={{ width: '100%' }}>
                             <TrendsChart
@@ -250,10 +221,7 @@ const SlideRenderer = ({
     const renderPlanVsActualSlide = () => (
         <div className="plan-vs-actual-slide-preview">
             {showHeader && (
-                <div className="slide-header">
-                    <h2 className="slide-title">{title || 'План vs Факт'}</h2>
-                    {description && <p className="slide-description">{description}</p>}
-                </div>
+                <ReportSlideHeader title={title || 'План vs Факт'} description={description} />
             )}
             
             <div className="plan-vs-actual-container">
@@ -284,10 +252,7 @@ const SlideRenderer = ({
     const renderDefaultSlide = () => (
         <div className="default-slide-preview">
             {showHeader && (
-                <div className="slide-header">
-                    <h2 className="slide-title">{title || 'Слайд'}</h2>
-                    {description && <p className="slide-description">{description}</p>}
-                </div>
+                <ReportSlideHeader title={title || 'Слайд'} description={description} />
             )}
             
             <div className="default-content">
@@ -319,6 +284,20 @@ const SlideRenderer = ({
                 case 'analytics-chart':
                 case 'finance-chart':
                     return renderChartSlide();
+                case 'multi-chart':
+                    return (
+                        <div className="multi-chart-grid">
+                            <div className="grid-row">
+                                <AGChartWrapper data={data?.chartDataA || data?.chartData} selectedMetrics={['plan','actual']} disableAnimations={disableAnimations} style={{ height: '100%' }} />
+                                <AGChartWrapper data={data?.chartDataB || data?.chartData} selectedMetrics={['plan','actual']} disableAnimations={disableAnimations} style={{ height: '100%' }} />
+                            </div>
+                            {data?.chartDataC && (
+                                <div className="grid-row">
+                                    <AGChartWrapper data={data?.chartDataC} selectedMetrics={['plan','actual']} disableAnimations={disableAnimations} style={{ height: '100%' }} />
+                                </div>
+                            )}
+                        </div>
+                    );
                 case 'analytics-table':
                 case 'finance-table':
                     return renderTableSlide();
@@ -408,3 +387,6 @@ const EmptySlidePlaceholder = ({ type, title, description, onGoToSettings }) => 
 
 export default SlideRenderer;
 export { EmptySlidePlaceholder };
+
+
+

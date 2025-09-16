@@ -2,28 +2,24 @@ import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useNotifications } from '../../hooks';
 import { useReportData } from './ReportDataProvider';
 import SlideRenderer from './SlideRenderer';
+// ExportRenderer удален
 import reportsService from '../../services/reportsService';
-import { hasDataToDisplay, createSafeFilters } from './utils/filterUtils';
+import { hasDataToDisplay, createSafeFilters } from '../../utils/filterUtils';
 import './ReportPreview.css';
-
-// Безопасное определение development режима
-const isDevelopment = () => {
-    if (typeof window !== 'undefined') {
-        return window.location.hostname === 'localhost' && ['3000', '3001'].includes(window.location.port);
-    }
-    return false;
-};
-
-const dev = isDevelopment();
+import './reports-common.css';
+import './reports-layout.css';
+import { dev } from '../../utils/env';
+import { getProcessedSlideData } from './utils/slideDataLoader';
+import pptxExport from '../../services/pptxExportService';
 
 /**
  * Компонент предпросмотра отчета.
  * Отображает слайды в режиме презентации с возможностью навигации.
  */
-const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPDF, onExportToPPTX }) => {
+const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect }) => {
     
     const { showSuccess, showError } = useNotifications();
-    const { loadSlideData, transformDataForChart } = useReportData();
+    const { loadSlideData } = useReportData();
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [presentationMode, setPresentationMode] = useState(false);
     const previewRef = useRef(null);
@@ -32,10 +28,10 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
     const [slideData, setSlideData] = useState(new Map());
     const [loadingSlides, setLoadingSlides] = useState(new Set());
     
-    // Состояние для экспорта
+    // Состояние для экспорта (PDF функционал удален)
     const [isExporting, setIsExporting] = useState(false);
     const [exportProgress, setExportProgress] = useState(0);
-    const [exportMode, setExportMode] = useState(false);
+    // Режим экспорта удален
     
 
     // Обработчики навигации
@@ -51,147 +47,11 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
         }
     };
 
-    const handleSlideClick = (index) => {
-        onSlideSelect(index);
-    };
+    // click handler не используется — навигация через thumbnails
 
-    // Обработчики экспорта
-    const handleExportToPDF = useCallback(async () => {
-        if (!report || !report.slides || report.slides.length === 0) {
-            showError('Нет слайдов для экспорта');
-            return;
-        }
+    // Обработчик PDF удален
 
-        setIsExporting(true);
-        setExportProgress(0);
-
-        try {
-            setExportProgress(10);
-            
-            // Загружаем данные для всех слайдов перед экспортом
-            setExportProgress(20);
-            
-            const chartSlides = report.slides.filter(slide => 
-                ['analytics-chart', 'finance-chart', 'trends', 'plan-vs-actual', 'comparison'].includes(slide.type)
-            );
-            
-            // Загружаем данные для каждого слайда с графиками
-            for (const slide of chartSlides) {
-                
-                try {
-                    const slideDataResult = await loadSlideData(slide);
-                    if (slideDataResult) {
-                        setSlideData(prev => new Map(prev).set(slide.id, slideDataResult));
-                    }
-                } catch (error) {
-                }
-                
-                // Небольшая пауза между загрузками
-                await new Promise(resolve => setTimeout(resolve, 100));
-            }
-            
-            setExportProgress(40);
-            
-            // Включаем режим экспорта для рендеринга всех слайдов
-            setExportMode(true);
-            
-            // Ждем, чтобы все слайды успели отрендериться в скрытом контейнере
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            setExportProgress(60);
-            
-            const pdf = await reportsService.generateClientPDF(report, {
-                orientation: 'landscape',
-                format: 'a4'
-            });
-            
-            // Выключаем режим экспорта
-            setExportMode(false);
-            
-            setExportProgress(80);
-            
-            // Скачиваем файл
-            const filename = `${report.title || 'report'}_${new Date().toISOString().split('T')[0]}.pdf`;
-            pdf.save(filename);
-            
-            setExportProgress(100);
-            showSuccess('Отчет успешно экспортирован в PDF');
-            
-        } catch (error) {
-            showError('Ошибка экспорта в PDF: ' + error.message);
-        } finally {
-            setIsExporting(false);
-            setExportProgress(0);
-        }
-    }, [report, showError, showSuccess, slideData, loadSlideData]);
-
-    const handleExportToPPTX = useCallback(async () => {
-        if (!report || !report.slides || report.slides.length === 0) {
-            showError('Нет слайдов для экспорта');
-            return;
-        }
-
-        setIsExporting(true);
-        setExportProgress(0);
-
-        try {
-            setExportProgress(10);
-            
-            // Загружаем данные для всех слайдов перед экспортом
-            setExportProgress(20);
-            
-            const chartSlides = report.slides.filter(slide => 
-                ['analytics-chart', 'finance-chart', 'trends', 'plan-vs-actual', 'comparison'].includes(slide.type)
-            );
-            
-            // Загружаем данные для каждого слайда с графиками
-            for (const slide of chartSlides) {
-                
-                try {
-                    const slideDataResult = await loadSlideData(slide);
-                    if (slideDataResult) {
-                        setSlideData(prev => new Map(prev).set(slide.id, slideDataResult));
-                    }
-                } catch (error) {
-                }
-                
-                // Небольшая пауза между загрузками
-                await new Promise(resolve => setTimeout(resolve, 100));
-            }
-            
-            setExportProgress(40);
-            
-            // Включаем режим экспорта для рендеринга всех слайдов
-            setExportMode(true);
-            
-            // Ждем, чтобы все слайды успели отрендериться в скрытом контейнере
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            setExportProgress(60);
-            
-            const pptx = await reportsService.generateClientPPTX(report, {
-                quality: 'high'
-            });
-            
-            // Выключаем режим экспорта
-            setExportMode(false);
-            
-            setExportProgress(80);
-            
-            // Скачиваем файл
-            const filename = `${report.title || 'report'}_${new Date().toISOString().split('T')[0]}.pptx`;
-            await pptx.writeFile({ fileName: filename });
-            
-            setExportProgress(100);
-            showSuccess('Отчет успешно экспортирован в PowerPoint');
-            
-        } catch (error) {
-            showError('Ошибка экспорта в PowerPoint: ' + error.message);
-        } finally {
-            setIsExporting(false);
-            setExportProgress(0);
-        }
-    }, [report, showError, showSuccess, slideData, loadSlideData]);
+    // Обработчик экспорта в PPTX удален
 
     // Полноэкранный режим
     const handleToggleFullscreen = () => {
@@ -343,44 +203,9 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
         setLoadingSlides(prev => new Set([...prev, slide.id]));
         
         try {
-            const filters = slide.content?.filters || {};
-            const settings = slide.content?.settings || {};
-            
-            // Нормализуем фильтры как в SlidePreview
-            const normalizedFilters = {
-                ...filters,
-                years: (filters?.years || []).map((y) => (y?.value ?? y?.id ?? y)),
-                categories: (filters?.categories || []).map((c) => (c?.value ?? c?.id ?? c)),
-                shops: (filters?.shops || []).map((s) => (s?.value ?? s?.id ?? s)),
-                metrics: (filters?.metrics || []).map((m) => (m?.value ?? m?.id ?? m)),
-                periodType: filters?.periodType || 'years'
-            };
+            const processedData = await getProcessedSlideData(slide, loadSlideData);
 
-            // Используем тот же loadSlideData, что и в SlidePreview
-            const slideData = await loadSlideData(slide.type, normalizedFilters, settings);
-            
-            if (slideData) {
-                // Определяем метрики для отображения (как в SlidePreview)
-                let selectedMetrics = ['plan', 'actual']; // По умолчанию
-                if (filters?.metrics && filters.metrics.length > 0) {
-                    // Используем выбранные пользователем метрики
-                    selectedMetrics = filters.metrics.map(m => m?.value ?? m?.id ?? m);
-                }
-                
-                
-                // Преобразуем данные для графика как в SlidePreview
-                const transformedData = transformDataForChart(
-                    slideData, 
-                    slide.type, 
-                    selectedMetrics
-                );
-                
-                const processedData = {
-                    ...slideData,
-                    chartData: transformedData,
-                    tableData: slideData.tableData || slideData.metrics || []
-                };
-                
+            if (processedData) {
                 setSlideData(prev => {
                     const newMap = new Map(prev);
                     newMap.set(slide.id, processedData);
@@ -398,7 +223,7 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
                 return newSet;
             });
         }
-    }, [loadSlideData, transformDataForChart]);
+    }, [loadSlideData]);
 
 
 
@@ -422,7 +247,7 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
     }
 
     return (
-        <div className={`report-preview ${presentationMode ? 'presentation-mode' : ''}`} ref={previewRef}>
+        <div className={`report-preview ${presentationMode ? 'presentation-mode' : ''} reports-root`} ref={previewRef}>
             {/* Заголовок предпросмотра */}
             {!presentationMode && (
                 <div className="preview-header">
@@ -435,6 +260,68 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
                             </small>
                         </div>
                         <div className="d-flex gap-2">
+                            <button
+                                className="btn btn-primary btn-sm"
+                                onClick={async () => {
+                                    try {
+                                        setIsExporting(true);
+                                        // Собираем canvases непосредственно из DOM в текущем состоянии
+                                        const imagesBySlide = new Map();
+                                        const order = [];
+                                        const thumbs = Array.from(document.querySelectorAll('.thumbnails-list .thumbnail-item[data-slide-id]'));
+                                        for (const t of thumbs) {
+                                            const id = t.getAttribute('data-slide-id');
+                                            order.push(id);
+                                            // Активируем миниатюру и ждём рендер
+                                            t.click();
+                                            await new Promise(r => setTimeout(r, 50));
+                                            const scope = document.querySelector(`.main-slide-area .slide-container[data-slide-id="${id}"]`) || document.querySelector('.main-slide-area .slide-container');
+                                            if (!scope) continue;
+                                            await reportsService.waitForChartToRender(scope, 1500);
+                                            // Ищем конкретные контейнеры графиков
+                                            const roots = [
+                                                ...scope.querySelectorAll('.comparison-container.reports-chart-container > div > div'),
+                                                ...scope.querySelectorAll('.reports-chart-container .ag-chart-container'),
+                                                ...scope.querySelectorAll('.chart-container .ag-chart-container'),
+                                                ...scope.querySelectorAll('.chart-container'),
+                                                // План vs Факт
+                                                ...scope.querySelectorAll('.plan-vs-actual-container .ag-chart-container'),
+                                                ...scope.querySelectorAll('.plan-vs-actual-container .chart-container'),
+                                                ...scope.querySelectorAll('.plan-vs-actual-container')
+                                            ];
+                                            const canvases = Array.from(new Set(roots.flatMap(r => Array.from(r.querySelectorAll('canvas')))))
+                                                .filter(c => c.width > 0 && c.height > 0);
+                                            const imgs = [];
+                                            const seen = new Set();
+                                            for (const c of canvases) {
+                                                const tmp = document.createElement('canvas');
+                                                tmp.width = c.width; tmp.height = c.height;
+                                                const ctx = tmp.getContext('2d');
+                                                ctx.fillStyle = '#fff'; ctx.fillRect(0,0,tmp.width,tmp.height);
+                                                ctx.drawImage(c, 0, 0);
+                                                const data = tmp.toDataURL('image/png', 1.0);
+                                                if (!seen.has(data)) { seen.add(data); imgs.push(data); }
+                                            }
+                                            if (imgs.length) imagesBySlide.set(id, imgs);
+                                        }
+                                        await pptxExport.exportReportFromImages(report, imagesBySlide, order, `${report.title || 'report'}.pptx`);
+                                        showSuccess('PPTX экспорт завершен');
+                                    } catch (e) {
+                                        showError('Не удалось экспортировать PPTX');
+                                    } finally {
+                                        setIsExporting(false);
+                                    }
+                                }}
+                                disabled={isExporting}
+                                title="Экспорт в PowerPoint"
+                            >
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M12 3v12"/>
+                                    <path d="M8 11l4 4 4-4"/>
+                                    <rect x="3" y="17" width="18" height="4" rx="1"/>
+                                </svg>
+                                {isExporting ? 'Экспорт...' : 'Экспорт PPTX'}
+                            </button>
                             <button
                                 className="btn btn-outline-primary btn-sm"
                                 onClick={handleTogglePresentationMode}
@@ -455,43 +342,8 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
                                     <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
                                 </svg>
                             </button>
-                            <button
-                                className="btn btn-outline-danger btn-sm"
-                                onClick={handleExportToPDF}
-                                disabled={isExporting || !report?.slides?.length}
-                                title="Экспорт в PDF"
-                            >
-                                {isExporting ? (
-                                    <div className="spinner-border spinner-border-sm me-1" role="status">
-                                        <span className="visually-hidden">Экспорт...</span>
-                                    </div>
-                                ) : (
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="me-1">
-                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                        <polyline points="14,2 14,8 20,8"/>
-                                    </svg>
-                                )}
-                                PDF
-                            </button>
-                            <button
-                                className="btn btn-primary btn-sm"
-                                onClick={handleExportToPPTX}
-                                disabled={isExporting || !report?.slides?.length}
-                                title="Экспорт в PowerPoint"
-                            >
-                                {isExporting ? (
-                                    <div className="spinner-border spinner-border-sm me-1" role="status">
-                                        <span className="visually-hidden">Экспорт...</span>
-                                    </div>
-                                ) : (
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="me-1">
-                                        <rect width="18" height="18" x="3" y="3" rx="2"/>
-                                        <path d="M7 7h10"/>
-                                        <path d="M7 12h4"/>
-                                    </svg>
-                                )}
-                                PowerPoint
-                            </button>
+                            {/* Кнопка PDF удалена */}
+                            {/* Кнопка экспорта в PowerPoint удалена */}
                         </div>
                     </div>
                 </div>
@@ -507,6 +359,7 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
                                 <div
                                     key={slide.id}
                                     className={`thumbnail-item ${expandedIndex === index ? 'active' : ''}`}
+                                    data-slide-id={slide.id}
                                     onClick={() => setExpandedIndex(index)}
                                 >
                                     <div className="thumbnail-number">{index + 1}</div>
@@ -524,55 +377,11 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
 
                 {/* Основной слайд */}
                 <div className="main-slide-area">
-                    <div className="slide-container">
+                    <div className="slide-container" data-slide-id={currentSlide?.id}>
                         {currentSlide && renderSlideContent(currentSlide)}
                     </div>
 
-                    {/* Все слайды в режиме экспорта (скрыты) */}
-                    {exportMode && (
-                        <div 
-                            id="export-slides-container"
-                            style={{ 
-                                position: 'absolute', 
-                                left: '-9999px', 
-                                top: '-9999px', 
-                                visibility: 'hidden',
-                                width: '800px',
-                                height: '600px',
-                                overflow: 'hidden',
-                                pointerEvents: 'none'
-                            }}
-                        >
-                            {report.slides.map((slide, index) => {
-                                // Принудительно загружаем данные для каждого слайда в режиме экспорта
-                                const slideDataForExport = slideData.get(slide.id);
-                                if (!slideDataForExport && slide.type !== 'title') {
-                                    // Загружаем данные синхронно для экспорта
-                                    loadSlideDataForPreview(slide);
-                                }
-                                
-                                return (
-                                    <div 
-                                        key={`export-${slide.id}`} 
-                                        data-slide-id={slide.id}
-                                        data-slide-type={slide.type}
-                                        style={{
-                                            width: '800px',
-                                            height: '600px',
-                                            marginBottom: '20px',
-                                            border: '1px solid #ddd',
-                                            borderRadius: '8px',
-                                            padding: '20px',
-                                            backgroundColor: '#ffffff',
-                                            position: 'relative'
-                                        }}
-                                    >
-                                        {renderSlideContent(slide)}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
+                    {/* Режим экспорта удален */}
 
                     {/* Навигация */}
                     <div className="slide-navigation">
@@ -665,12 +474,7 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
         const currentSlideData = slideData.get(slide.id);
         const isLoadingCurrentSlide = loadingSlides.has(slide.id);
         
-        // Определяем метрики из фильтров или используем по умолчанию
         const filters = slide.content?.filters || {};
-        let selectedMetrics = ['plan', 'actual'];
-        if (filters?.metrics && filters.metrics.length > 0) {
-            selectedMetrics = filters.metrics.map(m => m?.value ?? m?.id ?? m);
-        }
 
         return (
             <SlideRenderer
@@ -681,7 +485,7 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect, onExportToPD
                 filters={filters}
                 data={currentSlideData}
                 isLoading={isLoadingCurrentSlide}
-                disableAnimations={exportMode}
+                disableAnimations={false}
                 showHeader={true}
             />
         );

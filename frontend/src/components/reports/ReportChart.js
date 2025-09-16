@@ -1,5 +1,5 @@
 import React from 'react';
-import { BaseChart } from '../charts';
+import BaseChart from '../charts/BaseChart';
 
 /**
  * Обертка для Chart компонента специально для отчетов

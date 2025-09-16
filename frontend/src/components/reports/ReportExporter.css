@@ -159,13 +159,7 @@
     margin-bottom: 1rem;
 }
 
-/* Опции для PowerPoint */
-.pptx-options {
-    background: var(--bg-light);
-    border-radius: var(--border-radius);
-    padding: 1rem;
-    margin-bottom: 1rem;
-}
+/* Опции для PowerPoint удалены */
 
 /* Общие опции */
 .common-options {

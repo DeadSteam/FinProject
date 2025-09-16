@@ -342,3 +342,74 @@ export const getDefaultTableColumns = (groupBy) => [
     { key: 'deviation', title: 'Отклонение', sortable: true, format: 'number' },
     { key: 'percentage', title: '% выполнения', sortable: true, format: 'percent' }
 ];
+
+/**
+ * Нормализация русских названий месяцев в ключ periods_value
+ */
+export const getMonthKey = (monthName) => {
+    const monthMap = {
+        'Январь': 'январь',
+        'Февраль': 'февраль',
+        'Март': 'март',
+        'Апрель': 'апрель',
+        'Май': 'май',
+        'Июнь': 'июнь',
+        'Июль': 'июль',
+        'Август': 'август',
+        'Сентябрь': 'сентябрь',
+        'Октябрь': 'октябрь',
+        'Ноябрь': 'ноябрь',
+        'Декабрь': 'декабрь',
+        'Янв': 'январь',
+        'Фев': 'февраль',
+        'Мар': 'март',
+        'Апр': 'апрель',
+        'Июн': 'июнь',
+        'Июл': 'июль',
+        'Авг': 'август',
+        'Сен': 'сентябрь',
+        'Окт': 'октябрь',
+        'Ноя': 'ноябрь',
+        'Дек': 'декабрь'
+    };
+
+    if (!monthName) return '';
+    return monthMap[monthName] || String(monthName).toLowerCase();
+};
+
+/**
+ * Универсальная таблица для Plan vs Actual
+ */
+export const buildPlanVsActualTable = (planVsActual) => {
+    try {
+        const cols = [
+            { key: 'period', header: 'Период', sticky: true, align: 'left', width: '220px' },
+            { key: 'plan', header: 'План', align: 'right', width: '120px' },
+            { key: 'actual', header: 'Факт', align: 'right', width: '120px' },
+            { key: 'deviation', header: 'Отклонение', align: 'right', width: '120px' },
+            { key: 'percentage', header: '% выполнения', align: 'right', width: '120px' }
+        ];
+
+        const rows = [];
+
+        const source = planVsActual?.categories && Object.keys(planVsActual.categories).length
+            ? planVsActual.categories
+            : planVsActual?.shops && Object.keys(planVsActual.shops).length
+            ? planVsActual.shops
+            : planVsActual?.metrics || {};
+
+        Object.entries(source).forEach(([label, item]) => {
+            rows.push({
+                period: label,
+                plan: item.plan ?? 0,
+                actual: item.actual ?? item.fact ?? 0,
+                deviation: item.deviation ?? 0,
+                percentage: item.percentage ?? 0
+            });
+        });
+
+        return { tableData: rows, tableColumns: cols };
+    } catch (e) {
+        return { tableData: [], tableColumns: [] };
+    }
+};

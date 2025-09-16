@@ -1,0 +1,60 @@
+{
+  "name": "ag-charts-core",
+  "version": "12.2.0",
+  "description": "Advanced Charting / Charts supporting Javascript / Typescript / React / Angular / Vue",
+  "sideEffects": false,
+  "main": "./dist/package/main.cjs.js",
+  "types": "./dist/types/src/main.d.ts",
+  "module": "./dist/package/main.esm.mjs",
+  "exports": {
+    ".": {
+      "types": "./dist/types/src/main.d.ts",
+      "require": "./dist/package/main.cjs.js",
+      "import": "./dist/package/main.esm.mjs",
+      "default": "./dist/package/main.cjs.js"
+    }
+  },
+  "scripts": {
+    "lint:prune": "npx ts-prune -p tsconfig.lib.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ag-grid/ag-charts.git"
+  },
+  "keywords": [
+    "chart",
+    "charts",
+    "data",
+    "angular",
+    "angular-component",
+    "react",
+    "react-component",
+    "reactjs",
+    "vue",
+    "vuejs"
+  ],
+  "author": "AG Grid <info@ag-grid.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ag-grid/ag-charts/issues"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not ie >= 0",
+    "not ie_mob >= 0",
+    "not blackberry > 0",
+    "not op_mini all",
+    "not operamobile >= 0"
+  ],
+  "homepage": "https://www.ag-grid.com/charts/",
+  "dependencies": {
+    "ag-charts-types": "12.2.0"
+  },
+  "devDependencies": {
+    "@jest/globals": "29.6.1"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

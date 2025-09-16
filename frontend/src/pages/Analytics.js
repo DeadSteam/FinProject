@@ -10,7 +10,7 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 // Ленивая загрузка компонентов
 const AnalyticsFilters = lazy(() => import('../components/analytics/AnalyticsFilters'));
 const TabFilters = lazy(() => import('../components/analytics/TabFilters'));
-const AnalyticsCharts = lazy(() => import('../components/analytics/AnalyticsCharts'));
+const PlanVsActualChart = lazy(() => import('../components/charts/PlanVsActualChart'));
 const AnalyticsTrends = lazy(() => import('../components/analytics/AnalyticsTrends'));
 const AnalyticsComparison = lazy(() => import('../components/analytics/AnalyticsComparison'));
 
@@ -366,7 +366,7 @@ const Analytics = () => {
                 
 
                 {/* Фильтры */}
-                <div className="card mb-4">
+                <div >
                     <Suspense fallback={<div>Загрузка фильтров...</div>}>
                         <AnalyticsFilters
                             filters={filters}
@@ -432,10 +432,18 @@ const Analytics = () => {
                         )}
 
                         {activeTab === 'plan-vs-actual' && (
-                            <AnalyticsCharts
+                            <PlanVsActualChart
                                 analyticsData={analyticsData}
                                 filters={filters}
                                 isLoading={isLoading}
+                                showHeader={true}
+                                showSummary={true}
+                                viewMode={filters.viewMode || 'chart'}
+                                showTable={filters.viewMode === 'table' || filters.viewMode === 'both'}
+                                chartType={filters.chartType || 'bar'}
+                                groupBy={filters.groupBy || 'categories'}
+                                selectedMetrics={filters.metrics || ['plan', 'actual']}
+                                title="План vs Факт"
                             />
                         )}
 

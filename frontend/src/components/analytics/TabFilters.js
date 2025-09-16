@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import styles from './AnalyticsFilters.module.css';
+import '../../styles/components/toggle.css';
 import '../../styles/components/ButtonGroup.css';
 
 /**

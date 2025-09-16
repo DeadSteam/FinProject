@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { TrendsChart } from '../charts';
+import TrendsChart from '../charts/TrendsChart';
 import TrendsStatistics from './TrendsStatistics';
 
 /**
@@ -51,14 +51,16 @@ const AnalyticsTrends = ({
             });
         } else if (timeframe === 'quarterly') {
             const years = Object.keys(trendsData).sort((a, b) => parseInt(a) - parseInt(b));
+            const quarterNames = ['I квартал', 'II квартал', 'III квартал', 'IV квартал'];
+            const quarterKeys = ['Q1', 'Q2', 'Q3', 'Q4'];
+            
             years.forEach(year => {
                 const yearData = trendsData[year];
-                const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
-                quarters.forEach(quarter => {
-                    const quarterData = yearData[quarter];
+                quarterKeys.forEach((quarterKey, index) => {
+                    const quarterData = yearData[quarterKey];
                     if (quarterData) {
                         data.push({
-                            label: `${year} ${quarter}`,
+                            label: `${year} ${quarterNames[index]}`,
                             actual: quarterData.actual || 0,
                             plan: quarterData.plan || 0,
                             deviation: quarterData.deviation || 0,

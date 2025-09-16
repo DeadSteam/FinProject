@@ -1,0 +1,119 @@
+// Сервис экспорта отчетов в PowerPoint (PptxGenJS)
+// Поддерживает многослайдовость и несколько графиков на одном слайде
+
+import reportsService from './reportsService';
+
+let PptxGenJSInstance = null;
+
+async function getPptx() {
+    if (PptxGenJSInstance) return PptxGenJSInstance;
+    const mod = (await import('pptxgenjs')).default;
+    PptxGenJSInstance = mod;
+    return PptxGenJSInstance;
+}
+
+function computeLayoutRects(count, orientation = 'vertical') {
+    // 16:9, слайд по умолчанию 10 x 5.625in
+    // Возвращает массив прямоугольников { x, y, w, h }
+    const margin = 0.3; // поля
+    const full = { x: margin, y: margin + 0.4, w: 10 - margin * 2, h: 5.625 - margin * 2 - 0.4 };
+
+    if (count <= 1) return [full];
+    if (count === 2) {
+        const gap = 0.2;
+        if (orientation === 'vertical') {
+            const w = full.w;
+            const h = (full.h - gap) / 2;
+            return [
+                { x: full.x, y: full.y, w, h },
+                { x: full.x, y: full.y + h + gap, w, h },
+            ];
+        }
+        const w = (full.w - gap) / 2;
+        const h = full.h;
+        return [
+            { x: full.x, y: full.y, w, h },
+            { x: full.x + w + gap, y: full.y, w, h },
+        ];
+    }
+    if (count === 3) {
+        const gap = 0.2;
+        const w = (full.w - gap) / 2;
+        const h = (full.h - gap) / 2;
+        return [
+            { x: full.x, y: full.y, w, h },
+            { x: full.x + w + gap, y: full.y, w, h },
+            { x: full.x + (full.w - w) / 2, y: full.y + h + gap, w, h },
+        ];
+    }
+    // 4 и более — берём первые 4 в сетке 2x2
+    const gap = 0.2;
+    const w = (full.w - gap) / 2;
+    const h = (full.h - gap) / 2;
+    return [
+        { x: full.x, y: full.y, w, h },
+        { x: full.x + w + gap, y: full.y, w, h },
+        { x: full.x, y: full.y + h + gap, w, h },
+        { x: full.x + w + gap, y: full.y + h + gap, w, h },
+    ];
+}
+
+function addTitle(slide, title) {
+    if (!title) return;
+    slide.addText(title, {
+        x: 0.5,
+        y: 0.15,
+        w: 9,
+        h: 0.4,
+        fontSize: 16,
+        bold: true,
+        color: '363636',
+    });
+}
+
+async function addSlideWithCharts(pptx, slideDef, images, orientation = 'vertical') {
+    const slide = pptx.addSlide();
+    addTitle(slide, slideDef.title);
+
+    const rects = computeLayoutRects(images.length, orientation);
+    images.slice(0, rects.length).forEach((dataUrl, idx) => {
+        const r = rects[idx];
+        slide.addImage({ data: dataUrl, x: r.x, y: r.y, w: r.w, h: r.h });
+    });
+}
+
+// exportReportToPptx удален: используйте exportReportFromImages
+
+// Экспорт напрямую из набора изображений, подготовленных снаружи (ReportPreview)
+export async function exportReportFromImages(report, imagesBySlide, order, filename = 'report.pptx') {
+    const Pptx = await getPptx();
+    const pptx = new Pptx();
+    pptx.layout = 'LAYOUT_16x9';
+
+    const ids = order && order.length ? order : (report.slides || []).map(s => s.id);
+    for (const slideId of ids) {
+        const slide = (report.slides || []).find(s => slideId === s.id || slideId.startsWith(`${s.id}__part`)) || { id: slideId, title: report.title };
+        const imgs = imagesBySlide.get(slideId) || [];
+
+        if (!imgs.length) {
+            const s = pptx.addSlide();
+            addTitle(s, slide.title || '');
+            s.addText('Графики не были найдены в DOM (не отображались).', { x: 1, y: 2.5, w: 8, h: 0.6, color: '888888' });
+            continue;
+        }
+
+        const chunkSize = 2;
+        for (let i = 0; i < imgs.length; i += chunkSize) {
+            const chunk = imgs.slice(i, i + chunkSize);
+            await addSlideWithCharts(pptx, slide, chunk, 'vertical');
+        }
+    }
+
+    await pptx.writeFile({ fileName: filename });
+}
+
+export default {
+    exportReportFromImages,
+};
+
+

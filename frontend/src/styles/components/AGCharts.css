@@ -1,0 +1,192 @@
+/* Стили для AG Charts */
+
+/* Стили для tooltip */
+.ag-chart-tooltip {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 6px !important;
+  color: #1e293b !important;
+  font-size: 12px !important;
+  font-family: 'Segoe UI', system-ui, sans-serif !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
+  padding: 8px 12px !important;
+}
+
+/* Стили для всех tooltip элементов AG Charts */
+.ag-charts-tooltip {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 6px !important;
+  color: #1e293b !important;
+  font-size: 12px !important;
+  font-family: 'Segoe UI', system-ui, sans-serif !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
+  padding: 8px 12px !important;
+}
+
+/* Стили для осей */
+.ag-chart-axis-line {
+  stroke: #e2e8f0 !important;
+  stroke-width: 1 !important;
+}
+
+.ag-chart-axis-tick {
+  stroke: #e2e8f0 !important;
+}
+
+.ag-chart-axis-label {
+  fill: #64748b !important;
+  font-size: 12px !important;
+  font-family: 'Segoe UI', system-ui, sans-serif !important;
+}
+
+.ag-chart-axis-title {
+  fill: #1e293b !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  font-family: 'Rimma Sans', 'Segoe UI', system-ui, sans-serif !important;
+}
+
+/* Стили для легенды */
+.ag-chart-legend-item {
+  fill: #1e293b !important;
+  font-size: 12px !important;
+  font-family: 'Segoe UI', system-ui, sans-serif !important;
+}
+
+/* Стили для заголовков */
+.ag-chart-title {
+  fill: #1e293b !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  font-family: 'Rimma Sans', 'Segoe UI', system-ui, sans-serif !important;
+}
+
+.ag-chart-subtitle {
+  fill: #64748b !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  font-family: 'Rimma Sans', 'Segoe UI', system-ui, sans-serif !important;
+}
+
+/* Стили для столбцов */
+.ag-chart-bar {
+  stroke-width: 0 !important;
+  rx: 4 !important;
+  ry: 4 !important;
+}
+
+/* Убираем обводку при наведении на столбцы */
+.ag-chart-bar:hover,
+.ag-chart-bar:focus,
+.ag-chart-bar:active {
+  stroke-width: 0 !important;
+  stroke: none !important;
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Убираем highlight эффекты для всех элементов графика */
+.ag-chart-bar[data-highlighted="true"],
+.ag-chart-bar.highlighted,
+.ag-chart-bar.ag-highlight {
+  stroke-width: 0 !important;
+  stroke: none !important;
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Убираем обводку для линий при наведении */
+.ag-chart-line:hover,
+.ag-chart-line:focus,
+.ag-chart-line:active {
+  stroke-width: 2 !important;
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Убираем обводку для маркеров при наведении */
+.ag-chart-marker:hover,
+.ag-chart-marker:focus,
+.ag-chart-marker:active {
+  stroke-width: 2 !important;
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Убираем все hover эффекты для всех элементов AG Charts */
+.ag-chart-container *:hover,
+.ag-chart-container *:focus,
+.ag-chart-container *:active {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Специально для элементов серий */
+.ag-chart-series *:hover,
+.ag-chart-series *:focus,
+.ag-chart-series *:active {
+  stroke: inherit !important;
+  stroke-width: inherit !important;
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Стили для линий */
+.ag-chart-line {
+  stroke-width: 2 !important;
+}
+
+.ag-chart-marker {
+  stroke-width: 2 !important;
+}
+
+/* Стили для областей */
+.ag-chart-area {
+  stroke-width: 2 !important;
+  fill-opacity: 0.3 !important;
+}
+
+/* Стили для круговых графиков */
+.ag-chart-pie-sector {
+  stroke-width: 0 !important;
+}
+
+.ag-chart-pie-label {
+  fill: #ffffff !important;
+  font-size: 11px !important;
+  font-family: 'Segoe UI', system-ui, sans-serif !important;
+}
+
+.ag-chart-pie-callout {
+  fill: #1e293b !important;
+  font-size: 12px !important;
+  font-family: 'Segoe UI', system-ui, sans-serif !important;
+}
+
+/* Стили для точечных графиков */
+.ag-chart-scatter-marker {
+  stroke-width: 2 !important;
+}
+
+/* Адаптивные стили */
+@media (max-width: 768px) {
+  .ag-chart-tooltip {
+    font-size: 11px !important;
+    padding: 6px 10px !important;
+  }
+  
+  .ag-chart-axis-label {
+    font-size: 11px !important;
+  }
+  
+  .ag-chart-title {
+    font-size: 16px !important;
+  }
+}

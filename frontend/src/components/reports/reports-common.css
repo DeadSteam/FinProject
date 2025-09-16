@@ -1,0 +1,78 @@
+.reports-full-width {
+    width: 100%;
+}
+
+.reports-chart-container {
+    width: 100%;
+    display: flex;
+    align-items: stretch;
+}
+
+.reports-table-container {
+    width: 100%;
+}
+
+.reports-root {
+    --reports-gap: 12px;
+}
+
+.slide-header {
+    margin-bottom: var(--reports-gap);
+}
+
+.slide-title {
+    margin: 0 0 6px 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.slide-description {
+    margin: 0;
+    color: #6c757d;
+    font-size: .95rem;
+}
+
+/* Специфичные стили для разных типов слайдов */
+.title-slide-preview .slide-title {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.title-slide-preview .slide-description {
+    font-size: 1.2rem;
+    margin-bottom: var(--spacing-xl, 2rem);
+}
+
+.chart-slide-content .slide-title,
+.table-slide-content .slide-title {
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+}
+
+.title-slide-content .slide-title {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .title-slide-preview .slide-title {
+        font-size: 2rem;
+    }
+    
+    .title-slide-preview .slide-description {
+        font-size: 1rem;
+    }
+}
+
+.chart-slide-preview .chart-container,
+.table-slide-preview .table-container,
+.comparison-slide-preview .comparison-container,
+.comparison-table-slide-preview .comparison-container,
+.trends-slide-preview .trends-container,
+.plan-vs-actual-slide-preview .plan-vs-actual-container {
+    width: 100%;
+}
+
+

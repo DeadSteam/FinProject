@@ -4,16 +4,7 @@ import { useReportData } from './ReportDataProvider';
 import SlideEditor from './SlideEditor';
 import SlideTypeModal from './SlideTypeModal';
 import './ReportConstructor.css';
-
-// Безопасное определение development режима
-const isDevelopment = () => {
-    if (typeof window !== 'undefined') {
-        return window.location.hostname === 'localhost' && ['3000', '3001'].includes(window.location.port);
-    }
-    return false;
-};
-
-const dev = isDevelopment();
+import { dev } from '../../utils/env';
 
 /**
  * Компонент конструктора отчетов.

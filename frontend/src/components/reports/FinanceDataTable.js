@@ -1,4 +1,5 @@
 import React from 'react';
+import { getMonthKey } from '../charts/utils/chartDataUtils';
 import DataTable from '../ui/DataTable';
 import './FinanceDataTable.css';
 
@@ -13,7 +14,8 @@ const FinanceDataTable = ({
     isLoading = false,
     className = "",
     selectedMetrics = [], // Типы колонок ['plan', 'actual', 'deviation', 'percentage']
-    selectedMetric = 'all' // Конкретная выбранная метрика (ID или 'all')
+    selectedMetric = 'all', // Конкретная выбранная метрика (ID или 'all')
+    showQuarters = true // Показывать строки кварталов
 }) => {
     if (isLoading) {
         return (
@@ -54,7 +56,7 @@ const FinanceDataTable = ({
                     view="quarters"
                     hasAdminRights={false} // В отчетах редактирование отключено
                     isFiltering={false}
-                    showQuarters={true}
+                    showQuarters={showQuarters}
                     visibleColumns={{
                         plan: selectedMetrics.includes('plan'),
                         fact: selectedMetrics.includes('actual'),
@@ -135,37 +137,6 @@ const transformDataForDataTable = (data, columns) => {
     return { metrics, periods };
 };
 
-/**
- * Преобразует название месяца в ключ для periods_value
- */
-const getMonthKey = (monthName) => {
-    const monthMap = {
-        'Январь': 'январь',
-        'Февраль': 'февраль',
-        'Март': 'март',
-        'Апрель': 'апрель',
-        'Май': 'май',
-        'Июнь': 'июнь',
-        'Июль': 'июль',
-        'Август': 'август',
-        'Сентябрь': 'сентябрь',
-        'Октябрь': 'октябрь',
-        'Ноябрь': 'ноябрь',
-        'Декабрь': 'декабрь',
-        'Янв': 'январь',
-        'Фев': 'февраль',
-        'Мар': 'март',
-        'Апр': 'апрель',
-        'Июн': 'июнь',
-        'Июл': 'июль',
-        'Авг': 'август',
-        'Сен': 'сентябрь',
-        'Окт': 'октябрь',
-        'Ноя': 'ноябрь',
-        'Дек': 'декабрь'
-    };
-
-    return monthMap[monthName] || monthName.toLowerCase();
-};
+// getMonthKey вынесен в общие utils
 
 export default FinanceDataTable;

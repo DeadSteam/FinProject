@@ -223,14 +223,7 @@
     line-height: 1.3 !important;
 }
 
-/* Максимально специфичный селектор для защиты от глобальных стилей */
-#root > div > main > div > div:nth-child(3) > div > div > div.slides-panel > div.slides-panel-body > div > div > div.slide-item-content > div.slide-info > div.slide-title {
-    font-weight: 600 !important;
-    color: var(--text-primary) !important;
-    font-size: 0.95rem !important;
-    margin-bottom: 4px !important;
-    line-height: 1.3 !important;
-}
+/* Удалён глубокий селектор — используем компонентные классы */
 
 /* Переопределение глобальных стилей заголовков для элементов слайдов */
 .slides-panel h1,
