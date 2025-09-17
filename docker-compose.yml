@@ -17,8 +17,8 @@ services:
 
   app:
     build: .
-    expose:
-      - "8000"
+    ports:
+      - "8000:8000"
     volumes:
       - .:/app
     depends_on:
@@ -50,7 +50,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=${REDIS_DB}
-      - CORS_ORIGINS=http://${HOST:-localhost}:3000,http://${HOST:-localhost}:3001,http://${HOST:-localhost}:8080
+      - CORS_ORIGINS=http://${HOST:-localhost},https://${HOST:-localhost},http://${HOST:-localhost}:3000,http://${HOST:-localhost}:3001,http://${HOST:-localhost}:8080
     networks:
       - app-network
 
