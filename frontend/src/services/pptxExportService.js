@@ -95,6 +95,9 @@ export async function exportReportFromImagesAndTables(report, imagesBySlide, tab
     const pptx = new Pptx();
     pptx.layout = 'LAYOUT_16x9';
 
+    // Страхуем имя файла на проде
+    const safeFileName = String(filename || 'report.pptx').replace(/[^\w\-. ]+/g, '').replace(/\s+/g, ' ').trim() || 'report.pptx';
+
     const ids = order && order.length ? order : (report.slides || []).map(s => s.id);
     for (const slideId of ids) {
         const slide = (report.slides || []).find(s => slideId === s.id || slideId.startsWith(`${s.id}__part`)) || { id: slideId, title: report.title };
@@ -138,7 +141,26 @@ export async function exportReportFromImagesAndTables(report, imagesBySlide, tab
         }
     }
 
-    await pptx.writeFile({ fileName: filename });
+    // Пытаемся сохранить через стандартный метод; при ошибке используем fallback
+    try {
+        await pptx.writeFile({ fileName: safeFileName });
+    } catch (err) {
+        try {
+            const arr = await pptx.write('arraybuffer');
+            const blob = new Blob([arr], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = safeFileName;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        } catch (e) {
+            // Отдаём осмысленную ошибку наверх (UI покажет уведомление)
+            throw new Error('Экспорт PPTX не удался. Проверьте разрешение на скачивание файлов в браузере и повторите попытку.');
+        }
+    }
 }
 
 export default {

@@ -295,11 +295,8 @@ const AGChartWrapper = forwardRef(({
           tick: {
             stroke: '#e2e8f0', // border
             size: 4
-          },
-          // Автоматическое масштабирование под данные
-          nice: false,             // Отключаем автоматическое округление
-          min: 0,                  // Фиксируем минимум на 0
-          max: maxValue            // Используем рассчитанное максимальное значение
+          }
+          // min/max установим ниже только если есть положительные данные
         }
       ],
       // Настройки легенды
@@ -333,6 +330,16 @@ const AGChartWrapper = forwardRef(({
         seriesNodeClick: (event) => {
           onDataClick(event);
         }
+      };
+    }
+
+    // Применяем границы числовой оси только если maxValue > 0
+    if (maxValue > 0 && options.axes && options.axes[1] && options.axes[1].type === 'number') {
+      options.axes[1] = {
+        ...options.axes[1],
+        min: 0,
+        max: maxValue,
+        nice: false
       };
     }
 
