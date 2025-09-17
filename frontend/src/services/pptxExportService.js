@@ -7,8 +7,9 @@ let PptxGenJSInstance = null;
 
 async function getPptx() {
     if (PptxGenJSInstance) return PptxGenJSInstance;
-    const mod = (await import('pptxgenjs')).default;
-    PptxGenJSInstance = mod;
+    const mod = await import('pptxgenjs');
+    // поддержка разных форматов экспорта (ESM/CJS)
+    PptxGenJSInstance = mod && (mod.default || mod.PptxGenJS || mod);
     return PptxGenJSInstance;
 }
 
@@ -165,6 +166,7 @@ export async function exportReportFromImagesAndTables(report, imagesBySlide, tab
 
 export default {
     exportReportFromImages,
+    exportReportFromImagesAndTables,
 };
 
 
