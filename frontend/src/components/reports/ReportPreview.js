@@ -265,6 +265,8 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect }) => {
                                 onClick={async () => {
                                     try {
                                         setIsExporting(true);
+                                        // Включаем режим экспорта (отключение анимаций/переходов глобально)
+                                        document.body.classList.add('export-mode');
                                         // Собираем canvases и таблицы непосредственно из DOM в текущем состоянии
                                         const imagesBySlide = new Map();
                                         const tablesBySlide = new Map();
@@ -275,12 +277,12 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect }) => {
                                             const id = t.getAttribute('data-slide-id');
                                             order.push(id);
                                             
-                                            // Активируем миниатюру и ждём рендер
+                                            // Активируем миниатюру и даём времени React/графикам отрендериться
                                             t.click();
-                                            await new Promise(r => setTimeout(r, 50));
+                                            await new Promise(r => setTimeout(r, 150));
                                             const scope = document.querySelector(`.main-slide-area .slide-container[data-slide-id="${id}"]`) || document.querySelector('.main-slide-area .slide-container');
                                             if (!scope) continue;
-                                            await reportsService.waitForChartToRender(scope, 1500);
+                                            await reportsService.waitForChartToRender(scope, 1800);
                                             
                                             // Ищем графики (canvases)
                                             const roots = [
@@ -329,6 +331,7 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect }) => {
                                     } catch (e) {
                                         showError('Не удалось экспортировать PPTX');
                                     } finally {
+                                        document.body.classList.remove('export-mode');
                                         setIsExporting(false);
                                     }
                                 }}
