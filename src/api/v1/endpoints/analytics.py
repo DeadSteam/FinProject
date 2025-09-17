@@ -11,7 +11,7 @@ class AnalyticsEvent(BaseModel):
     priority: str = "normal"
     tags: list = []
     data: Optional[Dict[str, Any]] = None
-    timestamp: Optional[str] = None
+    timestamp: Optional[Union[int, float, str]] = None
 
 class AnalyticsBatch(BaseModel):
     events: List[AnalyticsEvent]
