@@ -167,24 +167,31 @@ const SlidePreview = ({
         true;
     
     if (!hasRequiredFilters && isFinanceSlide) {
+        const placeholderType = slideType.includes('table') ? 'table' : 'chart';
         return (
-            <div className="slide-preview-container">
-                <div className="alert alert-warning">
-                    <i className="fas fa-exclamation-triangle me-2"></i>
-                    <strong>Необходимо настроить фильтры</strong>
-                    <p className="mb-0 mt-2">
-                        Для отображения финансового графика необходимо выбрать конкретную категорию и магазин.
-                    </p>
-                    <button 
-                        className="btn btn-primary btn-sm mt-2"
-                        onClick={onGoToSettings}
-                    >
-                        <i className="fas fa-cog me-1"></i>
-                        Настроить фильтры
-                    </button>
-                </div>
-            </div>
+            <EmptySlidePlaceholder
+                type={placeholderType}
+                title="Нет данных для отображения"
+                description="Для финансовых слайдов выберите магазин и категорию, затем обновите данные"
+                onGoToSettings={onGoToSettings}
+            />
         );
+    }
+
+    // Если для не-финансовых слайдов фильтры не выбраны — показываем единый плейсхолдер
+    if (!isFinanceSlide && slideType !== 'title') {
+        const hasAny = hasSelectedFilters(createSafeFilters(filters || {}));
+        if (!hasAny) {
+            const placeholderType = slideType.includes('table') ? 'table' : 'chart';
+            return (
+                <EmptySlidePlaceholder
+                    type={placeholderType}
+                    title="Нет данных для отображения"
+                    description="Выберите параметры фильтрации или загрузите данные"
+                    onGoToSettings={onGoToSettings}
+                />
+            );
+        }
     }
 
     // Специальная обработка для comparison-table

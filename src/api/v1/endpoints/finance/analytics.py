@@ -292,6 +292,7 @@ async def get_comprehensive_analytics(
     metrics: Optional[str] = None,
     month_start: Optional[int] = None,
     month_end: Optional[int] = None,
+    group_by: Optional[str] = None,
     session: AsyncSession = Depends(finances_db.get_session)
 ):
     """
@@ -302,6 +303,9 @@ async def get_comprehensive_analytics(
         categories: Comma-separated список ID категорий
         shops: Comma-separated список ID магазинов
         metrics: Comma-separated список типов метрик (actual, plan, deviation, percentage)
+        month_start: Начальный месяц для фильтрации (1-12)
+        month_end: Конечный месяц для фильтрации (1-12)
+        group_by: Тип группировки для план vs факт (categories, subcategories, shops)
         session: Сессия БД
     """
     try:
@@ -374,7 +378,8 @@ async def get_comprehensive_analytics(
             ),
             "planVsActual": prepare_plan_vs_actual_data(
                 all_actual_values, all_plan_values, 
-                all_categories, all_shops, all_metrics
+                all_categories, all_shops, all_metrics,
+                group_by=group_by
             ),
             "planVsActualStats": prepare_plan_vs_actual_stats(
                 all_actual_values, all_plan_values
@@ -867,8 +872,27 @@ def prepare_trends_statistics(actual_values, plan_values, periods, years, month_
 
     return stats
 
-def prepare_plan_vs_actual_data(actual_values, plan_values, categories, shops, metrics):
+def prepare_plan_vs_actual_data(actual_values, plan_values, categories, shops, metrics, group_by=None):
     """Подготовка данных для план vs факт"""
+    plan_vs_actual = {
+        "categories": {},
+        "shops": {},
+        "metrics": {}
+    }
+    
+    # Определяем какую группировку использовать
+    if group_by == "subcategories":
+        # Для подкатегорий используем метрики
+        return prepare_plan_vs_actual_by_metrics(actual_values, plan_values, metrics)
+    elif group_by == "shops":
+        # Для магазинов
+        return prepare_plan_vs_actual_by_shops(actual_values, plan_values, shops)
+    else:
+        # По умолчанию - по категориям
+        return prepare_plan_vs_actual_by_categories(actual_values, plan_values, categories, metrics)
+
+def prepare_plan_vs_actual_by_categories(actual_values, plan_values, categories, metrics):
+    """Подготовка данных для план vs факт по категориям"""
     plan_vs_actual = {
         "categories": {},
         "shops": {},
@@ -898,6 +922,16 @@ def prepare_plan_vs_actual_data(actual_values, plan_values, categories, shops, m
             "percentage": round(percentage, 2)
         }
     
+    return plan_vs_actual
+
+def prepare_plan_vs_actual_by_shops(actual_values, plan_values, shops):
+    """Подготовка данных для план vs факт по магазинам"""
+    plan_vs_actual = {
+        "categories": {},
+        "shops": {},
+        "metrics": {}
+    }
+    
     # По магазинам
     for shop in shops:
         shop_actuals = [av for av in actual_values if av.shop_id == shop.id]
@@ -918,7 +952,17 @@ def prepare_plan_vs_actual_data(actual_values, plan_values, categories, shops, m
             "percentage": round(percentage, 2)
         }
     
-    # По метрикам
+    return plan_vs_actual
+
+def prepare_plan_vs_actual_by_metrics(actual_values, plan_values, metrics):
+    """Подготовка данных для план vs факт по метрикам (подкатегориям)"""
+    plan_vs_actual = {
+        "categories": {},
+        "shops": {},
+        "metrics": {}
+    }
+    
+    # По метрикам (подкатегориям)
     for metric in metrics:
         metric_actuals = [av for av in actual_values if av.metric_id == metric.id]
         metric_plans = [pv for pv in plan_values if pv.metric_id == metric.id]

@@ -8,6 +8,7 @@
     border-radius: var(--card-border-radius, 8px);
     padding: 1.25rem;
     margin-bottom: 1.5rem;
+
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
@@ -18,6 +19,14 @@
     margin-bottom: 0.75rem;
     cursor: pointer;
     user-select: none;
+    background: var(--bg-primary) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--card-border-radius) !important;
+    padding: 1.5rem !important;
+    box-shadow: var(--box-shadow) !important;
+    position: relative !important;
+    transition: var(--transition) !important;
+    margin-bottom: var(--spacing-md) !important;
 }
 
 .filtersTitle {

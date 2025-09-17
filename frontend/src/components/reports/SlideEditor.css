@@ -10,11 +10,7 @@
 }
 
 /* Заголовок теперь в card-header */
-.slide-editor .card-header {
-    background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border);
-    padding: var(--spacing-md) var(--spacing-lg);
-}
+
 
 .slide-editor .card-header h5 {
     color: var(--text-primary);

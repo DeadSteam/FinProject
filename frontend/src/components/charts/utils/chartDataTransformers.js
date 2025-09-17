@@ -53,18 +53,47 @@ export const fromFinanceData = (data, selectedMetrics = ['plan', 'actual']) => {
 };
 
 export const createSeriesConfig = (selectedMetrics = ['plan', 'actual'], type = 'bar') => {
+  // Базовые цвета для известных метрик (план/факт и т.п.)
   const metricColors = { plan: '#a5b4fc', actual: '#4f46e5', fact: '#4f46e5', deviation: '#dc3545', percentage: '#28a745' };
   const metricNames = { plan: 'План', actual: 'Факт', fact: 'Факт', deviation: 'Отклонение', percentage: 'Процент' };
-  return selectedMetrics.map((metric) => ({
+
+  // Чтение CSS переменных палитры из globals.css (fallback'и на случай отсутствия DOM)
+  const getCssVar = (name, fallback) => {
+    try {
+      if (typeof window !== 'undefined' && window.getComputedStyle) {
+        const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        return v || fallback;
+      }
+    } catch (_) {}
+    return fallback;
+  };
+
+  const dynamicPalette = [
+    getCssVar('--primary', '#4f46e5'),
+    getCssVar('--primary-light', '#a5b4fc'),
+    getCssVar('--secondary-grafic', '#978ab5'),
+    getCssVar('--thirdy-grafic', '#b0cbd2'),
+    // вместо оранжевого используем светлый фирменный
+    getCssVar('--success', '#10b981'),
+    getCssVar('--info', '#3b82f6'),
+    // предупреждения также заменяем на светлый фирменный
+
+    getCssVar('--error', '#ef4444')
+  ].filter(Boolean);
+
+  return selectedMetrics.map((metric, index) => {
+    const color = metricColors[metric] || dynamicPalette[index % dynamicPalette.length] || '#4f46e5';
+    return ({
     yKey: metric,
     yName: metricNames[metric] || metric,
-    fill: metricColors[metric] || '#4f46e5',
-    stroke: metricColors[metric] || '#4f46e5',
+    fill: color,
+    stroke: color,
     strokeWidth: type === 'line' || type === 'area' ? 2 : 0,
-    marker: type === 'line' || type === 'area' ? { shape: 'circle', size: 4, strokeWidth: 2, fill: metricColors[metric] || '#4f46e5', stroke: metricColors[metric] || '#4f46e5' } : undefined,
+    marker: type === 'line' || type === 'area' ? { shape: 'circle', size: 4, strokeWidth: 2, fill: color, stroke: color } : undefined,
     fillOpacity: type === 'area' ? 0.3 : 1,
     cornerRadius: type === 'bar' ? 4 : 0
-  }));
+    });
+  });
 };
 
 // prepareExportData и вспомогательные функции для Chart.js удалены как неиспользуемые

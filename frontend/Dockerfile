@@ -45,9 +45,9 @@ RUN mkdir -p /var/log/nginx && \
 # Копируем собранные файлы
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Копируем config.js в корневую директорию веб-сервера
-# Это позволит легко заменять его в runtime при необходимости
+# Копируем рантайм-конфиги в корень веб-сервера (SPA читает их напрямую)
 COPY public/config.js /usr/share/nginx/html/config.js
+COPY public/config-loader.js /usr/share/nginx/html/config-loader.js
 
 # Открываем порт nginx
 EXPOSE 80

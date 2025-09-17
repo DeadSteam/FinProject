@@ -86,6 +86,11 @@ async function addSlideWithCharts(pptx, slideDef, images, orientation = 'vertica
 
 // Экспорт напрямую из набора изображений, подготовленных снаружи (ReportPreview)
 export async function exportReportFromImages(report, imagesBySlide, order, filename = 'report.pptx') {
+    return await exportReportFromImagesAndTables(report, imagesBySlide, new Map(), order, filename);
+}
+
+// Экспорт с поддержкой и графиков, и таблиц
+export async function exportReportFromImagesAndTables(report, imagesBySlide, tablesBySlide, order, filename = 'report.pptx') {
     const Pptx = await getPptx();
     const pptx = new Pptx();
     pptx.layout = 'LAYOUT_16x9';
@@ -94,17 +99,41 @@ export async function exportReportFromImages(report, imagesBySlide, order, filen
     for (const slideId of ids) {
         const slide = (report.slides || []).find(s => slideId === s.id || slideId.startsWith(`${s.id}__part`)) || { id: slideId, title: report.title };
         const imgs = imagesBySlide.get(slideId) || [];
+        const tables = tablesBySlide.get(slideId) || [];
 
-        if (!imgs.length) {
+        // Если нет ни графиков, ни таблиц
+        if (!imgs.length && !tables.length) {
             const s = pptx.addSlide();
             addTitle(s, slide.title || '');
-            s.addText('Графики не были найдены в DOM (не отображались).', { x: 1, y: 2.5, w: 8, h: 0.6, color: '888888' });
+            s.addText('Графики и таблицы не были найдены в DOM (не отображались).', { x: 1, y: 2.5, w: 8, h: 0.6, color: '888888' });
             continue;
         }
 
+        // Если есть только таблицы
+        if (!imgs.length && tables.length > 0) {
+            const chunkSize = 2;
+            for (let i = 0; i < tables.length; i += chunkSize) {
+                const chunk = tables.slice(i, i + chunkSize);
+                await addSlideWithCharts(pptx, slide, chunk, 'vertical');
+            }
+            continue;
+        }
+
+        // Если есть только графики
+        if (imgs.length > 0 && !tables.length) {
+            const chunkSize = 2;
+            for (let i = 0; i < imgs.length; i += chunkSize) {
+                const chunk = imgs.slice(i, i + chunkSize);
+                await addSlideWithCharts(pptx, slide, chunk, 'vertical');
+            }
+            continue;
+        }
+
+        // Если есть и графики, и таблицы - объединяем их
+        const allContent = [...imgs, ...tables];
         const chunkSize = 2;
-        for (let i = 0; i < imgs.length; i += chunkSize) {
-            const chunk = imgs.slice(i, i + chunkSize);
+        for (let i = 0; i < allContent.length; i += chunkSize) {
+            const chunk = allContent.slice(i, i + chunkSize);
             await addSlideWithCharts(pptx, slide, chunk, 'vertical');
         }
     }

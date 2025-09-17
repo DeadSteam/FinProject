@@ -384,6 +384,14 @@
 .editor-panel .card-body {
     flex: 1;
     overflow-y: auto;
+    /* Скрываем колеса прокрутки */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* Скрываем колеса прокрутки для WebKit браузеров */
+.editor-panel .card-body::-webkit-scrollbar {
+    display: none;
 }
 
 /* Адаптивность */

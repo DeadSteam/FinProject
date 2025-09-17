@@ -1,5 +1,5 @@
 // Универсальный хук для управления состоянием фильтров
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, useEffect } from 'react';
 import {
     normalizeFilters,
     mergeFilters,
@@ -10,6 +10,18 @@ import {
 
 export function useFilters(initialFilters = {}, availableData = {}) {
     const [filters, setFilters] = useState(() => normalizeFilters(initialFilters));
+
+    // Синхронизируем с внешними изменениями initialFilters
+    useEffect(() => {
+        const normalized = normalizeFilters(initialFilters);
+        setFilters(prev => {
+            // Обновляем только если есть реальные изменения
+            if (JSON.stringify(prev) !== JSON.stringify(normalized)) {
+                return normalized;
+            }
+            return prev;
+        });
+    }, [initialFilters]);
 
     const update = useCallback((updates) => {
         setFilters((prev) => mergeFilters(prev, updates));

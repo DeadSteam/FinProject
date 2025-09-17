@@ -105,9 +105,21 @@ const SlideEditor = ({
     }, [localSlide, onSlideChange]);
 
     const handleFiltersChange = useCallback((newFilters) => {
-        // Преобразуем поля showDeviation и showPercentage в массив metrics для финансовых слайдов
+        // Преобразуем финансовые флаги в массив metrics для финансовых слайдов (без отклонения и процента)
         let processedFilters = { ...newFilters };
         
+        // Для слайдов plan-vs-actual сохраняем groupBy
+        if (localSlide.type === 'plan-vs-actual') {
+            if (newFilters.groupBy) {
+                processedFilters.groupBy = newFilters.groupBy;
+            }
+            if (newFilters.viewMode) {
+                processedFilters.viewMode = newFilters.viewMode;
+            }
+            if (newFilters.chartType) {
+                processedFilters.chartType = newFilters.chartType;
+            }
+        }
         
         if (localSlide.type === 'finance-chart' || localSlide.type === 'finance-table') {
             const metrics = [];
@@ -119,12 +131,7 @@ const SlideEditor = ({
             if (newFilters.showFact !== false) {
                 metrics.push('actual');
             }
-            if (newFilters.showDeviation === true) {
-                metrics.push('deviation');
-            }
-            if (newFilters.showPercentage === true) {
-                metrics.push('percentage');
-            }
+            // Отклонение и процент выключены из UI и не добавляются
             
             processedFilters.metrics = metrics;
             

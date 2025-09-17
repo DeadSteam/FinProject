@@ -19,7 +19,7 @@
     align-items: center !important;
     justify-content: space-between !important;
     cursor: pointer !important;
-    padding: 0.125rem 0.25rem !important;
+    padding: 0.5rem 0.75rem !important;
     transition: all 0.2s ease !important;
     flex: 1 !important;
     min-width: 0 !important;
@@ -27,8 +27,11 @@
     flex-shrink: 1 !important;
     box-sizing: border-box !important;
     white-space: nowrap !important;
-    gap: 0.25rem !important;
+    gap: 0.5rem !important;
     margin: 0 !important;
+    border-radius: var(--border-radius);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
 }
 
 /* Максимально специфичный селектор для минимального расстояния */
@@ -38,10 +41,17 @@
     font-size: 0.875rem;
     flex-shrink: 0;
     white-space: nowrap;
-    margin-right: 0.125rem !important;
+    margin-right: var(--spacing-sm) !important;
     padding: 0 !important;
     width: auto !important;
     max-width: none !important;
+    flex: 1;
+}
+
+/* Hover эффект для тумблеров */
+.slide-filters .toggle-item:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--primary);
 }
 
 .slide-filters .toggle-switch {

@@ -65,6 +65,8 @@ export const createSafeFilters = (filters) => {
             : [],
         periodType: filters?.periodType || 'years',
         chartType: filters?.chartType || 'bar',
+        groupBy: filters?.groupBy || 'categories',
+        viewMode: filters?.viewMode || 'chart',
         showPlan: filters?.showPlan || false,
         showFact: filters?.showFact || false,
         showDeviation: filters?.showDeviation || false,

@@ -275,10 +275,11 @@ export const prepareChartData = (sourceData, groupBy, filters = {}) => {
     switch (groupBy) {
         case 'categories':
             return prepareCategoryData(sourceData.planVsActual || sourceData);
-        case 'shops':
-            return prepareShopData(sourceData.planVsActual || sourceData);
+        case 'subcategories':
         case 'metrics':
             return prepareMetricsData(sourceData.planVsActual || sourceData);
+        case 'shops':
+            return prepareShopData(sourceData.planVsActual || sourceData);
         case 'years':
             return prepareYearlyData(sourceData.comparison || sourceData, filters);
         case 'monthly':

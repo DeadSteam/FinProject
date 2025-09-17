@@ -14,8 +14,7 @@ export const FILTER_KEYS = [
     // Финансовые флаги (могут отсутствовать в аналитике)
     'showPlan',
     'showFact',
-    'showDeviation',
-    'showPercentage'
+    // toggles for deviation/percentage удалены из UI
 ];
 
 export function getDefaultFilters() {
@@ -28,8 +27,7 @@ export function getDefaultFilters() {
         chartType: 'bar',
         showPlan: false,
         showFact: false,
-        showDeviation: false,
-        showPercentage: false
+        // deviation/percentage удалены из UI
     };
 }
 
@@ -112,8 +110,7 @@ export function ensureFinanceMetricsConsistency(filters) {
 
     if (f.showPlan) metricsSet.add('plan');
     if (f.showFact) metricsSet.add('actual');
-    if (f.showDeviation) metricsSet.add('deviation');
-    if (f.showPercentage) metricsSet.add('percentage');
+    // deviation/percentage не учитываем
 
     return mergeFilters(f, { metrics: Array.from(metricsSet) });
 }

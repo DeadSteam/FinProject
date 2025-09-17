@@ -181,6 +181,16 @@ const SlideSettings = ({
                                         </button>
                                         <button 
                                             type="button"
+                                            className={`btn ${ (filters?.groupBy) === 'subcategories' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                            onClick={() => onFiltersChange({
+                                                ...filters,
+                                                groupBy: 'subcategories'
+                                            })}
+                                        >
+                                            Подкатегории
+                                        </button>
+                                        <button 
+                                            type="button"
                                             className={`btn ${ (filters?.groupBy) === 'shops' ? 'btn-primary' : 'btn-outline-primary'}`}
                                             onClick={() => onFiltersChange({
                                                 ...filters,
@@ -188,6 +198,43 @@ const SlideSettings = ({
                                             })}
                                         >
                                             Магазины
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="setting-column">
+                                <label className="form-label">Отображение</label>
+                                <div className="period-selector">
+                                    <div className="btn-group button-group-container" role="group">
+                                        <button 
+                                            type="button"
+                                            className={`btn ${(filters?.viewMode || 'chart') === 'chart' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                            onClick={() => onFiltersChange({
+                                                ...filters,
+                                                viewMode: 'chart'
+                                            })}
+                                        >
+                                            График
+                                        </button>
+                                        <button 
+                                            type="button"
+                                            className={`btn ${filters?.viewMode === 'table' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                            onClick={() => onFiltersChange({
+                                                ...filters,
+                                                viewMode: 'table'
+                                            })}
+                                        >
+                                            Таблица
+                                        </button>
+                                        <button 
+                                            type="button"
+                                            className={`btn ${filters?.viewMode === 'both' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                            onClick={() => onFiltersChange({
+                                                ...filters,
+                                                viewMode: 'both'
+                                            })}
+                                        >
+                                            Оба
                                         </button>
                                     </div>
                                 </div>

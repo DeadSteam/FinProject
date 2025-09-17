@@ -226,6 +226,8 @@ export const ReportDataProvider = ({ children }) => {
                 if (subcategory && subcategory !== 'all') params.set('subcategory', subcategory);
                 // Передаем тип периода чтобы backend мог вернуть monthly/quarterly
                 if (filters.periodType) params.set('period_type', filters.periodType);
+                // Передаем группировку для план vs факт
+                if (filters.groupBy) params.set('group_by', filters.groupBy);
 
                 // cache buster
                 params.set('_', Date.now().toString());

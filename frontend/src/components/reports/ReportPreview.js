@@ -265,20 +265,24 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect }) => {
                                 onClick={async () => {
                                     try {
                                         setIsExporting(true);
-                                        // Собираем canvases непосредственно из DOM в текущем состоянии
+                                        // Собираем canvases и таблицы непосредственно из DOM в текущем состоянии
                                         const imagesBySlide = new Map();
+                                        const tablesBySlide = new Map();
                                         const order = [];
                                         const thumbs = Array.from(document.querySelectorAll('.thumbnails-list .thumbnail-item[data-slide-id]'));
+                                        
                                         for (const t of thumbs) {
                                             const id = t.getAttribute('data-slide-id');
                                             order.push(id);
+                                            
                                             // Активируем миниатюру и ждём рендер
                                             t.click();
                                             await new Promise(r => setTimeout(r, 50));
                                             const scope = document.querySelector(`.main-slide-area .slide-container[data-slide-id="${id}"]`) || document.querySelector('.main-slide-area .slide-container');
                                             if (!scope) continue;
                                             await reportsService.waitForChartToRender(scope, 1500);
-                                            // Ищем конкретные контейнеры графиков
+                                            
+                                            // Ищем графики (canvases)
                                             const roots = [
                                                 ...scope.querySelectorAll('.comparison-container.reports-chart-container > div > div'),
                                                 ...scope.querySelectorAll('.reports-chart-container .ag-chart-container'),
@@ -303,8 +307,24 @@ const ReportPreview = ({ report, selectedSlideIndex, onSlideSelect }) => {
                                                 if (!seen.has(data)) { seen.add(data); imgs.push(data); }
                                             }
                                             if (imgs.length) imagesBySlide.set(id, imgs);
+                                            
+                                            // Ищем таблицы
+                                            const tableElements = reportsService.findTableElements(id);
+                                            if (tableElements.length > 0) {
+                                                const tableImages = [];
+                                                for (const tableEl of tableElements) {
+                                                    const tableImage = await reportsService.captureTableAsImage(tableEl);
+                                                    if (tableImage) {
+                                                        tableImages.push(tableImage);
+                                                    }
+                                                }
+                                                if (tableImages.length > 0) {
+                                                    tablesBySlide.set(id, tableImages);
+                                                }
+                                            }
                                         }
-                                        await pptxExport.exportReportFromImages(report, imagesBySlide, order, `${report.title || 'report'}.pptx`);
+                                        
+                                        await pptxExport.exportReportFromImagesAndTables(report, imagesBySlide, tablesBySlide, order, `${report.title || 'report'}.pptx`);
                                         showSuccess('PPTX экспорт завершен');
                                     } catch (e) {
                                         showError('Не удалось экспортировать PPTX');

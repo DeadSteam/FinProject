@@ -244,6 +244,8 @@ const Analytics = () => {
             // Диапазон месяцев для трендов в месячном режиме (если выбран)
             if (filters.monthStart) params.append('month_start', String(filters.monthStart));
             if (filters.monthEnd) params.append('month_end', String(filters.monthEnd));
+            // Группировка для план vs факт
+            if (filters.groupBy) params.append('group_by', filters.groupBy);
 
             const url = `/api/v1/finance/analytics/comprehensive?${params}`;
                     if (dev) {
@@ -306,7 +308,7 @@ const Analytics = () => {
         if (filters.years.length > 0 || filters.categories.length > 0 || filters.shops.length > 0) {
             loadAnalyticsData();
         }
-    }, [filters.years, filters.categories, filters.shops, filters.metrics]);
+    }, [filters.years, filters.categories, filters.shops, filters.metrics, filters.groupBy]);
 
     if (!user) {
         return null;

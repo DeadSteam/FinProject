@@ -345,6 +345,16 @@ const TabFilters = ({
                                  </button>
                                  <button 
                                      type="button"
+                                     className={`btn ${filters.groupBy === 'subcategories' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                     onClick={() => onFiltersChange({
+                                         ...filters,
+                                         groupBy: 'subcategories'
+                                     })}
+                                 >
+                                     Подкатегории
+                                 </button>
+                                 <button 
+                                     type="button"
                                      className={`btn ${filters.groupBy === 'shops' ? 'btn-primary' : 'btn-outline-primary'}`}
                                      onClick={() => onFiltersChange({
                                          ...filters,

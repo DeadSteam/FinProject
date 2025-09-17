@@ -337,31 +337,6 @@ const SlideFilters = ({
                                         </label>
                                     </div>
                                     
-                                    <div className="toggle-item">
-                                        <span className="toggle-text">Отклонение</span>
-                                        <label className={`toggle-switch ${localFilters.showDeviation === true ? 'active' : ''}`}>
-                                            <input
-                                                className="toggle-input"
-                                                type="checkbox"
-                                                checked={localFilters.showDeviation === true}
-                                                onChange={(e) => handleFilterChange('showDeviation', e.target.checked)}
-                                            />
-                                            <span className="toggle-slider"></span>
-                                        </label>
-                                    </div>
-                                    
-                                    <div className="toggle-item">
-                                        <span className="toggle-text">Процент</span>
-                                        <label className={`toggle-switch ${localFilters.showPercentage === true ? 'active' : ''}`}>
-                                            <input
-                                                className="toggle-input"
-                                                type="checkbox"
-                                                checked={localFilters.showPercentage === true}
-                                                onChange={(e) => handleFilterChange('showPercentage', e.target.checked)}
-                                            />
-                                            <span className="toggle-slider"></span>
-                                        </label>
-                                    </div>
                                 </div>
                             </div>
                         </div>

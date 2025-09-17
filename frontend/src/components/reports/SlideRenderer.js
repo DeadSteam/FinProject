@@ -231,9 +231,13 @@ const SlideRenderer = ({
                         filters={filters}
                         isLoading={isLoading}
                         showControls={false}
-                        showTable={false}
+                        showTable={filters?.viewMode === 'table' || filters?.viewMode === 'both'}
                         showSummary={true}
                         showHeader={false}
+                        viewMode={filters?.viewMode || 'chart'}
+                        chartType={filters?.chartType || 'bar'}
+                        groupBy={filters?.groupBy || 'categories'}
+                        selectedMetrics={filters?.metrics || ['plan', 'actual']}
                         className="chartInReports"
                     />
                 ) : (

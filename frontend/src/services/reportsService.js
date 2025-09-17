@@ -284,161 +284,152 @@ class ReportsService {
         return months[month - 1] || `Месяц ${month}`;
     }
 
+    // Удалено: html-to-image/html2canvas больше не используются
+
     /**
-     * Захват графика как изображения с использованием html-to-image
+     * Захват графика как изображения
      */
-    async captureChartAsImageWithHtmlToImage(chartElement, options = {}) {
+    // Удалено: захват через html2canvas/svg больше не используется
+
+    /**
+     * Захват таблицы как изображения
+     */
+    async captureTableAsImage(tableElement) {
+        if (!tableElement) return null;
+        
         try {
-            if (!chartElement) {
-                console.warn('Chart element not found for capture');
-                return null;
-            }
-
-            // Дополнительная проверка, что элемент видимый
-            if (chartElement.offsetWidth === 0 || chartElement.offsetHeight === 0) {
-                console.warn('Chart element has zero dimensions');
-                return null;
-            }
-
-            // Минимальное время ожидания, так как анимации полностью отключены при экспорте
-            await new Promise(resolve => setTimeout(resolve, 200)); // Сократили до 200мс
+            // Используем html2canvas для захвата таблицы
+            const html2canvas = (await import('html2canvas')).default;
             
-            // Умная проверка готовности графика с учетом анимаций
-            let attempts = 0;
-            let isGraphicReady = false;
+            const canvas = await html2canvas(tableElement, {
+                backgroundColor: '#ffffff',
+                scale: 2, // Увеличиваем разрешение
+                useCORS: true,
+                allowTaint: true,
+                logging: false,
+                width: tableElement.offsetWidth,
+                height: tableElement.offsetHeight
+            });
             
-            while (attempts < 5 && !isGraphicReady) { // Сократили до 5 попыток
-                // Проверяем наличие визуальных элементов
-                const hasVisibleContent = chartElement.querySelector('rect, path, circle, line, text, .bar, .line, .point');
-                
-                // Проверяем завершение CSS анимаций
-                const allAnimatedElements = chartElement.querySelectorAll('*');
-                let hasActiveAnimations = false;
-                
-                for (const element of allAnimatedElements) {
-                    const computedStyle = window.getComputedStyle(element);
-                    // Проверяем CSS анимации и переходы
-                    if (computedStyle.animationName !== 'none' || 
-                        computedStyle.transitionProperty !== 'none' ||
-                        element.style.opacity === '0' ||
-                        element.style.transform?.includes('scale(0)') ||
-                        element.style.transform?.includes('translateY')) {
-                        hasActiveAnimations = true;
-                        break;
-                    }
-                }
-                
-                // Проверяем размеры элементов (анимация может изменять размеры)
-                const chartBars = chartElement.querySelectorAll('.bar, [class*="bar"], rect[height], [class*="Chart-module__chartBar"]');
-                let barsFullyRendered = true;
-                let maxBarHeight = 0;
-                
-                if (chartBars.length > 0) {
-                    
-                    for (const bar of chartBars) {
-                        const rect = bar.getBoundingClientRect();
-                        const computedStyle = window.getComputedStyle(bar);
-                        
-                        // Проверяем высоту бара
-                        if (rect.height < 20) { // Увеличили минимальную высоту
-                            barsFullyRendered = false;
-                            break;
-                        }
-                        
-                        // Проверяем CSS свойства анимации
-                        if (computedStyle.transform && computedStyle.transform !== 'none') {
-                            barsFullyRendered = false;
-                            break;
-                        }
-                        
-                        // Проверяем opacity
-                        if (parseFloat(computedStyle.opacity) < 0.9) {
-                            barsFullyRendered = false;
-                            break;
-                        }
-                        
-                        maxBarHeight = Math.max(maxBarHeight, rect.height);
-                    }
-                    
-                    
-                    // Дополнительная проверка - если максимальная высота баров слишком маленькая
-                    if (maxBarHeight < 50) {
-                        barsFullyRendered = false;
-                    }
-                }
-                
-                if (hasVisibleContent && !hasActiveAnimations && barsFullyRendered) {
-                    isGraphicReady = true;
-                    
-                    // Дополнительная пауза для полной уверенности
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                    break;
-                }
-                
-                
-                await new Promise(resolve => setTimeout(resolve, 200)); // Сократили интервал до 200мс
-                attempts++;
-            }
-            
-            if (!isGraphicReady) {
-                // График может быть не полностью готов, но продолжаем захват (таймаут)
-            }
-            
-            // Удалено: html-to-image/html2canvas больше не используются
-            return null;
-
+            return canvas.toDataURL('image/png', 1.0);
         } catch (error) {
-            console.error('Error capturing chart with html-to-image:', error);
+            console.error('Ошибка захвата таблицы:', error);
             return null;
         }
     }
 
     /**
-     * Захват графика как изображения
+     * Поиск элементов таблиц в слайде
      */
-    async captureChartAsImage(chartElement, options = {}) {
-        try {
-            if (!chartElement) {
-                console.warn('Chart element not found for capture');
-                return null;
-            }
-
-            // Дополнительная проверка, что элемент видимый
-            if (chartElement.offsetWidth === 0 || chartElement.offsetHeight === 0) {
-                console.warn('Chart element has zero dimensions');
-                return null;
-            }
-
-            // Проверяем, есть ли SVG элементы в графике
-            const svgElements = chartElement.querySelectorAll('svg');
-            const canvasElements = chartElement.querySelectorAll('canvas');
+    findTableElements(slideId) {
+        const selectors = [
+            // Основные контейнеры таблиц
+            `.main-slide-area .slide-container[data-slide-id="${slideId}"] .reports-table-container`,
+            `.main-slide-area .slide-container[data-slide-id="${slideId}"] .table-container`,
+            `.main-slide-area .slide-container[data-slide-id="${slideId}"] .finance-table-container`,
+            `.main-slide-area .slide-container[data-slide-id="${slideId}"] .comparison-table-content`,
             
+            // Таблицы в режиме table
+            `.main-slide-area .slide-container[data-slide-id="${slideId}"] .table-container table`,
+            `.main-slide-area .slide-container[data-slide-id="${slideId}"] .reports-table-container table`,
             
-            // Если есть SVG элементы, пытаемся их обработать
-            if (svgElements.length > 0) {
-                
-                // Ждем, чтобы SVG полностью отрендерился
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                // Принудительно перерисовываем SVG
-                svgElements.forEach(svg => {
-                    svg.style.display = 'none';
-                    svg.offsetHeight; // Force reflow
-                    svg.style.display = 'block';
-                });
-                
-                await new Promise(resolve => setTimeout(resolve, 500));
-            }
+            // Таблицы из BaseChart с viewMode="table"
+            `.main-slide-area .slide-container[data-slide-id="${slideId}"] .base-chart .table-container`,
+            `.main-slide-area .slide-container[data-slide-id="${slideId}"] .comparison-chart .table-container`,
+            
+            // Fallback селекторы
+            `[data-slide-id="${slideId}"] .table-container`,
+            `[data-slide-id="${slideId}"] .reports-table-container`,
+            `[data-slide-id="${slideId}"] table`
+        ];
 
-            // Ждем еще немного, чтобы убедиться, что все анимации завершены
-            await new Promise(resolve => setTimeout(resolve, 200));
-
-            // Удалено: html2canvas больше не используется
-            return null;
-        } catch (error) {
-            console.error('Error capturing chart as image:', error);
-            return null;
+        const elements = [];
+        for (const selector of selectors) {
+            const found = document.querySelectorAll(selector);
+            elements.push(...Array.from(found));
         }
+
+        // Фильтруем видимые элементы с содержимым
+        return elements.filter(el => {
+            const rect = el.getBoundingClientRect();
+            const hasContent = el.textContent && el.textContent.trim().length > 0;
+            const isVisible = rect.width > 0 && rect.height > 0 && 
+                            getComputedStyle(el).display !== 'none' &&
+                            getComputedStyle(el).visibility !== 'hidden';
+            return hasContent && isVisible;
+        });
+    }
+
+    /**
+     * Захват всех таблиц в отчете
+     */
+    async captureAllTables(report) {
+        const tableImages = new Map();
+        const thumbEls = Array.from(document.querySelectorAll('.thumbnails-list .thumbnail-item[data-slide-id]'));
+        const orderedIds = thumbEls.map((el) => el.getAttribute('data-slide-id')).filter(Boolean);
+        const baseSlides = (report.slides || []).filter((s) => this.isTableSlide(s.type));
+        const slides = orderedIds.length
+            ? orderedIds.map((id) => ({ 
+                id, 
+                type: (baseSlides.find(b => id === b.id || id.startsWith(`${b.id}__part`))?.type) || 'table',
+                title: baseSlides.find(b => id === b.id || id.startsWith(`${b.id}__part`))?.title 
+            }))
+            : baseSlides;
+
+        const clickThumbnailAndWait = async (slideId) => {
+            const thumb = document.querySelector(`.thumbnails-list .thumbnail-item[data-slide-id="${slideId}"]`);
+            if (thumb) {
+                thumb.click();
+                await new Promise(r => setTimeout(r, 50));
+            }
+            
+            const deadline = Date.now() + 2500;
+            let main = null;
+            do {
+                main = document.querySelector(`.main-slide-area .slide-container[data-slide-id="${slideId}"]`);
+                if (main) break;
+                await new Promise(r => setTimeout(r, 100));
+            } while (Date.now() < deadline);
+
+            if (main) {
+                await new Promise(r => setTimeout(r, 300));
+            }
+        };
+
+        for (const slide of slides) {
+            try {
+                await clickThumbnailAndWait(slide.id);
+                
+                const tableElements = this.findTableElements(slide.id);
+                if (tableElements.length === 0) continue;
+
+                const images = [];
+                for (const tableEl of tableElements) {
+                    const image = await this.captureTableAsImage(tableEl);
+                    if (image) {
+                        images.push(image);
+                    }
+                }
+
+                if (images.length > 0) {
+                    tableImages.set(slide.id, images);
+                }
+            } catch (error) {
+                console.error(`Ошибка захвата таблиц для слайда ${slide.id}:`, error);
+            }
+        }
+
+        return { tableImages, order: slides.map(s => s.id) };
+    }
+
+    /**
+     * Проверка является ли слайд табличным
+     */
+    isTableSlide(slideType) {
+        return slideType === 'table' || 
+               slideType === 'finance-table' || 
+               slideType === 'comparison-table' ||
+               slideType === 'analytics-table';
     }
 
     /**
@@ -684,52 +675,7 @@ class ReportsService {
         document.body.appendChild(tempContainer);
         
         try {
-            // Рендерим каждый слайд с графиком
-            for (const slide of report.slides) {
-                if (this.isChartSlide(slide.type)) {
-                    
-                    const slideElement = document.createElement('div');
-                    slideElement.setAttribute('data-slide-id', slide.id);
-                    slideElement.setAttribute('data-slide-type', slide.type);
-                    slideElement.style.cssText = `
-                        width: 800px;
-                        height: 600px;
-                        margin-bottom: 20px;
-                        border: 1px solid #ddd;
-                        border-radius: 8px;
-                        padding: 20px;
-                        background-color: #ffffff;
-                        position: relative;
-                    `;
-                    
-                    // Создаем заголовок слайда
-                    const title = document.createElement('h2');
-                    title.textContent = slide.title || 'График';
-                    title.style.cssText = 'margin-bottom: 20px; font-size: 18px; color: #333;';
-                    slideElement.appendChild(title);
-                    
-                    // Создаем контейнер для графика
-                    const chartContainer = document.createElement('div');
-                    chartContainer.className = 'chart-container';
-                    chartContainer.style.cssText = `
-                        width: 100%;
-                        height: 400px;
-                        position: relative;
-                    `;
-                    slideElement.appendChild(chartContainer);
-                    
-                    // Добавляем в временный контейнер
-                    tempContainer.appendChild(slideElement);
-                    
-                    // Небольшая пауза для рендеринга
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                }
-            }
-            
-            // Ждем, чтобы все элементы успели отрендериться
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            
+            // Удалено: принудительный скрытый рендер не используется
         } catch (error) {
             console.error('❌ Ошибка принудительного рендеринга слайдов:', error);
         } finally {

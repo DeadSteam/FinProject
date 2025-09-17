@@ -98,3 +98,4 @@ export class AnalyticsService {
         return this.api.get('/finance/analytics/forecast', forecastParams);
     }
 } 
+
